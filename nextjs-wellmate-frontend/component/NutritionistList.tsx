@@ -1,32 +1,7 @@
 import { Star } from "lucide-react";
 import Button from "./Button";
-
-const nutritionists = [
-    {
-        name: "Dr. Peeronuch Thepwong",
-        title: "Weight Management & Diabetes",
-        rating: 4.9,
-        reviews: 1846,
-        image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200&h=200",
-        description: "Specializing in weight management and diabetes care, Dr. Peeranuch Thapwong provides evidence-based medical nutrition therapy tailored to each unique needs. Achieve sustainable health goals through personalized plans designed to manage blood sugar and optimize your well-being."
-    },
-    {
-        name: "Dr. Pronchanok Phoolaikaw",
-        title: "Sport Nutrition",
-        rating: 4.75,
-        reviews: 1260,
-        image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=200&h=200",
-        description: "Fuel your performance with expert guidance. Dr. Pronchanok specializes in Sport Nutrition, helping athletes and active individuals optimize their diet for maximum strength and recovery."
-    },
-    {
-        name: "Dr. Krittiyawadee Phetthong",
-        title: "Maternal Child Health",
-        rating: 4.8,
-        reviews: 1176,
-        image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200&h=200",
-        description: "Give your little ones the best start in life. Dr. Krittiyawadee offers compassionate, personalized nutrition plans for mothers and children to ensure a healthy future for your family."
-    }
-];
+import Link from "next/link";
+import { nutritionists } from "@/data/nutritionistData";
 
 export default function NutritionistList() {
     return (
@@ -54,9 +29,11 @@ export default function NutritionistList() {
 
                             {/* Profile Button */}
                             <div className="mb-3">
-                                <Button variant="outline" size="sm" className="text-sm px-6 py-1 border-2 border-black rounded-lg">
-                                    Profile
-                                </Button>
+                                <Link href={`/nutritionist/${person.id}`}>
+                                    <Button variant="outline" size="sm" className="text-sm px-6 py-1 border-2 border-black rounded-lg">
+                                        Profile
+                                    </Button>
+                                </Link>
                             </div>
 
                             {/* Rating */}
