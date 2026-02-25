@@ -18,19 +18,26 @@ export default function Navbar() {
                 </div>
 
                 {/* Menu */}
-                <div className="hidden md:flex items-center gap-8 font-medium">
-                    <Link href="/" className="px-4 py-2 bg-gray-100 rounded-full">หน้าหลัก</Link>
-                    <Link href="#" className="hover:text-primary">บริการ</Link>
-                    <Link href="#" className="hover:text-primary">ข่าวสาร</Link>
-                    <Link href="#" className="hover:text-primary">เกี่ยวกับเรา</Link>
+                <div className="hidden md:flex items-center gap-6 font-medium text-sm">
+                    <Link href="/" className="px-4 py-2 bg-gray-100 rounded-full">Homepage</Link>
+                    <Link href="#" className="hover:text-primary">Dashboard</Link>
+                    <Link href="#" className="hover:text-primary flex items-center gap-1">
+                        Nutrition Service
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </Link>
+                    <Link href="#" className="hover:text-primary flex items-center gap-1">
+                        Healthy Menu
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </Link>
+                    <Link href="#" className="hover:text-primary">Progress</Link>
                 </div>
                 {/* Buttons */}
                 <div className="flex items-center gap-4">
                     <Button className="px-6 py-2 bg-white text-black border-2 border-black rounded-xl font-bold hover:bg-gray-50 transition-all">
-                        เข้าสู่ระบบ
+                        Sign In
                     </Button>
-                    <Button className="px-6 py-2 bg-white text-black border-2 border-black rounded-xl font-bold  transition-all bg-[#a3d133]">
-                        สมัครสมาชิก
+                    <Button className="px-6 py-2 text-black border-2 border-black rounded-xl font-bold transition-all bg-[#a3d133]">
+                        Sign Up
                     </Button>
                 </div>
             </div>
