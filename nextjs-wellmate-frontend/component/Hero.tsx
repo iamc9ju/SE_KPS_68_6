@@ -1,57 +1,38 @@
 import Button from "./Button";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function Hero() {
     return (
-        <section className="pt-32 pb-20 bg-transparent overflow-hidden">
-            <div className="max-w-7xl mx-auto px-4 text-center">
+        <section className="pt-24 pb-10 bg-transparent overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4">
+                {/* Hero Banner with food background image */}
+                <div className="relative rounded-3xl overflow-hidden min-h-[350px] flex items-center justify-center">
+                    {/* Background food image */}
+                    <img
+                        src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=2000"
+                        alt="Healthy food background"
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    {/* Dark overlay for text readability */}
+                    <div className="absolute inset-0 bg-black/50"></div>
 
-                {/* Badge
-                <div className="inline-flex items-center gap-2 bg-lime-100 text-lime-800 px-4 py-2 rounded-full text-sm font-bold mb-8 animate-fade-in-up">
-                    <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-lime-500"></span>
-                    </span>
-                    แพลตฟอร์มดูแลสุขภาพอันดับ 1
-                </div> */}
-
-                {/* Headline */}
-                <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight text-gray-900 leading-tight">
-                    สุขภาพดีเริ่มต้นที่<br />
-                    <span className="text-[#A3D133]">Wellmate Platform</span>
-                </h1>
-
-                {/* Subheadline */}
-                <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-                    บริหารจัดการโภชนาการ ปรึกษาผู้เชี่ยวชาญ และติดตามผลลัพธ์สุขภาพของคุณได้ครบจบในที่เดียว ผ่านเว็บบราวเซอร์ ไม่ต้องลงแอป
-                </p>
-
-                {/* Dashboard Image Showcase */}
-                <div className="relative mx-auto max-w-6xl">
-                    {/* Glow Effect */}
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-3/4 h-3/4 bg-lime-400/20 blur-[100px] rounded-full -z-10"></div>
-
-                    <div className="bg-gray-400 rounded-2xl p-2 shadow-2xl border border-gray-200/50 backdrop-blur-sm">
-                        <div className="bg-gray-500 rounded-xl overflow-hidden relative"> {/* ลบ aspect-[16/9] ออก */}
-                            <img
-                                src="/dashboard-mockup.png"
-                                alt="Wellmate Dashboard Interface"
-                                className="w-full h-auto opacity-90 hover:opacity-100 transition-opacity duration-700" /* ใช้ h-auto แทน h-full */
-                            />
+                    {/* Content */}
+                    <div className="relative z-10 text-center text-white px-4 py-16">
+                        <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fadeIn tracking-tight leading-tight">
+                            ค้นพบสุขภาพที่ดีกว่า<br />ในแบบที่เป็นคุณ
+                        </h1>
+                        <p className="text-base md:text-lg mb-10 max-w-2xl mx-auto opacity-0 animate-slideUp font-light text-gray-100 leading-relaxed" style={{ animationDelay: '0.2s' }}>
+                            ให้เราดูแลโภชนาการของคุณ ด้วยแผนอาหารที่ออกแบบเฉพาะบุคคลโดยผู้เชี่ยวชาญ เริ่มต้นเส้นทางสู่สุขภาพที่แข็งแรงได้ตั้งแต่วันนี้
+                        </p>
+                        <div className="flex flex-col sm:flex-row justify-center gap-4 opacity-0 animate-slideUp" style={{ animationDelay: '0.4s' }}>
+                            <Button className="bg-white text-black border-2 border-black rounded-lg font-bold px-6 py-3 hover:bg-gray-100 transition-all text-sm">
+                                ประเมินสุขภาพของคุณ
+                            </Button>
+                            <Button className="bg-white text-black border-2 border-black rounded-lg font-bold px-6 py-3 hover:bg-gray-100 transition-all text-sm">
+                                แพ็กเกจ
+                            </Button>
                         </div>
                     </div>
-
-                    {/* Feature Tags Floating
-                    <div className="hidden md:flex absolute -left-12 top-1/4 bg-white p-3 rounded-xl shadow-lg items-center gap-3 animate-bounce-slow">
-                        <div className="bg-green-100 p-2 rounded-lg text-green-600"><CheckCircle2 size={20} /></div>
-                        <div className="text-left">
-                            <p className="text-xs text-gray-500 font-bold">Status</p>
-                            <p className="text-sm font-bold text-gray-800">Healthy</p>
-                        </div>
-                    </div> */}
                 </div>
-
-
             </div>
         </section>
     );

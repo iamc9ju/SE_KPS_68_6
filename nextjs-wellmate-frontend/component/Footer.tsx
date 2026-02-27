@@ -32,9 +32,9 @@ export default function Footer() {
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-4">ช่วยเหลือ</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-[#A3D133] transition-colors">FAQ</a></li>
-                            <li><a href="#" className="hover:text-[#A3D133] transition-colors">Privacy</a></li>
-                            <li><a href="#" className="hover:text-[#A3D133] transition-colors">Terms</a></li>
+                            <li><a href="#" className="hover:text-[#A3D133] transition-colors">คำถามที่พบบ่อย</a></li>
+                            <li><a href="#" className="hover:text-[#A3D133] transition-colors">นโยบายความเป็นส่วนตัว</a></li>
+                            <li><a href="#" className="hover:text-[#A3D133] transition-colors">ข้อกำหนดและเงื่อนไข</a></li>
                         </ul>
                     </div>
 
@@ -55,7 +55,7 @@ export default function Footer() {
                 </div>
 
                 <div className="border-t border-gray-100 pt-8 flex justify-center md:justify-between items-center text-xs text-gray-400">
-                    <p>&copy; 2024 Wellmate. All rights reserved.</p>
+                    <p>&copy; 2024 Wellmate. สงวนลิขสิทธิ์ทั้งหมด</p>
                 </div>
             </div>
         </footer>
