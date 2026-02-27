@@ -7,13 +7,17 @@ export default function NutritionistList() {
     return (
         <section className="py-16 bg-transparent">
             <div className="max-w-7xl mx-auto px-4">
-                <div className="text-center mb-12">
+                <div className="text-center mb-12 animate-fadeIn">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">พบกับนักโภชนาการของเรา</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                     {nutritionists.map((person, idx) => (
-                        <div key={idx} className="border border-gray-200 p-6 rounded-2xl bg-white hover:border-lime-200 transition-colors text-center">
+                        <div
+                            key={idx}
+                            className="border border-gray-200 p-6 rounded-2xl bg-white hover:border-lime-200 transition-all hover:-translate-y-2 text-center opacity-0 animate-slideUp"
+                            style={{ animationDelay: `${idx * 0.15 + 0.2}s` }}
+                        >
                             {/* Avatar */}
                             <div className="flex justify-center mb-3">
                                 <img
@@ -31,7 +35,7 @@ export default function NutritionistList() {
                             <div className="mb-3">
                                 <Link href={`/nutritionist/${person.id}`}>
                                     <Button variant="outline" size="sm" className="text-sm px-6 py-1 border-2 border-black rounded-lg">
-                                        Profile
+                                        ดูโปรไฟล์
                                     </Button>
                                 </Link>
                             </div>
@@ -46,7 +50,7 @@ export default function NutritionistList() {
                                 ))}
                             </div>
                             <p className="text-xs text-gray-500 mb-3">
-                                {person.rating} | {person.reviews} Reviews
+                                {person.rating} | {person.reviews} รีวิว
                             </p>
 
                             {/* Description */}
