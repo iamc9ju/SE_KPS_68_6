@@ -229,4 +229,6 @@ model Appointment {
   type           AppointmentType   @default(online)
   createdAt      DateTime          @default(now()) @map("created_at")
   deletedAt      DateTime?         @map("deleted_at")
+
+  @@map("appointment")
 }
