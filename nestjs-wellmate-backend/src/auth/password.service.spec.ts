@@ -16,7 +16,7 @@ describe('PasswordService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks(); //ลบMockหลังรันจบเเต่ละ Test Case
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -35,7 +35,7 @@ describe('PasswordService', () => {
   });
 
   describe('compare', () => {
-    it('sould return true if password matches hash', async () => {
+    it('should return true if password matches hash', async () => {
       const password = 'mySecretPassword';
       const hash = 'hashedString123';
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -43,7 +43,7 @@ describe('PasswordService', () => {
       expect(bcrypt.compare).toHaveBeenCalledWith(password, hash);
       expect(result).toBe(true);
     });
-    it('sould return false if password does not match hash', async () => {
+    it('should return false if password does not match hash', async () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
       const result = await service.compare('wrongPassword', 'hash');
       expect(result).toBe(false);
