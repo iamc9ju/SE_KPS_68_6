@@ -149,13 +149,14 @@ model Patient {
   deletedAt         DateTime?   @map("deleted_at")
 
   // Relations
-  patientAllergies PatientAllergy[]
-  healthMetrics    HealthMetric[]
-  reviews          Review[]
-  appointments     Appointment[]
-  orders           Order[]
-  mealPlans        MealPlan[]
-  dietaryPlans     DietaryPlan[]
+  patientAllergies   PatientAllergy[]
+  healthMetrics      HealthMetric[]
+  reviews            Review[]
+  appointments       Appointment[]
+  orders             Order[]
+  mealPlans          MealPlan[]
+  dietaryPlans       DietaryPlan[]
+  physicalActivities PhysicalActivity[]
 
   @@map("patients")
 }
@@ -613,4 +614,24 @@ model ChatMessage {
 
   @@index([chatRoomId, createdAt])
   @@map("chat_messages")
+}
+
+model PhysicalActivity {
+  activityId  String    @id @default(uuid()) @map("activity_id") @db.Uuid
+  patientId   String    @map("patient_id") @db.Uuid
+  title       String    @db.VarChar(100)
+  description String?   @db.Text
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  calories    Int?      @map("calories")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([startTime])
+  @@map("physical_activities")
 }
