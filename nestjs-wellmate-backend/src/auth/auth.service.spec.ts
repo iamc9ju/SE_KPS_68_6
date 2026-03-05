@@ -22,6 +22,9 @@ describe('AuthService', () => {
     nutritionist: {
       create: jest.fn(),
     },
+    foodPartner: {
+      create: jest.fn(),
+    },
     $transaction: jest.fn((callback) => callback(mockPrismaService)),
   };
 
@@ -143,6 +146,46 @@ describe('AuthService', () => {
         },
       });
       expect(mockPrismaService.patient.create).not.toHaveBeenCalled();
+    });
+
+    it('should successfully register a new food_partner user', async () => {
+      // Arrange
+      const foodPartnerDto: RegisterDto = {
+        email: 'partner@example.com',
+        password: 'password123',
+        role: UserRole.food_partner,
+        partnerName: 'ร้านอาหารสุขภาพ ABC',
+      };
+      const mockCreatedUser = {
+        userId: 'partner-uuid',
+        email: foodPartnerDto.email,
+      };
+      const mockHash = 'hashedPassword123';
+
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPasswordService.hash.mockResolvedValue(mockHash);
+      mockPrismaService.user.create.mockResolvedValue(mockCreatedUser);
+      mockPrismaService.foodPartner.create.mockResolvedValue({});
+
+      // Act
+      const result = await authService.register(foodPartnerDto);
+
+      // Assert
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ role: UserRole.food_partner }),
+      });
+      expect(mockPrismaService.foodPartner.create).toHaveBeenCalledWith({
+        data: {
+          userId: mockCreatedUser.userId,
+          name: 'ร้านอาหารสุขภาพ ABC',
+        },
+      });
+      expect(mockPrismaService.patient.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.nutritionist.create).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        message: 'Registration successful',
+        userId: mockCreatedUser.userId,
+      });
     });
   });
 

@@ -125,6 +125,7 @@ model User {
   // Relations
   patient       Patient?
   nutritionist  Nutritionist?
+  foodPartner   FoodPartner?
   refreshTokens RefreshToken[]
   userDiseases  UserDisease[]
   notifications Notification[]
@@ -314,15 +315,18 @@ model Appointment {
 }
 
 model FoodPartner {
-  foodPartnerId      Int                 @id @default(autoincrement()) @map("food_partner_id")
-  name               String              @db.VarChar(100)
-  description        String?             @db.Text
-  phone              String?             @db.VarChar(20)
-  address            String?             @db.Text
-  rating             Decimal?            @default(5.0) @db.Decimal(2, 1)
-  commissionRate     Decimal?            @default(15.00) @map("commission_rate") @db.Decimal(4, 2)
-  isActive           Boolean             @default(true) @map("is_active")
-  joinedAt           DateTime            @default(now()) @map("joined_at")
+  foodPartnerId  Int      @id @default(autoincrement()) @map("food_partner_id")
+  userId         String   @unique @map("user_id") @db.Uuid
+  name           String   @db.VarChar(100)
+  description    String?  @db.Text
+  address        String?  @db.Text
+  rating         Decimal? @default(5.0) @db.Decimal(2, 1)
+  commissionRate Decimal? @default(15.00) @map("commission_rate") @db.Decimal(4, 2)
+  isActive       Boolean  @default(true) @map("is_active")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  user               User                @relation(fields: [userId], references: [userId], onDelete: Cascade)
   menuItems          MenuItem[]
   orderItems         OrderItem[]
   partnerOrders      PartnerOrder[]

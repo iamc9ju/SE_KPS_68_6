@@ -4,6 +4,8 @@ import {
   MinLength,
   IsEnum,
   IsOptional,
+  ValidateIf,
+  IsNotEmpty,
 } from 'class-validator';
 import { UserRole } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -18,17 +20,30 @@ export class RegisterDto {
   @MinLength(8)
   password: string;
 
-  @ApiProperty({ enum: ['patient', 'nutritionist'], example: 'patient' })
+  @ApiProperty({
+    enum: ['patient', 'nutritionist', 'food_partner'],
+    example: 'patient',
+  })
   @IsEnum(UserRole)
   role: UserRole;
 
-  @ApiProperty({ example: 'John' })
+  @ApiPropertyOptional({ example: 'John' })
+  @ValidateIf((o) => o.role !== 'food_partner')
   @IsString()
-  firstName: string;
+  @IsNotEmpty()
+  firstName?: string;
 
-  @ApiProperty({ example: 'Doe' })
+  @ApiPropertyOptional({ example: 'Doe' })
+  @ValidateIf((o) => o.role !== 'food_partner')
   @IsString()
-  lastName: string;
+  @IsNotEmpty()
+  lastName?: string;
+
+  @ApiPropertyOptional({ example: 'ร้านอาหารสุขภาพ ABC' })
+  @ValidateIf((o) => o.role === 'food_partner')
+  @IsString()
+  @IsNotEmpty()
+  partnerName?: string;
 
   @ApiPropertyOptional({ example: '0812345678' })
   @IsString()
