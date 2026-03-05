@@ -36,7 +36,10 @@ export class AuthController {
     private tokenService: TokenService,
     private configService: ConfigService,
   ) {
-    const accessExpiry = this.configService.get<string>('JWT_EXPIRATION', '1h');
+    const accessExpiry = this.configService.get<string>(
+      'ACCESS_TOKEN_EXPIRY',
+      '1h',
+    );
     const refreshDays = this.configService.get<number>(
       'REFRESH_TOKEN_EXPIRY_DAYS',
       7,
@@ -188,7 +191,7 @@ export class AuthController {
   }
 
   private parseExpiryToMs(expiry: string): number {
-    const match = expiry.match(/^(\d+)([smhd])$/);
+    const match = expiry.match(/^(\d+)(s|m|h|d)$/);
     if (!match) return 60 * 60 * 1000; // default 1h
 
     const value = parseInt(match[1]);

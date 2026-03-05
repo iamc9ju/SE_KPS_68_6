@@ -3,15 +3,17 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { HealthModule } from './health/health.module';
-import { HealthMetricsModule } from './health-metrics/health-metrics.module';
+import { NutritionistModule } from './nutritionist/nutritionist.module';
+import { FoodPartnerModule } from './food-partner/food-partner.module';
+import { FoodMenuModule } from './food-menu/food-menu.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
-    HealthModule,
-    HealthMetricsModule,
+    NutritionistModule,
+    FoodPartnerModule,
+    FoodMenuModule,
   ],
   controllers: [AppController],
   providers: [AppService],

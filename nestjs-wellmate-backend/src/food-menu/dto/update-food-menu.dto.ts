@@ -1,17 +1,4 @@
-import { IsOptional, IsString, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateMenuItemDto } from './create-food-menu.dto';
 
-export class UpdateNutritionistDto {
-  @IsOptional()
-  @IsString()
-  firstName?: string;
-
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  consultationFee?: number;
-}
+export class UpdateMenuItemDto extends PartialType(CreateMenuItemDto) {}
