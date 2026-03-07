@@ -22,43 +22,43 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
     {
         id: 1,
-        name: "Healthy Chicken Bowl (ไก่เพื่อสุขภาพ)",
-        desc: "Grilled chicken with quinoa",
+        name: "Healthy Chicken Bowl (ชามไก่เพื่อสุขภาพ)",
+        desc: "ไก่ย่างกับควินัว",
         price: 220,
         image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
     },
     {
         id: 2,
         name: "Salmon Protein Plate (แซลมอนโปรตีนเพลต)",
-        desc: "Salmon with asparagus",
+        desc: "แซลมอนกับหน่อไม้ฝรั่ง",
         price: 260,
         image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288",
     },
     {
         id: 3,
         name: "Avocado Toast (ขนมปังอะโวคาโด)",
-        desc: "Whole grain toast with avocado",
+        desc: "ขนมปังโฮลเกรนกับอะโวคาโด",
         price: 150,
         image: "https://images.unsplash.com/photo-1588137378633-dea1336ce1e2",
     },
     {
         id: 4,
         name: "Greek Yogurt Bowl (กรีกโยเกิร์ต)",
-        desc: "Yogurt berries granola",
+        desc: "โยเกิร์ตเบอร์รีและกราโนล่า",
         price: 130,
         image: "https://images.unsplash.com/photo-1488477181946-6428a0291777",
     },
     {
         id: 5,
         name: "Protein Pancakes (แพนเค้กโปรตีน)",
-        desc: "High protein pancakes",
+        desc: "แพนเค้กโปรตีนสูง",
         price: 190,
         image: "https://images.unsplash.com/photo-1528207776546-365bb710ee93",
     },
     {
         id: 6,
         name: "Green Detox Salad (สลัดดีท็อกซ์สีเขียว)",
-        desc: "Kale cucumber salad",
+        desc: "สลัดเคลและแตงกวา",
         price: 170,
         image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd",
     },
@@ -106,14 +106,14 @@ export default function HealthyMenu() {
                     </h2>
 
                     <div style={{ marginTop: "40px" }}>
-                        <MenuItemButton icon={<LayoutDashboard size={22} />} label="Dashboard" />
-                        <MenuItemButton icon={<Heart size={22} />} label="Nutrition Service" />
-                        <MenuItemButton icon={<Calendar size={22} />} label="Calendar" />
-                        <MenuItemButton icon={<MessageCircle size={22} />} label="Messages" />
-                        <MenuItemButton icon={<Salad size={22} />} label="Healthy Menu" active />
-                        <MenuItemButton icon={<Utensils size={22} />} label="Meal Plan" />
-                        <MenuItemButton icon={<BookOpen size={22} />} label="Food Diary" />
-                        <MenuItemButton icon={<TrendingUp size={22} />} label="Progress" />
+                        <MenuItemButton icon={<LayoutDashboard size={22} />} label="แดชบอร์ด" />
+                        <MenuItemButton icon={<Heart size={22} />} label="บริการโภชนาการ" />
+                        <MenuItemButton icon={<Calendar size={22} />} label="ปฏิทิน" />
+                        <MenuItemButton icon={<MessageCircle size={22} />} label="ข้อความ" />
+                        <MenuItemButton icon={<Salad size={22} />} label="เมนูสุขภาพ" active />
+                        <MenuItemButton icon={<Utensils size={22} />} label="แผนมื้ออาหาร" />
+                        <MenuItemButton icon={<BookOpen size={22} />} label="บันทึกอาหาร" />
+                        <MenuItemButton icon={<TrendingUp size={22} />} label="ความคืบหน้า" />
                     </div>
                 </div>
 
@@ -127,12 +127,12 @@ export default function HealthyMenu() {
                         textAlign: "center",
                     }}
                 >
-                    <p style={{ fontSize: "14px" }}>Start your health journey with</p>
+                    <p style={{ fontSize: "14px" }}>เริ่มต้นการดูแลสุขภาพของคุณด้วย</p>
 
-                    <h3 style={{ fontSize: "20px", fontWeight: 800 }}>a FREE 1 MONTH</h3>
+                    <h3 style={{ fontSize: "20px", fontWeight: 800 }}>สิทธิ์ใช้ฟรี 1 เดือน</h3>
 
                     <p style={{ fontSize: "13px", marginBottom: "15px" }}>
-                        access to WELLMATE
+                        ในการเข้าถึง WELLMATE
                     </p>
 
                     <button
@@ -145,7 +145,7 @@ export default function HealthyMenu() {
                             fontWeight: 700,
                         }}
                     >
-                        Sign Up Now!
+                        สมัครเลย!
                     </button>
                 </div>
             </div>
@@ -162,10 +162,10 @@ export default function HealthyMenu() {
                 >
                     <div>
                         <h1 style={{ fontSize: "38px", fontWeight: "800", marginBottom: "8px" }}>
-                            Healthy Menu
+                            เมนูสุขภาพ
                         </h1>
                         <p style={{ color: "#64748b", fontSize: "16px", fontWeight: "500" }}>
-                            Enjoy our selection of nutritious and delicious meals
+                            เพลิดเพลินกับตัวเลือกอาหารที่อุดมด้วยโภชนาการและแสนอร่อยของเรา
                         </p>
                     </div>
 
@@ -196,7 +196,7 @@ export default function HealthyMenu() {
                     <span style={{ marginRight: "10px", fontSize: "18px" }}>🔍</span>
 
                     <input
-                        placeholder="Search healthy food..."
+                        placeholder="ค้นหาอาหารเพื่อสุขภาพ..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         style={{
@@ -270,9 +270,9 @@ export default function HealthyMenu() {
                         borderLeft: "1px solid #e5e7eb",
                     }}
                 >
-                    <h2>Cart</h2>
+                    <h2>ตะกร้าสินค้า</h2>
 
-                    {cart.length === 0 && <p>No items in cart</p>}
+                    {cart.length === 0 && <p>ไม่มีสินค้าในตะกร้า</p>}
 
                     {cart.map((item, i) => (
                         <div
@@ -306,7 +306,7 @@ export default function HealthyMenu() {
 
                     <hr />
 
-                    <b>Total : {total} ฿</b>
+                    <b>ยอดรวม : {total} ฿</b>
 
                     <button
                         style={{
@@ -319,7 +319,7 @@ export default function HealthyMenu() {
                             borderRadius: "10px",
                         }}
                     >
-                        Checkout
+                        สั่งซื้อ
                     </button>
                 </div>
             )}
@@ -355,5 +355,7 @@ function MenuItemButton({
             {icon}
             <span>{label}</span>
         </div>
-    );
+
+    )
+
 }
