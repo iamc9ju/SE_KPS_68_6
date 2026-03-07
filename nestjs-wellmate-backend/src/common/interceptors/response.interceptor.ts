@@ -10,46 +10,49 @@ import { map } from 'rxjs/operators';
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  message: string;
+  message?: string;
+  meta?: any;
 }
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<
-  T,
-  ApiResponse<T>
-> {
+export class ResponseInterceptor<T>
+  implements NestInterceptor<T, ApiResponse<T>>
+{
   intercept(
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     return next.handle().pipe(
-      map((data) => {
-        const { message, meta, ...rest } = data || {};
+      map((data: any) => {
 
-        let extractedMeta = meta;
-        let responseData = rest.data ?? rest;
-
-        // ถ้า response มีทั้ง meta กับ data
-        if (
-          responseData &&
-          typeof responseData === 'object' &&
-          'meta' in responseData
-        ) {
-          extractedMeta = responseData.meta;
-          responseData = responseData.data ?? responseData;
+        // ✅ ถ้าเป็น array ให้ return ตรง ๆ เลย
+        if (Array.isArray(data)) {
+          return {
+            success: true,
+            data,
+          };
         }
 
-        const isEmptyObject =
-          responseData &&
-          typeof responseData === 'object' &&
-          !Array.isArray(responseData) &&
-          Object.keys(responseData).length === 0;
+        // ✅ ถ้าเป็น primitive (string, number, null)
+        if (
+          data === null ||
+          typeof data !== 'object'
+        ) {
+          return {
+            success: true,
+            data,
+          };
+        }
+
+        const { message, meta, ...rest } = data;
+
+        const responseData = rest.data ?? rest;
 
         return {
           success: true,
-          data: isEmptyObject ? null : responseData,
-          ...(extractedMeta ? { meta: extractedMeta } : {}),
-          message: message,
+          data: responseData,
+          ...(meta ? { meta } : {}),
+          ...(message ? { message } : {}),
         };
       }),
     );

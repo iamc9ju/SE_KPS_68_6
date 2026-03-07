@@ -20,7 +20,7 @@ export class TokenService {
   ) {
     this.bcryptRounds = this.configService.get<number>('BCRYPT_ROUNDS', 10);
     this.accessTokenExpiry = this.configService.get<string>(
-      'JWT_EXPIRATION',
+      'ACCESS_TOKEN_EXPIRY',
       '1h',
     );
     const refreshDays = this.configService.get<number>(

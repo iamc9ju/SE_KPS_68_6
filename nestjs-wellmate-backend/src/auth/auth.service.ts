@@ -46,16 +46,25 @@ export class AuthService {
         await tx.patient.create({
           data: {
             userId: user.userId,
-            firstName: dto.firstName,
-            lastName: dto.lastName,
+            firstName: dto.firstName!,
+            lastName: dto.lastName!,
           },
         });
       } else if (dto.role === 'nutritionist') {
         await tx.nutritionist.create({
           data: {
             userId: user.userId,
-            firstName: dto.firstName,
-            lastName: dto.lastName,
+            firstName: dto.firstName!,
+            lastName: dto.lastName!,
+          },
+        });
+      } else if (dto.role === 'food_partner') {
+        await tx.foodPartner.create({
+          data: {
+            userId: user.userId,
+            name:
+              dto.partnerName ||
+              `${dto.firstName || ''} ${dto.lastName || ''}`.trim(),
           },
         });
       }
@@ -102,6 +111,7 @@ export class AuthService {
       include: {
         patient: userBase.role === 'patient',
         nutritionist: userBase.role === 'nutritionist',
+        foodPartner: userBase.role === 'food_partner',
       },
     });
 
@@ -117,7 +127,7 @@ export class AuthService {
   private async validateUser(email: string, pass: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { patient: true, nutritionist: true },
+      include: { patient: true, nutritionist: true, foodPartner: true },
     });
 
     if (
@@ -141,6 +151,7 @@ export class AuthService {
       createdAt,
       patient,
       nutritionist,
+      foodPartner,
     } = user;
 
     let firstName = '';
@@ -152,6 +163,16 @@ export class AuthService {
     } else if (role === 'nutritionist' && nutritionist) {
       firstName = nutritionist.firstName;
       lastName = nutritionist.lastName;
+    } else if (role === 'food_partner' && foodPartner) {
+      return {
+        userId,
+        phone,
+        email,
+        partnerName: foodPartner.name,
+        role,
+        is2faEnabled,
+        createdAt,
+      };
     }
 
     return {

@@ -1,17 +1,47 @@
-import { IsOptional, IsString, IsNumber } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class UpdateNutritionistDto {
+export class UpdateFoodPartnerDto {
   @IsOptional()
   @IsString()
-  firstName?: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  lastName?: string;
+  description?: string;
 
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  // Decimal(2,1)
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  consultationFee?: number;
+  @Min(0)
+  @Max(5)
+  rating?: number;
+
+  // Decimal(4,2)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  commissionRate?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

@@ -1,26 +1,54 @@
-import { IsString, IsUUID, IsOptional, IsNumber, IsDecimal } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsBoolean, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateNutritionistDto {
-  @IsUUID()
-  userId: string;
+export class CreateMenuItemDto {
+
+  @IsInt()
+  foodPartnerId: number;
 
   @IsString()
-  firstName: string;
-
-  @IsString()
-  lastName: string;
+  name: string;
 
   @IsOptional()
   @IsString()
-  licenseNumber?: string;
+  description?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  price: number;   // ✅ เพิ่มตรงนี้
 
   @IsOptional()
   @IsString()
-  licenseDocumentUrl?: string;
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  caloriesKcal?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  consultationFee?: number; // default จะเป็น 500 ถ้าไม่ส่งมา
+  proteinG?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  carbsG?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  fatG?: number;
+
+  @IsOptional()
+  @IsInt()
+  stockQuantity?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isOutOfStock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
 }
