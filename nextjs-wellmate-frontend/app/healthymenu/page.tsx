@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
+
 import {
     LayoutDashboard,
     Heart,
@@ -17,54 +19,74 @@ type MenuItem = {
     desc: string;
     price: number;
     image: string;
+    restaurantName: string;
+};
+
+type Restaurant = {
+    id: number;
+    name: string;
+    desc: string;
+    image: string;
+    menu: string[];
+    link: string;
 };
 
 const menuItems: MenuItem[] = [
     {
         id: 1,
-        name: "Healthy Chicken Bowl (ชามไก่เพื่อสุขภาพ)",
+        name: "Healthy Chicken Bowl",
         desc: "ไก่ย่างกับควินัว",
         price: 220,
         image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
+        restaurantName: "Green Bowl Cafe",
     },
     {
         id: 2,
-        name: "Salmon Protein Plate (แซลมอนโปรตีนเพลต)",
+        name: "Salmon Protein Plate",
         desc: "แซลมอนกับหน่อไม้ฝรั่ง",
         price: 260,
         image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288",
+        restaurantName: "Protein Kitchen",
     },
     {
         id: 3,
-        name: "Avocado Toast (ขนมปังอะโวคาโด)",
+        name: "Avocado Toast",
         desc: "ขนมปังโฮลเกรนกับอะโวคาโด",
         price: 150,
         image: "https://images.unsplash.com/photo-1588137378633-dea1336ce1e2",
+        restaurantName: "Fresh Life Restaurant",
+    },
+];
+
+const restaurants: Restaurant[] = [
+    {
+        id: 1,
+        name: "Green Bowl Cafe",
+        desc: "ร้านอาหารสุขภาพและสลัด",
+        image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
+        menu: ["สลัดไก่ย่างควินัว", "สลัดทูน่าธัญพืช", "น้ำผักสกัดเย็น"],
+        link: "/restaurantmenu/greenbowlcafe",
     },
     {
-        id: 4,
-        name: "Greek Yogurt Bowl (กรีกโยเกิร์ต)",
-        desc: "โยเกิร์ตเบอร์รีและกราโนล่า",
-        price: 130,
-        image: "https://images.unsplash.com/photo-1488477181946-6428a0291777",
+        id: 2,
+        name: "Protein Kitchen",
+        desc: "อาหารโปรตีนสูงสำหรับสายฟิต",
+        image: "https://images.unsplash.com/photo-1552566626-52f8b828add9",
+        menu: ["สเต็กไก่พริกไทยดำ", "ข้าวไรซ์เบอร์รี่อกไก่", "แพนเค้กเวย์โปรตีน"],
+        link: "/restaurantmenu/proteinkitchen",
     },
     {
-        id: 5,
-        name: "Protein Pancakes (แพนเค้กโปรตีน)",
-        desc: "แพนเค้กโปรตีนสูง",
-        price: 190,
-        image: "https://images.unsplash.com/photo-1528207776546-365bb710ee93",
-    },
-    {
-        id: 6,
-        name: "Green Detox Salad (สลัดดีท็อกซ์สีเขียว)",
-        desc: "สลัดเคลและแตงกวา",
-        price: 170,
-        image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd",
+        id: 3,
+        name: "Fresh Life Restaurant",
+        desc: "เมนูคลีนและดีท็อกซ์",
+        image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
+        menu: ["สมูทตี้โบวล์", "สลัดอะโวคาโด", "น้ำผลไม้ดีท็อกซ์"],
+        link: "/restaurantmenu/freshlife",
     },
 ];
 
 export default function HealthyMenu() {
+
     const [search, setSearch] = useState("");
     const [cart, setCart] = useState<MenuItem[]>([]);
     const [showCart, setShowCart] = useState(false);
@@ -73,11 +95,14 @@ export default function HealthyMenu() {
         item.name.toLowerCase().includes(search.toLowerCase())
     );
 
+    const filteredRestaurants = restaurants.filter((item) =>
+        item.name.toLowerCase().includes(search.toLowerCase())
+    );
+
     const addFood = (item: MenuItem) => {
         setCart([...cart, item]);
     };
 
-    // ลบอาหารออกจากตะกร้า
     const removeFood = (index: number) => {
         setCart(cart.filter((_, i) => i !== index));
     };
@@ -85,6 +110,7 @@ export default function HealthyMenu() {
     const total = cart.reduce((sum, item) => sum + item.price, 0);
 
     return (
+
         <div style={{ display: "flex", height: "100vh", background: "#f8fafc" }}>
 
             {/* SIDEBAR */}
@@ -99,7 +125,9 @@ export default function HealthyMenu() {
                     justifyContent: "space-between",
                 }}
             >
+
                 <div>
+
                     <h2 style={{ fontWeight: 800, fontSize: "26px" }}>
                         <span style={{ color: "#a3e635" }}>WM</span>
                         <span style={{ color: "#1f2937" }}>WELLMATE</span>
@@ -115,57 +143,21 @@ export default function HealthyMenu() {
                         <MenuItemButton icon={<BookOpen size={22} />} label="บันทึกอาหาร" />
                         <MenuItemButton icon={<TrendingUp size={22} />} label="ความคืบหน้า" />
                     </div>
+
                 </div>
 
-                {/* PROMOTION */}
-
-                <div
-                    style={{
-                        background: "#ccff00",
-                        padding: "25px",
-                        borderRadius: "20px",
-                        textAlign: "center",
-                    }}
-                >
-                    <p style={{ fontSize: "14px" }}>เริ่มต้นการดูแลสุขภาพของคุณด้วย</p>
-
-                    <h3 style={{ fontSize: "20px", fontWeight: 800 }}>สิทธิ์ใช้ฟรี 1 เดือน</h3>
-
-                    <p style={{ fontSize: "13px", marginBottom: "15px" }}>
-                        ในการเข้าถึง WELLMATE
-                    </p>
-
-                    <button
-                        style={{
-                            background: "#0f172a",
-                            color: "#fff",
-                            border: "none",
-                            padding: "12px 20px",
-                            borderRadius: "30px",
-                            fontWeight: 700,
-                        }}
-                    >
-                        สมัครเลย!
-                    </button>
-                </div>
             </div>
 
             {/* CONTENT */}
 
             <div style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                    }}
-                >
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+
                     <div>
-                        <h1 style={{ fontSize: "38px", fontWeight: "800", marginBottom: "8px" }}>
-                            เมนูสุขภาพ
-                        </h1>
-                        <p style={{ color: "#64748b", fontSize: "16px", fontWeight: "500" }}>
-                            เพลิดเพลินกับตัวเลือกอาหารที่อุดมด้วยโภชนาการและแสนอร่อยของเรา
+                        <h1 style={{ fontSize: "38px", fontWeight: 800 }}>เมนูสุขภาพ</h1>
+                        <p style={{ color: "#64748b" }}>
+                            ค้นหาเมนูอาหารหรือร้านอาหารเพื่อสุขภาพ
                         </p>
                     </div>
 
@@ -181,22 +173,14 @@ export default function HealthyMenu() {
                     >
                         🛒 {cart.length}
                     </div>
+
                 </div>
 
                 {/* SEARCH */}
 
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginTop: "25px",
-                        marginBottom: "35px",
-                    }}
-                >
-                    <span style={{ marginRight: "10px", fontSize: "18px" }}>🔍</span>
-
+                <div style={{ marginTop: "20px", marginBottom: "30px" }}>
                     <input
-                        placeholder="ค้นหาอาหารเพื่อสุขภาพ..."
+                        placeholder="ค้นหาเมนูอาหารหรือร้านอาหาร..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         style={{
@@ -208,7 +192,9 @@ export default function HealthyMenu() {
                     />
                 </div>
 
-                {/* MENU LIST */}
+                {/* MENU */}
+
+                <h2 style={{ marginBottom: "15px" }}>เมนูแนะนำ</h2>
 
                 {filteredMenu.map((item) => (
                     <div
@@ -222,6 +208,7 @@ export default function HealthyMenu() {
                             marginBottom: "16px",
                         }}
                     >
+
                         <img
                             src={item.image}
                             style={{
@@ -234,10 +221,20 @@ export default function HealthyMenu() {
                         />
 
                         <div style={{ flex: 1 }}>
-                            <h3 style={{ margin: 0, fontWeight: 700 }}>{item.name}</h3>
-
-                            <p style={{ color: "#64748b", margin: "6px 0" }}>{item.desc}</p>
-
+                            <h3 style={{ margin: 0, fontWeight: 700 }}>
+                                {item.name}
+                                <span
+                                    style={{
+                                        fontSize: "14px",
+                                        fontWeight: "normal",
+                                        color: "#94a3b8",
+                                        marginLeft: "10px",
+                                    }}
+                                >
+                                    (จากร้าน {item.restaurantName})
+                                </span>
+                            </h3>
+                            <p style={{ color: "#64748b" }}>{item.desc}</p>
                             <b style={{ color: "#84cc16" }}>{item.price} ฿</b>
                         </div>
 
@@ -255,13 +252,94 @@ export default function HealthyMenu() {
                         >
                             +
                         </button>
+
                     </div>
                 ))}
+
+                {/* RESTAURANTS */}
+
+                <h2 style={{ marginTop: "40px", marginBottom: "20px" }}>
+                    ร้านอาหารแนะนำ
+                </h2>
+
+                <div
+                    style={{
+                        display: "flex",
+                        gap: "20px",
+                        overflowX: "auto",
+                        paddingBottom: "10px",
+                    }}
+                >
+
+                    {filteredRestaurants.map((shop) => (
+
+                        <Link
+                            key={shop.id}
+                            href={shop.link}
+                            style={{ textDecoration: "none", color: "inherit" }}
+                        >
+
+                            <div
+                                style={{
+                                    minWidth: "220px",
+                                    background: "#fff",
+                                    borderRadius: "14px",
+                                    padding: "14px",
+                                    boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                                    cursor: "pointer",
+                                }}
+                            >
+
+                                <img
+                                    src={shop.image}
+                                    style={{
+                                        width: "100%",
+                                        height: "120px",
+                                        objectFit: "cover",
+                                        borderRadius: "10px",
+                                        marginBottom: "10px",
+                                    }}
+                                />
+
+                                <h3>{shop.name}</h3>
+
+                                <p
+                                    style={{
+                                        fontSize: "13px",
+                                        color: "#64748b",
+                                        marginBottom: "8px",
+                                    }}
+                                >
+                                    {shop.desc}
+                                </p>
+
+                                <div
+                                    style={{
+                                        background: "#f8fafc",
+                                        padding: "8px",
+                                        borderRadius: "8px",
+                                        fontSize: "12px",
+                                        color: "#475569",
+                                    }}
+                                >
+                                    <strong style={{ color: "#84cc16" }}>เมนูเด็ด:</strong>{" "}
+                                    {shop.menu.join(", ")}
+                                </div>
+
+                            </div>
+
+                        </Link>
+
+                    ))}
+
+                </div>
+
             </div>
 
             {/* CART */}
 
             {showCart && (
+
                 <div
                     style={{
                         width: "320px",
@@ -270,9 +348,10 @@ export default function HealthyMenu() {
                         borderLeft: "1px solid #e5e7eb",
                     }}
                 >
+
                     <h2>ตะกร้าสินค้า</h2>
 
-                    {cart.length === 0 && <p>ไม่มีสินค้าในตะกร้า</p>}
+                    {cart.length === 0 && <p>ไม่มีสินค้า</p>}
 
                     {cart.map((item, i) => (
                         <div
@@ -280,10 +359,10 @@ export default function HealthyMenu() {
                             style={{
                                 display: "flex",
                                 justifyContent: "space-between",
-                                alignItems: "center",
                                 marginBottom: "10px",
                             }}
                         >
+
                             <span>
                                 {item.name} - {item.price} ฿
                             </span>
@@ -296,11 +375,11 @@ export default function HealthyMenu() {
                                     border: "none",
                                     borderRadius: "6px",
                                     padding: "4px 8px",
-                                    cursor: "pointer",
                                 }}
                             >
                                 ✕
                             </button>
+
                         </div>
                     ))}
 
@@ -308,21 +387,10 @@ export default function HealthyMenu() {
 
                     <b>ยอดรวม : {total} ฿</b>
 
-                    <button
-                        style={{
-                            marginTop: "20px",
-                            width: "100%",
-                            padding: "12px",
-                            background: "#84cc16",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "10px",
-                        }}
-                    >
-                        สั่งซื้อ
-                    </button>
                 </div>
+
             )}
+
         </div>
     );
 }
@@ -349,13 +417,10 @@ function MenuItemButton({
                 fontWeight: 600,
                 color: active ? "#111" : "#64748b",
                 background: active ? "#ccff00" : "transparent",
-                boxShadow: active ? "0 4px 10px rgba(0,0,0,0.08)" : "none",
             }}
         >
             {icon}
             <span>{label}</span>
         </div>
-
-    )
-
+    );
 }
