@@ -230,7 +230,7 @@ export default function Dashboard() {
                                 <span className="flex items-center gap-1 text-slate-600"><span className="text-orange-400 text-base">■</span> P 15 g</span>
                                 <span className="flex items-center gap-1 text-slate-600"><span className="text-red-400 text-base">○</span> F 8 g</span>
                             </div>
-                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Greek Yogurt with Granola and Mixed Berries</h4>
+                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Greek Yogurt with Granola and Mixed Berries (กรีกโยเกิร์ตพร้อมกราโนล่าและเบอร์รีรวม)</h4>
                             <p className="text-sm text-slate-400 font-medium">Rich in probiotics and antioxidants. A perfect</p>
                         </div>
 
@@ -248,7 +248,7 @@ export default function Dashboard() {
                                 <span className="flex items-center gap-1 text-slate-600"><span className="text-orange-400 text-base">■</span> P 40 g</span>
                                 <span className="flex items-center gap-1 text-slate-600"><span className="text-red-400 text-base">○</span> F 22 g</span>
                             </div>
-                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Grilled Chicken Salad with Avocado and Fresh Vegetables</h4>
+                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Grilled Chicken Salad with Avocado and Fresh Vegetables (สลัดไก่ย่างอะโวคาโดและผักสด)</h4>
                             <p className="text-sm text-slate-400 font-medium">Packed with lean protein and healthy fats from</p>
                         </div>
                     </div>
@@ -304,7 +304,7 @@ export default function Dashboard() {
                     <MealItem
                         type="Breakfast"
                         calories={380}
-                        title="Fluffy Protein Pancakes with Fresh Strawberries"
+                        title="Fluffy Protein Pancakes with Fresh Strawberries (แพนเค้กโปรตีนหน้าสตรอว์เบอร์รี)"
                         macros={{ c: 42, p: 22, f: 10 }}
                         imgSrc="https://images.unsplash.com/photo-1528207776546-322186407074?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#a8e6cf]"
@@ -312,7 +312,7 @@ export default function Dashboard() {
                     <MealItem
                         type="Lunch"
                         calories={420}
-                        title="Grilled Chicken Salad with Avocado and Fresh Vegetables"
+                        title="Grilled Chicken Salad with Avocado and Fresh Vegetables (สลัดไก่ย่างอะโวคาโดและผักสด)"
                         macros={{ c: 15, p: 40, f: 22 }}
                         imgSrc="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#ccff00]"
@@ -320,7 +320,7 @@ export default function Dashboard() {
                     <MealItem
                         type="Snack"
                         calories={420}
-                        title="Greek Yogurt with Granola and Mixed Berries"
+                        title="Greek Yogurt with Granola and Mixed Berries (กรีกโยเกิร์ตพร้อมกราโนล่าและเบอร์รีรวม)"
                         macros={{ c: 28, p: 15, f: 8 }}
                         imgSrc="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#ffd3b6]"
@@ -328,7 +328,7 @@ export default function Dashboard() {
                     <MealItem
                         type="Dinner"
                         calories={450}
-                        title="Baked Salmon with Steamed Asparagus"
+                        title="Baked Salmon with Steamed Asparagus (แซลมอนอบและหน่อไม้ฝรั่งนึ่ง)"
                         macros={{ c: 10, p: 35, f: 28 }}
                         imgSrc="https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#ffbd59]"
