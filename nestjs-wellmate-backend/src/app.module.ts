@@ -1,21 +1,77 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+
+import { MyLoggerModule } from './my-logger/my-logger.module';
+import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
-import { NutritionistModule } from './nutritionist/nutritionist.module';
-import { FoodPartnerModule } from './food-partner/food-partner.module';
+import { PatientsModule } from './patients/patients.module';
+import { HealthMetricsModule } from './health-metrics/health-metrics.module';
+import { NutritionistsModule } from './nutritionists/nutritionists.module';
+import { APP_GUARD } from '@nestjs/core';
+
+import { PaymentsModule } from './payments/payments.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { ChatModule } from './chat/chat.module';
 import { FoodMenuModule } from './food-menu/food-menu.module';
+import { FoodPartnerModule } from './food-partner/food-partner.module';
+import { OrdersModule } from './orders/orders.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SchedulersModule } from './schedulers/schedulers.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    ScheduleModule.forRoot() as unknown as DynamicModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        DATABASE_URL: Joi.string().required(),
+        JWT_SECRET: Joi.string().required(),
+        PORT: Joi.number().default(4000),
+        FRONTEND_URL: Joi.string().default('http://localhost:3000'),
+        REDIS_URL: Joi.string().default('redis://localhost:6379'),
+      }),
+    }) as unknown as DynamicModule,
+    MyLoggerModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 30,
+        },
+      ],
+    }) as unknown as DynamicModule,
+    HealthModule,
     AuthModule,
-    NutritionistModule,
-    FoodPartnerModule,
+    PatientsModule,
+    HealthMetricsModule,
+    NutritionistsModule,
+    PaymentsModule,
+    AppointmentsModule,
+    WebhooksModule,
+    ChatModule,
     FoodMenuModule,
+    FoodPartnerModule,
+    OrdersModule,
+    NotificationsModule,
+    SchedulersModule,
+    CartModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

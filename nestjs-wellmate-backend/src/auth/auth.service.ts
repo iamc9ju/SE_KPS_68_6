@@ -62,7 +62,7 @@ export class AuthService {
         await tx.foodPartner.create({
           data: {
             userId: user.userId,
-            name:
+            partnerName:
               dto.partnerName ||
               `${dto.firstName || ''} ${dto.lastName || ''}`.trim(),
           },
@@ -78,22 +78,15 @@ export class AuthService {
     return { message: 'Registration successful', userId: result.userId };
   }
 
-  /**
-   * Validate credentials and return user data only.
-   * Token creation is handled by the controller via TokenService.
-   */
   async login(dto: LoginDto) {
     const user = await this.validateUser(dto.email, dto.password);
     return this.flattenUser(user);
   }
 
   async logout(refreshToken: string) {
-    // Delegated to controller → tokenService.revokeToken()
-    // This method exists for backward compat / orchestration if needed
   }
 
   async logoutAllDevices(userId: string) {
-    // Delegated to controller → tokenService.revokeAllTokens()
   }
 
   async getMe(userId: string) {
@@ -121,8 +114,6 @@ export class AuthService {
 
     return this.flattenUser(user);
   }
-
-  // Private helpers
 
   private async validateUser(email: string, pass: string) {
     const user = await this.prisma.user.findUnique({
@@ -168,7 +159,7 @@ export class AuthService {
         userId,
         phone,
         email,
-        partnerName: foodPartner.name,
+        partnerName: foodPartner.partnerName,
         role,
         is2faEnabled,
         createdAt,

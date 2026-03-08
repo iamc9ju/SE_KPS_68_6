@@ -11,15 +11,15 @@ export class CustomPrismaHealthIndicator extends HealthIndicator {
   constructor(private readonly prismaService: PrismaService) {
     super();
   }
-
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
     try {
       await this.prismaService.$connect();
       return this.getStatus(key, true);
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       throw new HealthCheckError(
         'Prisma check failed',
-        this.getStatus(key, false, { error: error.message }),
+        this.getStatus(key, false, { error: message }),
       );
     }
   }

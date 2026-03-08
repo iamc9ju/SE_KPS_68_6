@@ -7,45 +7,95 @@ import {
   Param,
   Delete,
   Query,
+  ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiNotFoundResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
 import { FoodMenuService } from './food-menu.service';
-import { CreateMenuItemDto } from './dto/create-food-menu.dto';
-import { UpdateMenuItemDto } from './dto/update-food-menu.dto';
+import { FindMenuItemsQueryDto } from './dto/find-menu-items-query.dto';
+import {
+  CreateMenuItemDto,
+  UpdateMenuItemDto,
+} from './dto/menu-item-request.dto';
+import {
+  MenuItemResponseDto,
+  PaginatedMenuItemsDto,
+} from './dto/menu-item-response.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth-guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { UserRole } from '@prisma/client';
+import type { JwtPayload } from '../auth/interface/jwt-payload.interface';
 
+@ApiTags('Food / Menu Items')
 @Controller('food-menu')
 export class FoodMenuController {
   constructor(private readonly foodMenuService: FoodMenuService) {}
 
-  // ✅ CREATE
-  @Post()
-  create(@Body() dto: CreateMenuItemDto) {
-    return this.foodMenuService.create(dto);
-  }
-
-  // ✅ GET ALL + FILTER
   @Get()
-  findAll(@Query() query: any) {
+  @ApiOperation({ summary: 'List all menu items with advanced filtering' })
+  @ApiResponse({ status: 200, type: PaginatedMenuItemsDto })
+  async findAll(@Query() query: FindMenuItemsQueryDto) {
     return this.foodMenuService.findAll(query);
   }
 
-  // ✅ GET BY ID
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.foodMenuService.findOne(Number(id));
+  @ApiOperation({
+    summary: 'Get detailed information for a specific menu item',
+  })
+  @ApiResponse({ status: 200, type: MenuItemResponseDto })
+  @ApiNotFoundResponse({ description: 'Menu item not found' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.foodMenuService.findOne(id);
   }
 
-  // ✅ UPDATE
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateMenuItemDto,
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.food_partner, UserRole.admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new menu item' })
+  @ApiResponse({ status: 201, type: MenuItemResponseDto })
+  @ApiForbiddenResponse({ description: 'Only Food Partners can create items' })
+  async create(
+    @Body() createDto: CreateMenuItemDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.foodMenuService.update(Number(id), dto);
+    return this.foodMenuService.create(createDto, user.sub);
   }
 
-  // ✅ DELETE
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.food_partner, UserRole.admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update an existing menu item' })
+  @ApiResponse({ status: 200, type: MenuItemResponseDto })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UpdateMenuItemDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.foodMenuService.update(id, updateDto, user.sub, user.role);
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.foodMenuService.remove(Number(id));
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.food_partner, UserRole.admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a menu item' })
+  @ApiResponse({ status: 204, description: 'Successfully deleted' })
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    await this.foodMenuService.remove(id, user.sub, user.role);
+    return { message: 'Item deleted successfully' };
   }
 }

@@ -91,7 +91,7 @@ export default function Calendar() {
 
     return (
         <div className="flex h-screen bg-[#fffdf8] font-sans text-slate-800 overflow-hidden">
-            {/* LEFT SIDEBAR */}
+            {}
             <aside className="w-[260px] bg-white border-r border-slate-200 flex-col justify-between py-6 px-4 shrink-0 overflow-y-auto hidden md:flex">
                 <div>
                     <div className="flex items-center gap-2 px-2 mb-10">
@@ -128,7 +128,7 @@ export default function Calendar() {
                 </div>
             </aside>
 
-            {/* MAIN CONTENT */}
+            {}
             <main className="flex-1 overflow-y-auto p-8 flex flex-col">
                 <header className="mb-8 flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-slate-800">Calendar</h1>
@@ -150,12 +150,12 @@ export default function Calendar() {
                 </header>
 
                 <div className="grid grid-cols-2 gap-6 mb-8">
-                    {/* Summary Cards */}
+                    {}
                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
                         <h3 className="font-semibold text-slate-500 mb-6 text-sm border-b border-slate-200 pb-3 w-full text-center">Total Physical Activities Schedule</h3>
                         <div className="flex items-center gap-4">
                             <div className="bg-[#ffe8a1] w-14 h-14 rounded-2xl flex items-center justify-center">
-                                {/* Using a custom SVG or similar for the muscular arm */}
+                                {}
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d49a00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                                 </svg>
@@ -209,7 +209,7 @@ export default function Calendar() {
                     </label>
                 </div>
 
-                {/* Calendar Table */}
+                {}
                 <div className="bg-white border-slate-200 border-t border-l flex-1 flex flex-col min-h-[500px]">
                     <div className="flex-1 overflow-x-auto overflow-y-hidden">
                         <table className="w-full h-full table-fixed border-collapse">
@@ -253,12 +253,12 @@ export default function Calendar() {
 
             </main>
 
-            {/* RIGHT SIDEBAR */}
+            {}
             <aside className="w-[340px] bg-white border-l border-slate-200 overflow-y-auto shrink-0 flex flex-col p-6 hidden xl:flex">
                 <h2 className="text-xl font-black text-slate-800 mb-6">Schedule Detail</h2>
 
                 <div className="space-y-6">
-                    {/* Activity Card 1 */}
+                    {}
                     <div className="bg-[#fef9f0] p-5 rounded-2xl border border-orange-50/50 shadow-sm relative group">
                         <div className="inline-block bg-[#ffdda8] text-[#c28e3b] text-[10px] font-black uppercase px-2 py-0.5 rounded mb-3">Physical Activities</div>
                         <h3 className="font-bold text-slate-800 leading-tight mb-3">Morning Yoga Session</h3>
@@ -290,7 +290,7 @@ export default function Calendar() {
                         </div>
                     </div>
 
-                    {/* Activity Card 2 */}
+                    {}
                     <div className="bg-[#fff4ed] p-5 rounded-2xl border border-orange-50 shadow-sm relative group">
                         <div className="inline-block bg-orange-300 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded mb-3">Appointments</div>
                         <h3 className="font-bold text-slate-800 leading-tight mb-3">General Health Check-up with Nutritionist</h3>

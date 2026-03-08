@@ -14,9 +14,6 @@ export class HealthMetricsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Helper function to get the internal patientId bound to a user UUID.
-   */
   private async getPatientId(userId: string): Promise<string> {
     const patient = await this.prisma.patient.findUnique({
       where: { userId },

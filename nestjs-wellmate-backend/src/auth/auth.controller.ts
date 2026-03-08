@@ -66,10 +66,8 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Headers('x-device-id') deviceId?: string,
   ) {
-    // 1. Validate credentials → get user data only
     const user = await this.authService.login(dto);
 
-    // 2. Create tokens (cookie-only, never returned in response body)
     const accessToken = this.tokenService.generateAccessToken({
       sub: user.userId,
       email: user.email,
@@ -82,7 +80,6 @@ export class AuthController {
       deviceId,
     );
 
-    // 3. Set HttpOnly cookies
     this.setAuthCookies(response, accessToken, refreshToken);
 
     return {
@@ -161,8 +158,6 @@ export class AuthController {
     };
   }
 
-  // Private helpers
-
   private setAuthCookies(
     response: Response,
     accessToken: string,
@@ -192,7 +187,7 @@ export class AuthController {
 
   private parseExpiryToMs(expiry: string): number {
     const match = expiry.match(/^(\d+)(s|m|h|d)$/);
-    if (!match) return 60 * 60 * 1000; // default 1h
+    if (!match) return 60 * 60 * 1000;
 
     const value = parseInt(match[1]);
     const unit = match[2];

@@ -9,7 +9,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiCookieAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiCookieAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { HealthMetricsService } from './health-metrics.service';
 import { CreateHealthMetricDto } from './dto/create-health-metric.dto';
 import { UpdateHealthMetricDto } from './dto/update-health-metric.dto';
@@ -25,6 +30,7 @@ export class HealthMetricsController {
 
   @Post()
   @ApiOperation({ summary: 'เพิ่มข้อมูลสุขภาพใหม่ (น้ำหนัก, ส่วนสูง, ไขมัน)' })
+  @ApiResponse({ status: 201, description: 'บันทึกข้อมูลสุขภาพสำเร็จ' })
   async create(
     @CurrentUser('sub') userId: string,
     @Body() dto: CreateHealthMetricDto,
@@ -38,6 +44,7 @@ export class HealthMetricsController {
 
   @Get()
   @ApiOperation({ summary: 'ประวัติข้อมูลสุขภาพทั้งหมด เรียงจากล่าสุด' })
+  @ApiResponse({ status: 200, description: 'ดึงข้อมูลสุขภาพสำเร็จ' })
   async findAll(@CurrentUser('sub') userId: string) {
     const data = await this.healthMetricsService.findAll(userId);
     return {
@@ -48,6 +55,7 @@ export class HealthMetricsController {
 
   @Get('latest')
   @ApiOperation({ summary: 'ดึงข้อมูลสุขภาพล่าสุดที่เพิ่งบันทึกไป' })
+  @ApiResponse({ status: 200, description: 'ดึงข้อมูลสุขภาพล่าสุดสำเร็จ' })
   async findLatest(@CurrentUser('sub') userId: string) {
     const data = await this.healthMetricsService.findLatest(userId);
     return {
@@ -58,6 +66,8 @@ export class HealthMetricsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'ดูข้อมูลสุขภาพเฉพาะรายการตาม ID' })
+  @ApiResponse({ status: 200, description: 'ดึงข้อมูลสุขภาพสำเร็จ' })
+  @ApiResponse({ status: 404, description: 'ไม่พบข้อมูลสุขภาพ' })
   async findOne(
     @CurrentUser('sub') userId: string,
     @Param('id', ParseIntPipe) id: number,
@@ -71,6 +81,8 @@ export class HealthMetricsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'แก้ไขข้อมูลสุขภาพตาม ID' })
+  @ApiResponse({ status: 200, description: 'อัปเดตข้อมูลสุขภาพสำเร็จ' })
+  @ApiResponse({ status: 404, description: 'ไม่พบข้อมูลสุขภาพ' })
   async update(
     @CurrentUser('sub') userId: string,
     @Param('id', ParseIntPipe) id: number,
@@ -85,6 +97,8 @@ export class HealthMetricsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'ลบข้อมูลสุขภาพตาม ID' })
+  @ApiResponse({ status: 200, description: 'ลบข้อมูลสุขภาพสำเร็จ' })
+  @ApiResponse({ status: 404, description: 'ไม่พบข้อมูลสุขภาพ' })
   async remove(
     @CurrentUser('sub') userId: string,
     @Param('id', ParseIntPipe) id: number,

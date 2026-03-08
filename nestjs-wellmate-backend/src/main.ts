@@ -1,24 +1,39 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
-import cookieParser from 'cookie-parser';
+import { ConfigService } from '@nestjs/config';
+import { MyLoggerService } from './my-logger/my-logger.service';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { GlobalExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    // bufferLogs: true,
+    bufferLogs: true,
+    rawBody: true,
   });
+  app.useLogger(app.get(MyLoggerService));
+
+  app.use(helmet());
+
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new ResponseInterceptor(reflector));
+
+  const configService = app.get(ConfigService);
+  const frontendUrl =
+    configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: frontendUrl,
     credentials: true,
   });
-
   app.setGlobalPrefix('api');
+
   app.use(cookieParser());
 
-  //ตรวจสอบ + กรอง + แปลงข้อมูลของ Req body ก่อยส่งเข้า controller
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -29,16 +44,18 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('WellMate API')
-    .setDescription('WellMate Backend API Documentation')
+    .setDescription('The WellMate API description')
     .setVersion('1.0')
-    .addCookieAuth('accessToken') // บอก Swagger ว่าใช้ cookie auth
+    .addBearerAuth()
     .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, documentFactory);
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  const myLogger = app.get(MyLoggerService);
 
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new GlobalExceptionsFilter(httpAdapterHost, myLogger));
 
-  await app.listen(process.env.PORT || 4000);
+  await app.listen(process.env.PORT ?? 4000);
 }
-bootstrap();
+void bootstrap();
