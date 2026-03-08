@@ -29,13 +29,13 @@ export default function Dashboard() {
     const COLORS = ['#F97316', '#F1F5F9'];
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+        <div className="flex h-screen bg-[#fdf6ec] font-sans text-slate-800 overflow-hidden">
             {/* LEFT SIDEBAR */}
             <aside className="w-[260px] bg-white border-r border-slate-200 flex-col justify-between py-6 px-4 shrink-0 overflow-y-auto hidden md:flex">
                 <div>
                     <div className="flex items-center gap-2 px-2 mb-10">
                         <div className="font-bold text-2xl tracking-tighter flex items-center">
-                            <span className="text-[#a4cc00] mr-1 italic">WM</span>
+                            <span className="text-[#a1ce4f] mr-1 italic">WM</span>
                             <span className="text-slate-800">WELLMATE</span>
                         </div>
                     </div>
@@ -53,14 +53,14 @@ export default function Dashboard() {
                 </div>
 
                 <div className="mt-8">
-                    <div className="bg-[#ccff00] p-5 rounded-2xl mb-4 text-center">
+                    <div className="bg-[#baec60] p-5 rounded-2xl mb-4 text-center">
                         <p className="text-sm font-medium mb-1 text-slate-800">Start your health journey with</p>
                         <p className="font-black text-lg mb-2 text-slate-900">a FREE 1 MONTH</p>
                         <p className="text-xs mb-4 text-slate-700 font-medium">access to WELLMATE</p>
                         <button className="bg-slate-900 text-white hover:bg-black text-xs font-bold py-2.5 px-4 rounded-full w-full transition-colors">Sign Up Now!</button>
                     </div>
 
-                    <button className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-slate-700 bg-orange-50 hover:bg-orange-100 transition-colors font-semibold">
+                    <button className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-slate-700 bg-[#f9ecda] hover:bg-[#f2dfc2] transition-colors font-semibold">
                         <LogOut size={18} />
                         Logout
                     </button>
@@ -105,7 +105,7 @@ export default function Dashboard() {
                         <div className="mt-6">
                             <div className="flex gap-1 h-3.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div className="h-full w-[65%] bg-orange-400 rounded-full"></div>
-                                <div className="h-full w-[15%] bg-orange-200 rounded-full"></div>
+                                <div className="h-full w-[15%] bg-[#fbe2a6] rounded-full"></div>
                             </div>
                             <div className="flex justify-between text-xs mt-3 font-semibold">
                                 <span className="text-slate-800">65%</span>
@@ -122,7 +122,7 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-end h-16 gap-2 justify-between px-1">
                             {[4, 5, 4, 7.5, 6, 6.5, 5].map((h, i) => (
-                                <div key={i} className={`w-3.5 rounded-full ${i === 3 ? 'bg-[#bfe600]' : 'bg-slate-200'}`} style={{ height: `${(h / 8) * 100}%` }}></div>
+                                <div key={i} className={`w-3.5 rounded-full ${i === 3 ? 'bg-[#baec60]' : 'bg-slate-200'}`} style={{ height: `${(h / 8) * 100}%` }}></div>
                             ))}
                         </div>
                     </div>
@@ -182,15 +182,15 @@ export default function Dashboard() {
                         {/* Right side macros and summary */}
                         <div className="flex-1 w-full">
                             <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                                <div className="bg-[#f0f5e1] rounded-2xl p-4 flex items-center gap-4 flex-1">
-                                    <div className="bg-[#bfe600] p-2.5 rounded-xl"><Utensils size={20} className="text-slate-800" /></div>
+                                <div className="bg-[#f3f9e8] rounded-2xl p-4 flex items-center gap-4 flex-1">
+                                    <div className="bg-[#baec60] p-2.5 rounded-xl"><Utensils size={20} className="text-slate-800" /></div>
                                     <div>
                                         <div className="text-xl font-bold text-slate-800">1750 <span className="text-sm font-medium text-slate-600">kcal</span></div>
                                         <div className="text-sm text-slate-500 font-medium">Eaten calories</div>
                                     </div>
                                 </div>
                                 <div className="bg-[#fff4ed] rounded-2xl p-4 flex items-center gap-4 flex-1">
-                                    <div className="bg-orange-200 p-2.5 rounded-xl"><Flame size={20} className="text-orange-600" /></div>
+                                    <div className="bg-[#ffe1c9] p-2.5 rounded-xl"><Flame size={20} className="text-orange-600" /></div>
                                     <div>
                                         <div className="text-xl font-bold text-slate-800">510 <span className="text-sm font-medium text-slate-600">kcal</span></div>
                                         <div className="text-sm text-slate-500 font-medium">Burned calories</div>
@@ -201,7 +201,7 @@ export default function Dashboard() {
                             {/* Macros */}
                             <div className="space-y-3">
                                 <MacroProgress value={120} max={325} label="Carbohydrates" percentage={37} fillClass="bg-slate-300" labelClass="text-slate-500" valueClass="text-slate-600" />
-                                <MacroProgress value={70} max={75} label="Proteins" percentage={93} fillClass="bg-[#bfe600]" labelClass="text-slate-600" valueClass="text-slate-800" />
+                                <MacroProgress value={70} max={75} label="Proteins" percentage={93} fillClass="bg-[#baec60]" labelClass="text-slate-600" valueClass="text-slate-800" />
                                 <MacroProgress value={20} max={44} label="Fats" percentage={45} fillClass="bg-slate-300" labelClass="text-slate-500" valueClass="text-slate-600" />
                             </div>
                         </div>
@@ -221,16 +221,16 @@ export default function Dashboard() {
                             <div className="relative rounded-3xl overflow-hidden mb-4 aspect-[4/3]">
                                 <img src="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=800" alt="Yogurt" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
                                 <div className="absolute top-4 left-4 flex gap-2">
-                                    <span className="bg-[#ccff00] text-black text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">Snack</span>
+                                    <span className="bg-[#baec60] text-black text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">Snack</span>
                                     <span className="bg-white/95 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1"><Flame size={12} className="text-orange-500" /> 260 kcal</span>
                                 </div>
                             </div>
                             <div className="flex gap-4 text-xs font-bold text-slate-600 mb-2">
-                                <span className="flex items-center gap-1 text-slate-600"><span className="text-green-500 text-base">■</span> C 28 g</span>
+                                <span className="flex items-center gap-1 text-slate-600"><span className="text-[#baec60] text-base">■</span> C 28 g</span>
                                 <span className="flex items-center gap-1 text-slate-600"><span className="text-orange-400 text-base">■</span> P 15 g</span>
-                                <span className="flex items-center gap-1 text-slate-600"><span className="text-red-400 text-base">○</span> F 8 g</span>
+                                <span className="flex items-center gap-1 text-slate-600"><span className="text-slate-300 text-base">○</span> F 8 g</span>
                             </div>
-                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Greek Yogurt with Granola and Mixed Berries</h4>
+                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Greek Yogurt with Granola and Mixed Berries (กรีกโยเกิร์ตพร้อมกราโนล่าและเบอร์รีรวม)</h4>
                             <p className="text-sm text-slate-400 font-medium">Rich in probiotics and antioxidants. A perfect</p>
                         </div>
 
@@ -244,11 +244,11 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="flex gap-4 text-xs font-bold text-slate-600 mb-2">
-                                <span className="flex items-center gap-1 text-slate-600"><span className="text-green-500 text-base">■</span> C 15 g</span>
+                                <span className="flex items-center gap-1 text-slate-600"><span className="text-[#baec60] text-base">■</span> C 15 g</span>
                                 <span className="flex items-center gap-1 text-slate-600"><span className="text-orange-400 text-base">■</span> P 40 g</span>
-                                <span className="flex items-center gap-1 text-slate-600"><span className="text-red-400 text-base">○</span> F 22 g</span>
+                                <span className="flex items-center gap-1 text-slate-600"><span className="text-slate-300 text-base">○</span> F 22 g</span>
                             </div>
-                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Grilled Chicken Salad with Avocado and Fresh Vegetables</h4>
+                            <h4 className="font-bold text-lg leading-tight mb-2 text-slate-800 group-hover:text-amber-600 transition-colors">Grilled Chicken Salad with Avocado and Fresh Vegetables (สลัดไก่ย่างอะโวคาโดและผักสด)</h4>
                             <p className="text-sm text-slate-400 font-medium">Packed with lean protein and healthy fats from</p>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function Dashboard() {
                             <div className="text-[13px] text-slate-500 font-medium">Member</div>
                         </div>
                     </div>
-                    <button className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 hover:bg-orange-100 transition-colors">
+                    <button className="w-9 h-9 rounded-full bg-[#faeedc] flex items-center justify-center text-orange-500 hover:bg-[#f6dfc0] transition-colors">
                         <Bell size={18} />
                     </button>
                 </div>
@@ -285,13 +285,13 @@ export default function Dashboard() {
                     </div>
                     <div className="flex justify-between text-xs text-slate-400 font-semibold mb-3">
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                            <span key={day} className={`w-8 text-center ${day === 'Wed' ? 'text-white bg-[#bfe600] rounded px-1 !bg-opacity-0 !text-slate-800' : ''}`}>{day}</span>
+                            <span key={day} className={`w-8 text-center ${day === 'Wed' ? 'text-white bg-[#baec60] rounded px-1 !bg-opacity-0 !text-slate-800' : ''}`}>{day}</span>
                         ))}
                     </div>
                     <div className="flex justify-between text-sm font-bold text-slate-700">
                         <span className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 cursor-pointer">19</span>
                         <span className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 cursor-pointer">20</span>
-                        <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#ccff00] text-slate-900 shadow-sm cursor-pointer">21</span>
+                        <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#baec60] text-slate-900 shadow-sm cursor-pointer">21</span>
                         <span className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 cursor-pointer">22</span>
                         <span className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 cursor-pointer">23</span>
                         <span className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 cursor-pointer">24</span>
@@ -304,7 +304,7 @@ export default function Dashboard() {
                     <MealItem
                         type="Breakfast"
                         calories={380}
-                        title="Fluffy Protein Pancakes with Fresh Strawberries"
+                        title="Fluffy Protein Pancakes with Fresh Strawberries (แพนเค้กโปรตีนหน้าสตรอว์เบอร์รี)"
                         macros={{ c: 42, p: 22, f: 10 }}
                         imgSrc="https://images.unsplash.com/photo-1528207776546-322186407074?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#a8e6cf]"
@@ -312,15 +312,15 @@ export default function Dashboard() {
                     <MealItem
                         type="Lunch"
                         calories={420}
-                        title="Grilled Chicken Salad with Avocado and Fresh Vegetables"
+                        title="Grilled Chicken Salad with Avocado and Fresh Vegetables (สลัดไก่ย่างอะโวคาโดและผักสด)"
                         macros={{ c: 15, p: 40, f: 22 }}
                         imgSrc="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=150"
-                        tagColor="bg-[#ccff00]"
+                        tagColor="bg-[#baec60]"
                     />
                     <MealItem
                         type="Snack"
                         calories={420}
-                        title="Greek Yogurt with Granola and Mixed Berries"
+                        title="Greek Yogurt with Granola and Mixed Berries (กรีกโยเกิร์ตพร้อมกราโนล่าและเบอร์รีรวม)"
                         macros={{ c: 28, p: 15, f: 8 }}
                         imgSrc="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#ffd3b6]"
@@ -328,7 +328,7 @@ export default function Dashboard() {
                     <MealItem
                         type="Dinner"
                         calories={450}
-                        title="Baked Salmon with Steamed Asparagus"
+                        title="Baked Salmon with Steamed Asparagus (แซลมอนอบและหน่อไม้ฝรั่งนึ่ง)"
                         macros={{ c: 10, p: 35, f: 28 }}
                         imgSrc="https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=150"
                         tagColor="bg-[#ffbd59]"
@@ -372,7 +372,7 @@ export default function Dashboard() {
 function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
     return (
         <a href="#" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-semibold text-[15px]
-      ${active ? 'bg-[#ccff00] text-slate-900 shadow-sm' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>
+      ${active ? 'bg-[#baec60] text-slate-900 shadow-sm' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>
             <div className={`${active ? 'text-slate-900' : 'text-slate-400'}`}>{icon}</div>
             <span>{label}</span>
         </a>
@@ -437,3 +437,4 @@ function ActivityItem({ time, title, desc, icon, iconBg }: { time: string, title
         </div>
     );
 }
+
