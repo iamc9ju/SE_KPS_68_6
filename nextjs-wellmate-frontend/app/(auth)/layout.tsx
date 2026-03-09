@@ -60,7 +60,7 @@ export default function AuthLayout({
             </div>
 
             {}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-20 bg-[#FFFCF2] relative overflow-hidden">
+            <div className="w-full lg:w-1/2 flex items-start justify-center p-8 lg:p-20 bg-[#FFFCF2] relative overflow-y-auto">
                 {}
                 <div className="absolute top-16 right-20 w-16 h-16 bg-[#C6E065]/15 rounded-full"></div>
                 <div className="absolute top-40 right-10 w-8 h-8 bg-[#FFD699]/20 rounded-lg rotate-12"></div>
@@ -84,7 +84,7 @@ export default function AuthLayout({
                     <polygon points="12,2 22,22 2,22" />
                 </svg>
 
-                <div className="w-full max-w-sm relative z-10">{children}</div>
+                <div className="w-full max-w-sm relative z-10 pt-16 lg:pt-10 pb-8">{children}</div>
             </div>
         </div>
     );

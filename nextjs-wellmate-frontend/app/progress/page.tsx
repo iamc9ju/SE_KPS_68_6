@@ -114,7 +114,6 @@ export default function ProgressPage() {
             <div className="w-64 flex-shrink-0 border-r border-zinc-100 flex flex-col justify-between py-6 px-4 bg-white z-10 overflow-y-auto">
                 <div>
                     <div className="flex items-center gap-2 px-2 mb-8">
-                        {/* Logo placeholder */}
                         <div className="text-[#8CC63F] font-bold text-2xl tracking-tighter italic">
                             W<span className="text-[#F7931E]">M</span>
                         </div>

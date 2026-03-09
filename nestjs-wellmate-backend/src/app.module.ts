@@ -25,6 +25,7 @@ import { OrdersModule } from './orders/orders.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SchedulersModule } from './schedulers/schedulers.module';
 import { CartModule } from './cart/cart.module';
+import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { CartModule } from './cart/cart.module';
     NotificationsModule,
     SchedulersModule,
     CartModule,
+    CalendarModule,
   ],
   controllers: [AppController],
   providers: [

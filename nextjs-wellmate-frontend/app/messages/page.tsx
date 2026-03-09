@@ -37,15 +37,11 @@ export default function Messages() {
             <div className="w-[280px] flex-shrink-0 border-r border-gray-100 flex flex-col justify-between py-6 bg-white z-10 hidden lg:flex">
                 <div className="px-8 mb-8">
                     {/* Logo Placeholder */}
-                    <div className="flex items-center space-x-2">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M4 16 L10 6 L16 26 L22 8 L28 20" stroke="#F4A261" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M12 26 L18 6 L24 22" stroke="#A2DCA3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <div className="flex flex-col">
-                            <span className="font-extrabold text-[#3A3A3A] text-lg leading-none uppercase tracking-wide">WELLMATE</span>
-                            <span className="text-[10px] text-gray-400 font-medium tracking-[0.2em] mt-0.5">WALLMATE</span>
+                    <div className="flex items-center gap-2">
+                        <div className="text-[#8CC63F] font-bold text-2xl tracking-tighter italic">
+                            W<span className="text-[#F7931E]">M</span>
                         </div>
+                        <div className="font-bold text-xl tracking-tight uppercase text-[#3A3A3A]">Wellmate</div>
                     </div>
                 </div>
 

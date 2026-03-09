@@ -125,6 +125,14 @@ enum Platform {
   ios
 }
 
+enum ActivityLevel {
+  sedentary
+  light
+  moderate
+  active
+  very_active
+}
+
 model User {
   userId       String    @id @default(uuid()) @map("user_id") @db.Uuid
   email        String    @unique @map("email") @db.VarChar(100)
@@ -223,13 +231,17 @@ model PatientAllergy {
 }
 
 model HealthMetric {
-  id             Int      @id @default(autoincrement()) @map("health_metric_id")
-  patientId      String   @map("patient_id") @db.Uuid
-  patient        Patient  @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
-  weightKg       Decimal? @map("weight_kg") @db.Decimal(5, 2)
-  heightCm       Decimal? @map("height_cm") @db.Decimal(5, 2)
-  bodyFatPercent Decimal? @map("body_fat_percent") @db.Decimal(4, 1)
-  recordedAt     DateTime @default(now()) @map("recorded_at")
+  id            Int           @id @default(autoincrement()) @map("health_metric_id")
+  patientId     String        @map("patient_id") @db.Uuid
+  patient       Patient       @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+  gender        GenderType?   @map("gender")
+  ageYears      Int?          @map("age_years")
+  weightKg      Decimal?      @map("weight_kg") @db.Decimal(5, 2)
+  heightCm      Decimal?      @map("height_cm") @db.Decimal(5, 2)
+  activityLevel ActivityLevel @default(sedentary) @map("activity_level")
+  goal          String?       @db.VarChar(100)
+  goalDetail    String?       @map("goal_detail") @db.Text
+  recordedAt    DateTime      @default(now()) @map("recorded_at")
 
   @@map("health_metrics")
 }
