@@ -33,7 +33,7 @@ export default function NutritionistList() {
 
                             {}
                             <div className="mb-3">
-                                <Link href={`/nutritionist/${person.id}`}>
+                                <Link href={`/nutritionist-profile/${person.id}`}>
                                     <Button variant="outline" size="sm" className="text-sm px-6 py-1 border-2 border-black rounded-lg">
                                         ดูโปรไฟล์
                                     </Button>
