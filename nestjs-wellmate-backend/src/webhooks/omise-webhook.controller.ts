@@ -1,15 +1,14 @@
 import {
   Controller,
   Post,
-  Req,
   HttpCode,
   HttpStatus,
   Logger,
   Body,
+  UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { WebhooksService, OmiseEventType } from './webhooks.service';
-import { OmiseWebhookDto } from './dto/omise-webhook.dto';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/omise')
@@ -21,12 +20,15 @@ export class OmiseWebhookController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiExcludeEndpoint()
+  @UsePipes() // Bypass global ValidationPipe — Omise sends many extra fields
   @ApiOperation({
     summary: 'รับข้อมูล Omise Webhook (server-to-server)',
     description:
       'รับ event จาก Omise (เช่น charge.complete) เพื่ออัปเดตสถานะการนัดหมายในฐานข้อมูล — ไม่แสดงใน API Docs สาธารณะ',
   })
-  async handleWebhook(@Body() payload: OmiseWebhookDto) {
+  async handleWebhook(@Body() payload: any) {
+    this.logger.log(`Webhook received! key: ${payload?.key}`);
+
     if (!payload?.key || !payload?.data?.id) {
       this.logger.warn('Webhook received with missing key or data.id');
       return { received: true };
@@ -38,6 +40,7 @@ export class OmiseWebhookController {
     }
 
     const chargeId = payload.data.id;
+    this.logger.log(`Processing charge.complete for chargeId: ${chargeId}`);
 
     await this.webhooksService.processOmiseChargeComplete(chargeId);
 

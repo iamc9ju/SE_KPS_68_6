@@ -134,15 +134,16 @@ enum ActivityLevel {
 }
 
 model User {
-  userId       String    @id @default(uuid()) @map("user_id") @db.Uuid
-  email        String    @unique @map("email") @db.VarChar(100)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
-  phone        String?   @unique @map("phone") @db.VarChar(20)
-  role         UserRole  @map("role")
-  is2faEnabled Boolean   @default(false) @map("is_2fa_enabled")
-  twoFaSecret  String?   @map("two_fa_secret") @db.VarChar(100)
-  createdAt    DateTime  @default(now()) @map("created_at")
-  deletedAt    DateTime? @map("deleted_at")
+  userId          String    @id @default(uuid()) @map("user_id") @db.Uuid
+  email           String    @unique @map("email") @db.VarChar(100)
+  passwordHash    String    @map("password_hash") @db.VarChar(255)
+  phone           String?   @unique @map("phone") @db.VarChar(20)
+  role            UserRole  @map("role")
+  profileImageUrl String?   @map("profile_image_url") @db.VarChar(500)
+  is2faEnabled    Boolean   @default(false) @map("is_2fa_enabled")
+  twoFaSecret     String?   @map("two_fa_secret") @db.VarChar(100)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   // Relations
   patient       Patient?
@@ -161,17 +162,20 @@ model User {
 }
 
 model Patient {
-  patientId         String      @id @default(uuid()) @map("patient_id") @db.Uuid
-  userId            String      @unique @map("user_id") @db.Uuid
-  user              User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  firstName         String      @map("first_name") @db.VarChar(100)
-  lastName          String      @map("last_name") @db.VarChar(100)
-  dateOfBirth       DateTime?   @map("date_of_birth") @db.Date
-  gender            GenderType? @map("gender")
-  bloodType         String?     @map("blood_type") @db.VarChar(5)
-  chronicDiseases   String[]    @map("chronic_diseases")
-  isProfileComplete Boolean     @default(false) @map("is_profile_complete")
-  deletedAt         DateTime?   @map("deleted_at")
+  patientId         String         @id @default(uuid()) @map("patient_id") @db.Uuid
+  userId            String         @unique @map("user_id") @db.Uuid
+  user              User           @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  firstName         String         @map("first_name") @db.VarChar(100)
+  lastName          String         @map("last_name") @db.VarChar(100)
+  dateOfBirth       DateTime?      @map("date_of_birth") @db.Date
+  gender            GenderType?    @map("gender")
+  bloodType         String?        @map("blood_type") @db.VarChar(5)
+  chronicDiseases   String[]       @map("chronic_diseases")
+  goal              String?        @db.VarChar(100)
+  goalDetail        String?        @map("goal_detail") @db.Text
+  activityLevel     ActivityLevel? @map("activity_level")
+  isProfileComplete Boolean        @default(false) @map("is_profile_complete")
+  deletedAt         DateTime?      @map("deleted_at")
 
   // Relations
   patientAllergies   PatientAllergy[]
@@ -231,17 +235,12 @@ model PatientAllergy {
 }
 
 model HealthMetric {
-  id            Int           @id @default(autoincrement()) @map("health_metric_id")
-  patientId     String        @map("patient_id") @db.Uuid
-  patient       Patient       @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
-  gender        GenderType?   @map("gender")
-  ageYears      Int?          @map("age_years")
-  weightKg      Decimal?      @map("weight_kg") @db.Decimal(5, 2)
-  heightCm      Decimal?      @map("height_cm") @db.Decimal(5, 2)
-  activityLevel ActivityLevel @default(sedentary) @map("activity_level")
-  goal          String?       @db.VarChar(100)
-  goalDetail    String?       @map("goal_detail") @db.Text
-  recordedAt    DateTime      @default(now()) @map("recorded_at")
+  id         Int      @id @default(autoincrement()) @map("health_metric_id")
+  patientId  String   @map("patient_id") @db.Uuid
+  patient    Patient  @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+  weightKg   Decimal? @map("weight_kg") @db.Decimal(5, 2)
+  heightCm   Decimal? @map("height_cm") @db.Decimal(5, 2)
+  recordedAt DateTime @default(now()) @map("recorded_at")
 
   @@map("health_metrics")
 }

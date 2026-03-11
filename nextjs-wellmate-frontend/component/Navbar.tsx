@@ -6,20 +6,8 @@ export default function Navbar() {
         <nav className="fixed top-0 w-full bg-white z-50 py-4 px-6 md:px-12 shadow-sm">
             <div className="max-w-[1400px] mx-auto flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="flex items-end gap-3 hover:opacity-90 transition-opacity">
-                    {/* Simplified geometric icon for W/M */}
-                    <div className="flex flex-col items-center justify-center -mt-1">
-                        <svg width="42" height="28" viewBox="0 0 50 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 12L12 25L25 5L38 25L45 12" stroke="#8BC34A" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M12 25L25 15L38 25" stroke="#FDB813" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="text-[7px] font-bold text-gray-400 tracking-wider uppercase mt-0.5">Wallmate</span>
-                    </div>
-
-                    <div className="text-2xl font-bold font-sans tracking-wide leading-none pb-1">
-                        <span className="text-[#8BC34A]">WELL</span>
-                        <span className="text-[#FDB813]">MATE</span>
-                    </div>
+                <Link href="/" className="flex items-center hover:opacity-90 transition-opacity gap-2">
+                    <img src="/logo.png" alt="WellMate Logo" className="h-20 w-auto" />
                 </Link>
 
                 {/* Menu */}
@@ -29,6 +17,9 @@ export default function Navbar() {
                     </Link>
                     <Link href="/dashboard" className="hover:text-black transition-colors">
                         แดชบอร์ด
+                    </Link>
+                    <Link href="/dashboard/appointments" className="hover:text-black transition-colors">
+                        ประวัติการนัดหมาย
                     </Link>
                     <button className="flex items-center gap-1.5 hover:text-black transition-colors">
                         บริการโภชนาการ

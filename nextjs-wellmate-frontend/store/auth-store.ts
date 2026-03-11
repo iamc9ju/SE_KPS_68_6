@@ -10,7 +10,9 @@ interface User {
   firstName: string;
   lastName: string;
   role: "patient" | "nutritionist" | "food_partner" | "admin";
+  profileImageUrl?: string;
   phone?: string;
+  isProfileComplete?: boolean;
 }
 
 interface AuthState {
@@ -28,13 +30,13 @@ export const useAuthStore = create<AuthState>()(
       login: (user) => set({ user }),
       logout: async () => {
         try {
-          await api.post("/auth/logout");
+          await api.post("/auth/sign-out");
         } catch (error) {
           console.error("Logout error:", error);
         } finally {
+          // Note: Cookies are cleared by the backend's /sign-out endpoint.
+          // We just need to clear the local state.
           set({ user: null });
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
         }
       },
     }),

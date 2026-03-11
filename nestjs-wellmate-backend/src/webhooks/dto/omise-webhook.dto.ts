@@ -1,28 +1,10 @@
-import {
-  IsString,
-  IsNotEmpty,
-  ValidateNested,
-  IsOptional,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-
-class OmiseWebhookDataDto {
-  @IsString()
-  @IsNotEmpty()
-  id: string;
-
-  @IsString()
-  @IsOptional()
-  object?: string;
-}
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class OmiseWebhookDto {
   @IsString()
   @IsNotEmpty()
   key: string;
 
-  @ValidateNested()
   @IsNotEmpty()
-  @Type(() => OmiseWebhookDataDto)
-  data: OmiseWebhookDataDto;
+  data: any;
 }

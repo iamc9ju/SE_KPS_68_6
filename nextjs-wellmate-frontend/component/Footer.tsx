@@ -7,7 +7,9 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                     {/* Brand */}
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-gray-900">Wellmate</h3>
+                        <div className="pb-4 flex justify-center md:justify-start">
+                            <img src="/logo.png" alt="WellMate Logo" className="h-20 w-auto" />
+                        </div>
                         <p className="text-sm text-gray-500 leading-relaxed">
                             เพื่อนคู่คิดด้านสุขภาพของคุณ<br />เพื่อชีวิตที่ดีอย่างยั่งยืน
                         </p>

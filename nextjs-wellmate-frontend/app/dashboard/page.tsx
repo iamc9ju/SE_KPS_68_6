@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Skeleton from "@/components/ui/Skeleton";
 import {
     Flame,
     Plus,
@@ -16,9 +17,16 @@ import {
 import RightPanel from "@/components/dashboard/RightPanel";
 import StatCard from "@/components/dashboard/StatCard";
 import { useAuthStore } from "@/store/auth-store";
+import { StatCardSkeleton, MacroBlockSkeleton, MenuCardSkeleton } from "@/components/dashboard/DashboardSkeletons";
 
 export default function DashboardPage() {
     const { user } = useAuthStore();
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => setLoading(false), 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     const calorieData = [
         { name: "ได้รับแล้ว", value: 1750 },
@@ -29,7 +37,7 @@ export default function DashboardPage() {
         <div className="flex-1 flex flex-col min-h-screen">
             <main className="flex-1 overflow-y-auto px-8 py-10 z-10 custom-scrollbar ml-64 mr-80">
                 <div className="max-w-[1240px] mx-auto">
-                    {}
+                    { }
                     <header className="mb-8 animate-fadeIn">
                         <h1 className="text-4xl font-black text-[#1a1a1a] tracking-tight mb-2">
                             สวัสดี , {user?.firstName || "ผู้ใช้งานใหม่"}!
@@ -39,91 +47,97 @@ export default function DashboardPage() {
                         </p>
                     </header>
 
-                    {}
+                    { }
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 animate-slideUp">
-                        {}
-                        <StatCard
-                            title="น้ำหนัก"
-                            value={82}
-                            unit="กก."
-                        >
-                            <div className="mt-4 relative px-2">
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
-                                </div>
-                                <div className="h-[1px] bg-gray-200 w-full mb-2"></div>
-                                <div className="flex justify-between items-start h-8">
-                                    {[90, 85, 80, 75, 70].map((v, i) => (
-                                        <div key={i} className="flex flex-col items-center gap-1">
-                                            <div className="h-4 w-[1px] bg-gray-300"></div>
-                                            <span className="text-[10px] text-gray-400 font-bold">{v}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                {}
-                                <div className="absolute top-[1px] left-0 right-0 flex justify-between px-2 opacity-30">
-                                    {Array.from({ length: 21 }).map((_, i) => (
-                                        i % 5 !== 0 && <div key={i} className="h-2 w-[1px] bg-gray-400"></div>
-                                    ))}
-                                </div>
-                            </div>
-                        </StatCard>
-
-                        {}
-                        <StatCard
-                            title="ก้าวเดิน"
-                            value={"4850"}
-                            unit="ก้าว"
-                        >
-                            <div className="mt-4">
-                                <div className="flex gap-1 h-5 w-full">
-                                    <div className="h-full w-[65%] bg-orange-400 rounded-sm"></div>
-                                    <div className="h-full flex-1 bg-[#fff5e6] rounded-sm"></div>
-                                </div>
-                                <div className="flex justify-between mt-3">
-                                    <span className="text-[11px] font-black text-gray-800 tracking-tight">65%</span>
-                                    <span className="text-[11px] font-bold text-gray-400 tracking-tight">อีก 2150 ก้าว</span>
-                                </div>
-                            </div>
-                        </StatCard>
-
-                        {}
-                        <StatCard
-                            title="การนอนหลับ"
-                            value={7.5}
-                            unit="ชั่วโมง"
-                        >
-                            <div className="mt-4 flex items-end justify-between h-12 gap-1.5 px-1">
-                                <div className="w-2.5 h-[40%] bg-gray-200 rounded-full"></div>
-                                <div className="w-2.5 h-[70%] bg-[#ffd980] rounded-full"></div>
-                                <div className="w-2.5 h-[55%] bg-[#ffd980] rounded-full"></div>
-                                <div className="w-2.5 h-[90%] bg-[#C6E065] rounded-full"></div>
-                                <div className="w-2.5 h-[75%] bg-[#85B22E] rounded-full"></div>
-                                <div className="w-2.5 h-[30%] bg-gray-100 rounded-full"></div>
-                                <div className="w-2.5 h-[50%] bg-gray-100 rounded-full"></div>
-                            </div>
-                        </StatCard>
-
-                        {}
-                        <StatCard
-                            title="ดื่มน้ำ"
-                            value={0.7}
-                            unit="ลิตร (เหลือ)"
-                        >
-                            <div className="mt-4 relative h-16 w-full bg-[#f4f4f4] rounded-xl overflow-hidden group">
-                                <div
-                                    className="absolute bottom-0 left-0 right-0 bg-[#ffd980] transition-all duration-1000 ease-out"
-                                    style={{ height: '65%' }}
+                        {loading ? (
+                            Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+                        ) : (
+                            <>
+                                { }
+                                <StatCard
+                                    title="น้ำหนัก"
+                                    value={82}
+                                    unit="กก."
                                 >
-                                </div>
-                                <div className="absolute bottom-2 right-3 text-[10px] font-black text-gray-600/60">
-                                    1.3/2 ลิตร
-                                </div>
-                            </div>
-                        </StatCard>
+                                    <div className="mt-4 relative px-2">
+                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                                            <div className="w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-sm"></div>
+                                        </div>
+                                        <div className="h-[1px] bg-gray-200 w-full mb-2"></div>
+                                        <div className="flex justify-between items-start h-8">
+                                            {[90, 85, 80, 75, 70].map((v, i) => (
+                                                <div key={i} className="flex flex-col items-center gap-1">
+                                                    <div className="h-4 w-[1px] bg-gray-300"></div>
+                                                    <span className="text-[10px] text-gray-400 font-bold">{v}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        { }
+                                        <div className="absolute top-[1px] left-0 right-0 flex justify-between px-2 opacity-30">
+                                            {Array.from({ length: 21 }).map((_, i) => (
+                                                i % 5 !== 0 && <div key={i} className="h-2 w-[1px] bg-gray-400"></div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </StatCard>
+
+                                { }
+                                <StatCard
+                                    title="ก้าวเดิน"
+                                    value={"4850"}
+                                    unit="ก้าว"
+                                >
+                                    <div className="mt-4">
+                                        <div className="flex gap-1 h-5 w-full">
+                                            <div className="h-full w-[65%] bg-orange-400 rounded-sm"></div>
+                                            <div className="h-full flex-1 bg-[#fff5e6] rounded-sm"></div>
+                                        </div>
+                                        <div className="flex justify-between mt-3">
+                                            <span className="text-[11px] font-black text-gray-800 tracking-tight">65%</span>
+                                            <span className="text-[11px] font-bold text-gray-400 tracking-tight">อีก 2150 ก้าว</span>
+                                        </div>
+                                    </div>
+                                </StatCard>
+
+                                { }
+                                <StatCard
+                                    title="การนอนหลับ"
+                                    value={7.5}
+                                    unit="ชั่วโมง"
+                                >
+                                    <div className="mt-4 flex items-end justify-between h-12 gap-1.5 px-1">
+                                        <div className="w-2.5 h-[40%] bg-gray-200 rounded-full"></div>
+                                        <div className="w-2.5 h-[70%] bg-[#ffd980] rounded-full"></div>
+                                        <div className="w-2.5 h-[55%] bg-[#ffd980] rounded-full"></div>
+                                        <div className="w-2.5 h-[90%] bg-[#C6E065] rounded-full"></div>
+                                        <div className="w-2.5 h-[75%] bg-[#85B22E] rounded-full"></div>
+                                        <div className="w-2.5 h-[30%] bg-gray-100 rounded-full"></div>
+                                        <div className="w-2.5 h-[50%] bg-gray-100 rounded-full"></div>
+                                    </div>
+                                </StatCard>
+
+                                { }
+                                <StatCard
+                                    title="ดื่มน้ำ"
+                                    value={0.7}
+                                    unit="ลิตร (เหลือ)"
+                                >
+                                    <div className="mt-4 relative h-16 w-full bg-[#f4f4f4] rounded-xl overflow-hidden group">
+                                        <div
+                                            className="absolute bottom-0 left-0 right-0 bg-[#ffd980] transition-all duration-1000 ease-out"
+                                            style={{ height: '65%' }}
+                                        >
+                                        </div>
+                                        <div className="absolute bottom-2 right-3 text-[10px] font-black text-gray-600/60">
+                                            1.3/2 ลิตร
+                                        </div>
+                                    </div>
+                                </StatCard>
+                            </>
+                        )}
                     </div>
 
-                    {}
+                    { }
                     <div className="bg-white p-10 rounded-[40px] shadow-[0_4px_40px_rgba(0,0,0,0.02)] border border-gray-50 mb-8 animate-slideUp delay-100">
                         <div className="flex justify-between items-start mb-8">
                             <h3 className="text-2xl font-black text-gray-900">ปริมาณแคลอรี่</h3>
@@ -155,52 +169,66 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="flex flex-col lg:flex-row items-center gap-16">
-                            {}
+                            { }
                             <div className="relative w-72 h-72 flex-shrink-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={calorieData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={100}
-                                            outerRadius={115}
-                                            stroke="none"
-                                            dataKey="value"
-                                            startAngle={180}
-                                            endAngle={-180}
-                                            cornerRadius={15}
-                                            paddingAngle={0}
-                                        >
-                                            <Cell fill="url(#calorieGradient)" />
-                                            <Cell fill="#f4f4f4" />
-                                        </Pie>
-                                        <defs>
-                                            <linearGradient id="calorieGradient" x1="0" y1="0" x2="1" y2="0">
-                                                <stop offset="0%" stopColor="#ffd980" />
-                                                <stop offset="100%" stopColor="#ff9933" />
-                                            </linearGradient>
-                                        </defs>
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                {loading ? (
+                                    <Skeleton className="w-full h-full rounded-full" />
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={calorieData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={100}
+                                                outerRadius={115}
+                                                stroke="none"
+                                                dataKey="value"
+                                                startAngle={180}
+                                                endAngle={-180}
+                                                cornerRadius={15}
+                                                paddingAngle={0}
+                                            >
+                                                <Cell fill="url(#calorieGradient)" />
+                                                <Cell fill="#f4f4f4" />
+                                            </Pie>
+                                            <defs>
+                                                <linearGradient id="calorieGradient" x1="0" y1="0" x2="1" y2="0">
+                                                    <stop offset="0%" stopColor="#ffd980" />
+                                                    <stop offset="100%" stopColor="#ff9933" />
+                                                </linearGradient>
+                                            </defs>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                )}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <Flame className="text-gray-900 mb-2 w-8 h-8 fill-gray-900/10" />
-                                    <span className="text-5xl font-black text-gray-900">1750</span>
+                                    {loading ? (
+                                        <Skeleton className="w-24 h-12" />
+                                    ) : (
+                                        <span className="text-5xl font-black text-gray-900">1750</span>
+                                    )}
                                     <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">kcal</span>
                                     <span className="text-[11px] text-gray-400 font-bold mt-1">แคลอรี่คงเหลือ</span>
                                 </div>
                             </div>
 
-                            {}
+                            { }
                             <div className="flex-1 w-full space-y-4">
-                                <MacroBlock label="คาร์โบไฮเดรต" value={120} max={325} percentage={37} />
-                                <MacroBlock label="โปรตีน" value={70} max={75} percentage={93} />
-                                <MacroBlock label="ไขมัน" value={20} max={44} percentage={45} />
+                                {loading ? (
+                                    Array.from({ length: 3 }).map((_, i) => <MacroBlockSkeleton key={i} />)
+                                ) : (
+                                    <>
+                                        <MacroBlock label="คาร์โบไฮเดรต" value={120} max={325} percentage={37} />
+                                        <MacroBlock label="โปรตีน" value={70} max={75} percentage={93} />
+                                        <MacroBlock label="ไขมัน" value={20} max={44} percentage={45} />
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {}
+                    { }
                     <div className="bg-white p-10 rounded-[40px] shadow-[0_4px_40px_rgba(0,0,0,0.02)] border border-gray-50 animate-slideUp delay-200">
                         <div className="flex justify-between items-center mb-8">
                             <h3 className="text-2xl font-black text-gray-900">เมนูแนะนำ</h3>
@@ -212,22 +240,28 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <MenuCard
-                                category="ของว่าง"
-                                calories={280}
-                                title="กรีกโยเกิร์ต กราโนล่า และมิกซ์เบอร์รี่"
-                                description="อุดมไปด้วยโปรไบโอติกและสารต้านอนุมูลอิสระ ของว่างเพื่อสุขภาพที่สมบูรณ์แบบ"
-                                macros={{ c: 28, p: 15, f: 8 }}
-                                image="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=800"
-                            />
-                            <MenuCard
-                                category="มื้อเที่ยง"
-                                calories={420}
-                                title="สลัดไก่ย่างกับอะโวคาโดและผักสด"
-                                description="เต็มไปด้วยโปรตีนลีนและไขมันดีจากอะโวคาโด"
-                                macros={{ c: 15, p: 40, f: 22 }}
-                                image="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800"
-                            />
+                            {loading ? (
+                                Array.from({ length: 2 }).map((_, i) => <MenuCardSkeleton key={i} />)
+                            ) : (
+                                <>
+                                    <MenuCard
+                                        category="ของว่าง"
+                                        calories={280}
+                                        title="กรีกโยเกิร์ต กราโนล่า และมิกซ์เบอร์รี่"
+                                        description="อุดมไปด้วยโปรไบโอติกและสารต้านอนุมูลอิสระ ของว่างเพื่อสุขภาพที่สมบูรณ์แบบ"
+                                        macros={{ c: 28, p: 15, f: 8 }}
+                                        image="https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=800"
+                                    />
+                                    <MenuCard
+                                        category="มื้อเที่ยง"
+                                        calories={420}
+                                        title="สลัดไก่ย่างกับอะโวคาโดและผักสด"
+                                        description="เต็มไปด้วยโปรตีนลีนและไขมันดีจากอะโวคาโด"
+                                        macros={{ c: 15, p: 40, f: 22 }}
+                                        image="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800"
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

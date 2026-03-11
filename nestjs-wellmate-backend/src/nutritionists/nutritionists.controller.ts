@@ -86,6 +86,14 @@ export class NutritionistsController {
     return this.nutritionistSchedulesService.createSchedule(userId, dto);
   }
 
+  @Get('me/schedules')
+  @ApiBearerAuth()
+  @Auth(UserRole.nutritionist)
+  @ApiOperation({ summary: 'ดูเวลาทำงานทั้งหมดของตัวเอง' })
+  async getMySchedules(@CurrentUser('sub') userId: string) {
+    return this.nutritionistSchedulesService.getMySchedules(userId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('me/leaves')
   @ApiBearerAuth()
@@ -101,6 +109,25 @@ export class NutritionistsController {
     @Body() dto: CreateLeaveDto,
   ) {
     return this.nutritionistLeavesService.createLeave(userId, dto);
+  }
+
+  @Get('me/leaves')
+  @ApiBearerAuth()
+  @Auth(UserRole.nutritionist)
+  @ApiOperation({ summary: 'ดูประวัติการลาของตัวเอง' })
+  async getMyLeaves(@CurrentUser('sub') userId: string) {
+    return this.nutritionistLeavesService.getMyLeaves(userId);
+  }
+
+  @Delete('me/leaves/:id')
+  @ApiBearerAuth()
+  @Auth(UserRole.nutritionist)
+  @ApiOperation({ summary: 'ยกเลิกวันลา' })
+  async deleteLeave(
+    @CurrentUser('sub') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.nutritionistLeavesService.deleteLeave(userId, id);
   }
 
   @Post()

@@ -8,11 +8,13 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
     ConfigModule,
     PrismaModule,
+    CloudinaryModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

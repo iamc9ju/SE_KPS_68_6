@@ -69,6 +69,7 @@ export class NutritionistsService {
         user: {
           select: {
             email: true,
+            profileImageUrl: true,
           },
         },
         nutritionistSpecialties: {
@@ -130,7 +131,10 @@ export class NutritionistsService {
         consultationFee: true,
         verificationStatus: true,
         user: {
-          select: { email: true },
+          select: {
+            email: true,
+            profileImageUrl: true,
+          },
         },
         nutritionistSpecialties: {
           select: { specialty: { select: { id: true, name: true } } },

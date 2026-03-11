@@ -24,6 +24,9 @@ export class PatientsService {
         gender: dto.gender,
         bloodType: dto.bloodType,
         chronicDiseases: dto.chronicDiseases,
+        goal: dto.goal,
+        goalDetail: dto.goalDetail,
+        activityLevel: dto.activityLevel,
         isProfileComplete: true,
       },
     });
@@ -60,6 +63,9 @@ export class PatientsService {
       gender: patient.gender,
       bloodType: patient.bloodType,
       chronicDiseases: patient.chronicDiseases,
+      goal: patient.goal,
+      goalDetail: patient.goalDetail,
+      activityLevel: patient.activityLevel,
       isProfileComplete: patient.isProfileComplete,
       healthMetrics: patient.healthMetrics[0] || null,
     };

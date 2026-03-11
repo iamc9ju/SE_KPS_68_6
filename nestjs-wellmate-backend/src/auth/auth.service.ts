@@ -72,10 +72,28 @@ export class AuthService {
       return user;
     });
 
+    // Fetch full user with relations for flattening
+    const fullUser = await this.prisma.user.findUnique({
+      where: { userId: result.userId },
+      include: {
+        patient: true,
+        nutritionist: true,
+        foodPartner: true,
+      },
+    });
+
     this.logger.log(
       `New ${dto.role} registered: ${result.userId} (${dto.email})`,
     );
-    return { message: 'Registration successful', userId: result.userId };
+
+    if (!fullUser) {
+      throw new UnauthorizedException('Registration failed');
+    }
+
+    return {
+      message: 'Registration successful',
+      data: this.flattenUser(fullUser as UserWithRelation),
+    };
   }
 
   async login(dto: LoginDto) {
@@ -83,11 +101,9 @@ export class AuthService {
     return this.flattenUser(user);
   }
 
-  async logout(refreshToken: string) {
-  }
+  async logout(refreshToken: string) {}
 
-  async logoutAllDevices(userId: string) {
-  }
+  async logoutAllDevices(userId: string) {}
 
   async getMe(userId: string) {
     const userBase = await this.prisma.user.findUnique({
@@ -139,6 +155,7 @@ export class AuthService {
       email,
       role,
       is2faEnabled,
+      profileImageUrl,
       createdAt,
       patient,
       nutritionist,
@@ -147,22 +164,54 @@ export class AuthService {
 
     let firstName = '';
     let lastName = '';
+    let roleId: string | number | undefined;
 
     if (role === 'patient' && patient) {
       firstName = patient.firstName;
       lastName = patient.lastName;
+      roleId = patient.patientId;
+      return {
+        userId,
+        phone,
+        email,
+        firstName,
+        lastName,
+        role,
+        is2faEnabled,
+        profileImageUrl,
+        createdAt,
+        patientId: roleId,
+        isProfileComplete: patient.isProfileComplete,
+      };
     } else if (role === 'nutritionist' && nutritionist) {
       firstName = nutritionist.firstName;
       lastName = nutritionist.lastName;
+      roleId = nutritionist.nutritionistId;
+      return {
+        userId,
+        phone,
+        email,
+        firstName,
+        lastName,
+        role,
+        is2faEnabled,
+        profileImageUrl,
+        createdAt,
+        nutritionistId: roleId,
+        isProfileComplete: true, // Nutritionists don't have this requirement yet
+      };
     } else if (role === 'food_partner' && foodPartner) {
       return {
         userId,
         phone,
         email,
         partnerName: foodPartner.partnerName,
+        foodPartnerId: foodPartner.foodPartnerId,
         role,
         is2faEnabled,
+        profileImageUrl,
         createdAt,
+        isProfileComplete: true,
       };
     }
 
@@ -174,7 +223,9 @@ export class AuthService {
       lastName,
       role,
       is2faEnabled,
+      profileImageUrl,
       createdAt,
+      isProfileComplete: true,
     };
   }
 }

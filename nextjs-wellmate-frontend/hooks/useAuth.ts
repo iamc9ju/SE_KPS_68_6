@@ -12,6 +12,7 @@ export interface AuthUser {
   lastName: string;
   role: "patient" | "nutritionist" | "food_partner" | "admin";
   phone?: string;
+  isProfileComplete?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -28,7 +29,7 @@ interface ApiErrorResponse {
 
 interface RegisterResponse {
   message: string;
-  userId: string;
+  data: AuthUser;
 }
 
 export const useAuth = () => {
@@ -107,17 +108,24 @@ export const useAuth = () => {
     setError(null);
 
     try {
-      await api.post<RegisterResponse>("/auth/register", payload);
+      const res = await api.post<RegisterResponse>("/auth/register", payload);
       await Swal.fire({
         icon: "success",
         title: "สมัครสมาชิกสำเร็จ!",
-        text: "ยินดีต้อนรับสมาชิกใหม่ของเรา",
+        text: "กำลังพาคุณเข้าสู่ระบบ...",
         timer: 1500,
         showConfirmButton: false,
         color: "#3d3522",
         confirmButtonColor: "#C6E065",
       });
-      router.push("/login?registered=true");
+
+      // Auto-login
+      if (res.data?.data) {
+        login(res.data.data);
+        router.push("/healthdata");
+      } else {
+        router.push("/login?registered=true");
+      }
     } catch (err) {
       handleAxiosError(err, "สมัครสมาชิกไม่สำเร็จ");
     } finally {
@@ -129,26 +137,60 @@ export const useAuth = () => {
     const result = await Swal.fire({
       title: "ออกจากระบบ?",
       text: "คุณต้องการออกจากระบบใช่หรือไม่?",
-      icon: "question",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#C6E065",
-      cancelButtonColor: "#f4f4f4",
+      confirmButtonColor: "#3d3522",
+      cancelButtonColor: "#ef4444",
       confirmButtonText: "ใช่, ออกจากระบบ",
       cancelButtonText: "ยกเลิก",
       color: "#3d3522",
+      background: "#fffbf5",
+      customClass: {
+        popup: "rounded-3xl",
+        confirmButton: "rounded-2xl px-6 py-2.5 font-bold shadow-md",
+        cancelButton: "rounded-2xl px-6 py-2.5 font-bold shadow-md",
+        title: "text-2xl font-black mt-4",
+      },
     });
 
     if (result.isConfirmed) {
       setIsLoading(true);
+
+      Swal.fire({
+        title: "กำลังออกจากระบบ...",
+        text: "กรุณารอสักครู่",
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: "#fffbf5",
+        color: "#3d3522",
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       try {
-        await useAuthStore.getState().logout();
+        // Call API directly to control state clearing timing
+        await api.post("/auth/sign-out");
+
+        // Wait a tiny bit for UX
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         await Swal.fire({
           icon: "success",
           title: "ออกจากระบบสำเร็จ",
           timer: 1000,
           showConfirmButton: false,
+          background: "#fffbf5",
+          color: "#3d3522",
         });
+
+        // Navigate first
         router.replace("/login");
+
+        // Clear user state AFTER navigation has started to prevent UI flicker
+        setTimeout(() => {
+          useAuthStore.getState().setUser(null);
+        }, 100);
       } catch (err) {
         handleAxiosError(err, "ออกจากระบบไม่สำเร็จ");
       } finally {

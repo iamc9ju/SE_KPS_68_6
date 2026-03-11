@@ -32,13 +32,8 @@ export class HealthMetricsService {
     const metric = await this.prisma.healthMetric.create({
       data: {
         patientId,
-        gender: dto.gender,
-        ageYears: dto.ageYears,
         weightKg: dto.weightKg,
         heightCm: dto.heightCm,
-        activityLevel: dto.activityLevel,
-        goal: dto.goal,
-        goalDetail: dto.goalDetail,
       },
     });
 
@@ -99,13 +94,8 @@ export class HealthMetricsService {
     return this.prisma.healthMetric.update({
       where: { id: metricId },
       data: {
-        gender: dto.gender,
-        ageYears: dto.ageYears,
         weightKg: dto.weightKg,
         heightCm: dto.heightCm,
-        activityLevel: dto.activityLevel,
-        goal: dto.goal,
-        goalDetail: dto.goalDetail,
       },
     });
   }

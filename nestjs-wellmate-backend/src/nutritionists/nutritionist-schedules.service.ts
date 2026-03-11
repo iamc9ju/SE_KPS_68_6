@@ -36,4 +36,19 @@ export class NutritionistSchedulesService {
       },
     });
   }
+
+  async getMySchedules(userId: string) {
+    const nutritionist = await this.prisma.nutritionist.findUnique({
+      where: { userId },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('คุณไม่ได้ลงทะเบียนเป็นนักโภชนาการ');
+    }
+
+    return this.prisma.nutritionistSchedule.findMany({
+      where: { nutritionistId: nutritionist.nutritionistId },
+      orderBy: { dayOfWeek: 'asc' },
+    });
+  }
 }

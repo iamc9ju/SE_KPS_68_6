@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth";
@@ -53,11 +53,8 @@ export default function LoginPage() {
     <>
       <div className="mb-10">
         <div className="mb-8">
-          <div className="flex items-center gap-2">
-            <div className="text-[#8CC63F] font-bold text-3xl tracking-tighter italic">
-              W<span className="text-[#F7931E]">M</span>
-            </div>
-            <div className="font-bold text-2xl tracking-tight uppercase text-[#3d3522]">Wellmate</div>
+          <div className="flex items-center justify-center">
+            <img src="/logo.png" alt="WellMate Logo" className="h-32 w-auto" />
           </div>
         </div>
         <h2 className="text-4xl font-black text-[#3d3522] leading-tight mb-2">เข้าสู่ระบบ</h2>
@@ -118,9 +115,16 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-4 bg-[#3d3522] text-white font-bold rounded-2xl text-base hover:bg-[#2c2518] active:scale-[0.97] transition-all shadow-lg hover:shadow-xl group mt-2"
+          className="w-full py-4 bg-[#3d3522] text-white font-bold rounded-2xl text-base hover:bg-[#2c2518] active:scale-[0.97] transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3 mt-2 disabled:opacity-80 disabled:cursor-not-allowed"
         >
-          {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+          {isLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>กำลังเข้าสู่ระบบ...</span>
+            </>
+          ) : (
+            "เข้าสู่ระบบ"
+          )}
         </button>
       </form>
 

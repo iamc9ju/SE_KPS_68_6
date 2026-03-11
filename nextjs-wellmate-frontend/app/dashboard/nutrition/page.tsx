@@ -3,7 +3,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
 import NutritionistCard from "@/components/dashboard/NutritionistCard";
+import NutritionistCardSkeleton from "@/components/dashboard/NutritionistCardSkeleton";
 import NotificationDropdown from "@/components/notifications/NotificationDropdown";
+import ImageUpload from "@/components/common/ImageUpload";
 import { useAuthStore } from "@/store/auth-store";
 import {
     nutritionistApi,
@@ -45,8 +47,7 @@ export default function NutritionPage() {
     const [sortBy, setSortBy] = useState<NutritionistQueryParams["sortBy"]>("highest_rated");
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [page] = useState(1);
+    const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
     const fetchNutritionists = useCallback(async () => {
@@ -54,7 +55,7 @@ export default function NutritionPage() {
         try {
             const params: NutritionistQueryParams = {
                 page,
-                limit: 12,
+                limit: 8,
                 sortBy,
             };
 
@@ -84,34 +85,39 @@ export default function NutritionPage() {
     const currentSortLabel = SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "คะแนนสูงสุด";
 
     return (
-        <div className="flex-1 flex flex-col min-h-screen">
-            <main className="flex-1 overflow-y-auto px-8 py-8 z-10 custom-scrollbar ml-64">
-                <div className="max-w-[1400px] mx-auto">
+        <div className="flex-1 flex flex-col min-h-screen bg-[#FDF9F3]">
+            <main className="flex-1 overflow-y-auto px-6 py-4 sm:px-8 sm:py-6 z-10 custom-scrollbar ml-64">
+                <div className="max-w-[1500px] mx-auto">
+                    {/* Top Global Header with Search and Profile */}
+                    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 animate-fadeIn">
 
-                    {}
-                    <header className="flex items-center justify-between mb-8 animate-fadeIn">
-                        <h1 className="text-3xl font-black text-[#3d3522] tracking-tight">
-                            ค้นหานักโภชนาการ
-                        </h1>
-                        <div className="flex items-center gap-3">
-                            {}
-                            <button
-                                onClick={() => setSearchOpen(!searchOpen)}
-                                className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-[#3d3522] hover:bg-[#C6E065]/20 transition-all"
-                            >
-                                <Search className="w-5 h-5" />
-                            </button>
-                            <NotificationDropdown />
-                            {}
-                            <div className="flex items-center gap-3 ml-2">
-                                <div className="w-10 h-10 rounded-2xl bg-[#C6E065]/20 flex items-center justify-center text-[#3d3522] font-bold text-sm">
-                                    {(user?.firstName?.[0] || "U").toUpperCase()}
-                                </div>
-                                <div className="hidden sm:block">
-                                    <p className="text-sm font-bold text-[#3d3522] leading-tight">
+                        {/* Search Bar - Left Side */}
+                        <div className="relative w-full sm:max-w-[400px] md:max-w-[500px]">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search by name..."
+                                className="w-full pl-[56px] pr-6 py-[14px] rounded-[30px] border-[2px] border-[#F4D9C7] hover:border-[#FF6A2C] focus:border-[#FF6A2C] shadow-sm bg-white text-[15px] text-[#111111] placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-[#FF6A2C]/10 transition-all font-medium"
+                            />
+                        </div>
+
+                        {/* User Profile & Actions - Right Side */}
+                        <div className="flex items-center gap-4 self-end sm:self-auto">
+                            {/* Notification Button */}
+                            <div className="w-[46px] h-[46px] rounded-full bg-white flex items-center justify-center shadow-sm relative cursor-pointer">
+                                <NotificationDropdown />
+                            </div>
+
+                            {/* User Profile */}
+                            <div className="flex items-center gap-3 ml-2 bg-white/50 pl-2 pr-4 py-1.5 rounded-2xl hover:bg-white hover:shadow-sm transition-all">
+                                <ImageUpload sizeClasses="w-11 h-11" />
+                                <div className="hidden sm:block cursor-pointer">
+                                    <p className="text-[15px] font-medium text-[#111111] leading-tight">
                                         {user?.firstName || "User"} {user?.lastName || ""}
                                     </p>
-                                    <p className="text-[10px] text-[#8a7550] font-medium">
+                                    <p className="text-[11px] text-gray-500 font-medium tracking-wide">
                                         Member
                                     </p>
                                 </div>
@@ -119,103 +125,113 @@ export default function NutritionPage() {
                         </div>
                     </header>
 
-                    {}
-                    {searchOpen && (
-                        <div className="mb-6 animate-fadeIn">
-                            <div className="relative max-w-md">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="พิมพ์ชื่อนักโภชนาการ..."
-                                    className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#f0e6cc] bg-white text-sm text-[#3d3522] placeholder:text-gray-300 focus:outline-none focus:border-[#C6E065] focus:ring-2 focus:ring-[#C6E065]/20 transition-all"
-                                    autoFocus
-                                />
+                    {/* Main White Canvas Container */}
+                    <div className="bg-white rounded-[24px] sm:rounded-[32px] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] min-h-[60vh] flex flex-col">
+
+                        {/* Top Filters Row (Pills & Sort) */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+
+                            {/* Specialty Pills */}
+                            <div className="flex flex-wrap items-center gap-3 flex-1">
+                                {SPECIALTIES.map((spec) => (
+                                    <button
+                                        key={spec}
+                                        onClick={() => setSelectedSpecialty(spec)}
+                                        className={`px-[22px] py-[10px] rounded-[20px] text-[15px] transition-all duration-200 border ${selectedSpecialty === spec
+                                            ? "bg-transparent text-[#111111] font-medium border-gray-400"
+                                            : "bg-transparent text-gray-600 font-medium border-gray-200 hover:border-gray-300"
+                                            }`}
+                                    >
+                                        {spec}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Sort Dropdown */}
+                            <div className="relative flex-shrink-0">
+                                <button
+                                    onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                                    className="flex items-center gap-2 px-[22px] py-[10px] rounded-[20px] text-[15px] font-medium text-[#111111] bg-transparent border border-gray-200 hover:border-gray-300 transition-all"
+                                >
+                                    <svg className="w-[18px] h-[18px] text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="4" y1="6" x2="20" y2="6"></line>
+                                        <line x1="4" y1="12" x2="14" y2="12"></line>
+                                        <line x1="4" y1="18" x2="8" y2="18"></line>
+                                    </svg>
+                                    Sort By : {currentSortLabel}
+                                    <ChevronDown className={`w-[18px] h-[18px] text-gray-400 transition-transform ${sortDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {sortDropdownOpen && (
+                                    <div className="absolute right-0 top-[110%] w-[220px] bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 z-50 overflow-hidden animate-fadeIn py-1">
+                                        {SORT_OPTIONS.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => {
+                                                    setSortBy(option.value);
+                                                    setSortDropdownOpen(false);
+                                                }}
+                                                className={`w-full text-left px-5 py-3 text-[14px] font-medium transition-colors ${sortBy === option.value
+                                                    ? "bg-[#FDF9F3] text-[#111111]"
+                                                    : "text-gray-500 hover:bg-gray-50"
+                                                    }`}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    )}
 
-                    {}
-                    <div className="flex flex-wrap items-center gap-3 mb-8 animate-slideUp">
-                        {}
-                        {SPECIALTIES.map((spec) => (
-                            <button
-                                key={spec}
-                                onClick={() => setSelectedSpecialty(spec)}
-                                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-200 border ${selectedSpecialty === spec
-                                    ? "bg-[#3d3522] text-white border-[#3d3522] shadow-md"
-                                    : "bg-white text-[#3d3522] border-[#e8dcc8] hover:border-[#C6E065] hover:bg-[#C6E065]/5"
-                                    }`}
-                            >
-                                {spec}
-                            </button>
-                        ))}
-
-                        {}
-                        <div className="relative ml-auto">
-                            <button
-                                onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-[#3d3522] bg-white border border-[#e8dcc8] hover:border-[#C6E065] transition-all"
-                            >
-                                <svg className="w-3.5 h-3.5 text-[#8a7550]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M3 6h18M7 12h10M10 18h4" />
-                                </svg>
-                                เรียงตาม : {currentSortLabel}
-                                <ChevronDown className={`w-3.5 h-3.5 text-[#8a7550] transition-transform ${sortDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            {sortDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-fadeIn">
-                                    {SORT_OPTIONS.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => {
-                                                setSortBy(option.value);
-                                                setSortDropdownOpen(false);
-                                            }}
-                                            className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors ${sortBy === option.value
-                                                ? "bg-[#C6E065]/10 text-[#3d3522]"
-                                                : "text-[#8a7550] hover:bg-gray-50"
-                                                }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
+                        {/* Grid Result */}
+                        {loading ? (
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-6 animate-fadeIn">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <NutritionistCardSkeleton key={i} />
+                                ))}
+                            </div>
+                        ) : nutritionists.length === 0 ? (
+                            <div className="flex flex-col flex-1 items-center justify-center py-16 text-center animate-fadeIn bg-gray-50/50 rounded-[24px] border border-dashed border-gray-200">
+                                <div className="w-[60px] h-[60px] bg-white rounded-full flex items-center justify-center mb-4 shadow-sm text-gray-300">
+                                    <Search className="w-[28px] h-[28px]" />
                                 </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {}
-                    {loading ? (
-                        <div className="flex items-center justify-center py-32">
-                            <Loader2 className="w-8 h-8 text-[#C6E065] animate-spin" />
-                        </div>
-                    ) : nutritionists.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-32 text-center animate-fadeIn">
-                            <div className="w-20 h-20 bg-[#C6E065]/10 rounded-3xl flex items-center justify-center mb-4">
-                                <span className="text-3xl">🔍</span>
+                                <h3 className="text-[18px] font-medium text-[#111111] mb-2">ไม่พบผลลัพธ์</h3>
+                                <p className="text-[14px] text-gray-500">ลองเปลี่ยนเงื่อนไขการค้นหาดูนะครับ</p>
                             </div>
-                            <h3 className="text-lg font-bold text-[#3d3522] mb-1">ไม่พบนักโภชนาการ</h3>
-                            <p className="text-sm text-[#8a7550]">ลองเปลี่ยนตัวกรองหรือคำค้นหาดูนะครับ</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-slideUp">
-                            {nutritionists.map((n) => (
-                                <NutritionistCard key={n.nutritionistId} nutritionist={n} />
-                            ))}
-                        </div>
-                    )}
+                        ) : (
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-6 animate-slideUp">
+                                {nutritionists.map((n) => (
+                                    <NutritionistCard key={n.nutritionistId} nutritionist={n} />
+                                ))}
+                            </div>
+                        )}
 
-                    {}
-                    {!loading && nutritionists.length > 0 && totalPages > 1 && (
-                        <div className="mt-8 text-center">
-                            <p className="text-xs text-[#8a7550] font-medium">
-                                หน้า {page} จาก {totalPages}
-                            </p>
-                        </div>
-                    )}
+                        {/* Pagination */}
+                        {!loading && totalPages > 1 && (
+                            <div className="mt-8 flex justify-center border-t border-gray-100 pt-5">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                        className="px-5 py-2 rounded-full text-[13px] font-medium bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-[#111111] shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        ย้อนกลับ
+                                    </button>
+                                    <span className="text-[13px] font-medium text-[#111111] mx-2">
+                                        หน้า {page} จาก {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={page === totalPages}
+                                        className="px-5 py-2 rounded-full text-[13px] font-medium bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-[#111111] shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        ถัดไป
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
+                    </div>
                 </div>
             </main>
         </div>

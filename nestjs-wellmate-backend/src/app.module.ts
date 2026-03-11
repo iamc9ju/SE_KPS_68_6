@@ -26,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SchedulersModule } from './schedulers/schedulers.module';
 import { CartModule } from './cart/cart.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { CalendarModule } from './calendar/calendar.module';
     SchedulersModule,
     CartModule,
     CalendarModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [

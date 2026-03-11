@@ -7,6 +7,7 @@ export interface User {
   role: 'nutritionist' | 'patient' | 'food_partner' | 'admin';
   is2faEnabled: boolean;
   twoFaSecret: string | null;
+  profileImageUrl: string | null;
   createdAt: Date;
   deletedAt: Date | null;
 }

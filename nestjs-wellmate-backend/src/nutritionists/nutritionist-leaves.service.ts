@@ -38,4 +38,43 @@ export class NutritionistLeavesService {
       },
     });
   }
+
+  async getMyLeaves(userId: string) {
+    const nutritionist = await this.prisma.nutritionist.findUnique({
+      where: { userId },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('คุณไม่ได้ลงทะเบียนเป็นนักโภชนาการ');
+    }
+
+    return this.prisma.nutritionistLeave.findMany({
+      where: { nutritionistId: nutritionist.nutritionistId },
+      orderBy: { leaveDate: 'desc' },
+    });
+  }
+
+  async deleteLeave(userId: string, leaveId: string) {
+    const nutritionist = await this.prisma.nutritionist.findUnique({
+      where: { userId },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('คุณไม่ได้ลงทะเบียนเป็นนักโภชนาการ');
+    }
+
+    const leave = await this.prisma.nutritionistLeave.findUnique({
+      where: { nutritionistLeaveId: parseInt(leaveId) },
+    });
+
+    if (!leave || leave.nutritionistId !== nutritionist.nutritionistId) {
+      throw new NotFoundException(
+        'ไม่พบข้อมูลการลาหรือคุณไม่มีสิทธิ์ลบรายการนี้',
+      );
+    }
+
+    return this.prisma.nutritionistLeave.delete({
+      where: { nutritionistLeaveId: parseInt(leaveId) },
+    });
+  }
 }

@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Stethoscope,
   Phone,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -53,11 +54,8 @@ export default function RegisterPage() {
     <>
       <div className="mb-6">
         <div className="mb-5">
-          <div className="flex items-center gap-2">
-            <div className="text-[#8CC63F] font-bold text-3xl tracking-tighter italic">
-              W<span className="text-[#F7931E]">M</span>
-            </div>
-            <div className="font-bold text-2xl tracking-tight uppercase text-[#3d3522]">Wellmate</div>
+          <div className="flex items-center justify-center">
+            <img src="/logo.png" alt="WellMate Logo" className="h-28 w-auto" />
           </div>
         </div>
         <h2 className="text-4xl font-black text-[#3d3522] leading-tight mb-2">สมัครสมาชิก</h2>
@@ -183,9 +181,16 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-4 bg-[#3d3522] text-white font-bold rounded-2xl text-base hover:bg-[#2c2518] active:scale-[0.97] transition-all shadow-lg"
+          className="w-full py-4 bg-[#3d3522] text-white font-bold rounded-2xl text-base hover:bg-[#2c2518] active:scale-[0.97] transition-all shadow-lg flex items-center justify-center gap-3 disabled:opacity-80 disabled:cursor-not-allowed"
         >
-          {isLoading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
+          {isLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>กำลังสมัครสมาชิก...</span>
+            </>
+          ) : (
+            "สมัครสมาชิก"
+          )}
         </button>
       </form>
 

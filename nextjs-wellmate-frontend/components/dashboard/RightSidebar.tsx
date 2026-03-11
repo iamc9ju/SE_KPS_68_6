@@ -12,20 +12,18 @@ interface CartSidebarProps {
 export default function RightSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCartStore();
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[100] overflow-hidden">
-            {}
+        <div className={`fixed inset-0 z-[100] overflow-hidden transition-all duration-500 ${isOpen ? 'visible' : 'invisible pointer-events-none'}`}>
+            {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity"
+                className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
                 onClick={onClose}
             />
 
-            <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
-                <div className="w-screen max-w-md transform transition-all duration-500 ease-in-out">
+            <div className={`absolute inset-y-0 right-0 flex max-w-full pl-10 transform transition-transform duration-500 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div className="w-screen max-w-md">
                     <div className="flex h-full flex-col bg-white shadow-2xl rounded-l-[40px] border-l border-[#f0e6cc] overflow-hidden">
-                        {}
+                        { }
                         <div className="px-8 py-8 border-b border-[#faf8f2]">
                             <div className="flex items-start justify-between">
                                 <div>
@@ -45,7 +43,7 @@ export default function RightSidebar({ isOpen, onClose }: { isOpen: boolean; onC
                             </div>
                         </div>
 
-                        {}
+                        { }
                         <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
                             {items.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
@@ -111,7 +109,7 @@ export default function RightSidebar({ isOpen, onClose }: { isOpen: boolean; onC
                             )}
                         </div>
 
-                        {}
+                        { }
                         {items.length > 0 && (
                             <div className="border-t border-[#faf8f2] px-8 py-10 bg-[#faf8f2]/50">
                                 <div className="flex justify-between text-base font-medium text-[#3d3522] mb-6">

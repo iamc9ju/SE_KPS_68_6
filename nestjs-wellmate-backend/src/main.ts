@@ -56,6 +56,22 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionsFilter(httpAdapterHost, myLogger));
 
-  await app.listen(process.env.PORT ?? 4000);
+  // Graceful shutdown — release port before process exits (fixes EADDRINUSE on hot-reload)
+  app.enableShutdownHooks();
+
+  const server = await app.listen(process.env.PORT ?? 4000);
+
+  // Ensure the HTTP server closes quickly on SIGTERM/SIGINT (sent by nest --watch)
+  const shutdown = async (signal: string) => {
+    console.log(`Received ${signal}, shutting down gracefully...`);
+    server.close(() => {
+      process.exit(0);
+    });
+    // Force exit if server doesn't close in 3 seconds
+    setTimeout(() => process.exit(1), 3000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 void bootstrap();

@@ -29,7 +29,7 @@ export class WebhooksService {
 
       if (appointment.status === AppointmentStatus.confirmed) {
         this.logger.log(
-          `Appointment ${appointment.appointmentId} is already confirmed`,
+          `Appointment ${appointment.appointmentId} is already confirmed. Skipping...`,
         );
         return;
       }
@@ -59,13 +59,44 @@ export class WebhooksService {
       });
 
       this.logger.log(
-        `Successfully updated appointment ${appointment.appointmentId} status to confirmed`,
+        `SUCCESS: Updated appointment ${appointment.appointmentId} to confirmed`,
       );
+      return;
     } catch (error) {
-      this.logger.error(
-        `Failed to process charge complete for ${chargeId}`,
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.error(`Error processing appointment for ${chargeId}:`, error);
     }
+
+    // If not an appointment, check if it's an Order
+    try {
+      const order = await this.prisma.order.findUnique({
+        where: { chargeId },
+      });
+
+      if (order) {
+        this.logger.log(`Found Order for chargeId: ${chargeId}`);
+
+        if (order.paymentStatus === 'PAID') {
+          this.logger.log(
+            `Order ${order.orderId} is already PAID. Skipping...`,
+          );
+          return;
+        }
+
+        await this.prisma.order.update({
+          where: { orderId: order.orderId },
+          data: {
+            paymentStatus: 'PAID',
+            status: 'accepted', // Auto-accept after paid?
+          },
+        });
+
+        this.logger.log(`SUCCESS: Updated order ${order.orderId} to PAID`);
+        return;
+      }
+    } catch (error) {
+      this.logger.error(`Error processing order for ${chargeId}:`, error);
+    }
+
+    this.logger.warn(`No appointment or order found for chargeId: ${chargeId}`);
   }
 }

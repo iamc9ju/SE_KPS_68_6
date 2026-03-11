@@ -9,10 +9,13 @@ import {
 import axios from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
+import NotificationDropdown from "@/components/notifications/NotificationDropdown";
+import ImageUpload from "@/components/common/ImageUpload";
 
 type EventType = "physical" | "appointment";
 
@@ -38,7 +41,7 @@ interface CalendarCell {
     }>;
 }
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
 
 const getDateKey = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -74,7 +77,7 @@ const toDatetimeLocalFromDate = (date: Date) => {
 };
 
 const formatDateFromKey = (key: string) =>
-    parseDateKey(key).toLocaleDateString("en-US", {
+    parseDateKey(key).toLocaleDateString("th-TH", {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -84,8 +87,7 @@ const formatDateFromKey = (key: string) =>
 export default function Calendar() {
     const router = useRouter();
     const user = useAuthStore((state) => state.user);
-    const [events, setEvents] = useState<CalendarEvent[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [error, setError] = useState<string | null>(null);
     const [showPhysical, setShowPhysical] = useState(true);
     const [showAppointments, setShowAppointments] = useState(true);
@@ -107,11 +109,9 @@ export default function Calendar() {
         return new Date(now.getFullYear(), now.getMonth(), 1);
     });
 
-    const fetchCalendar = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
+    const { data: events = [], isLoading: loading, error: queryError } = useQuery({
+        queryKey: ["calendar", viewDate.getFullYear(), viewDate.getMonth()],
+        queryFn: async () => {
             const monthStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
             const monthEnd = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0, 23, 59, 59, 999);
 
@@ -124,39 +124,30 @@ export default function Calendar() {
 
             const payload = Array.isArray(res.data) ? res.data : res.data?.data;
             if (!Array.isArray(payload)) {
-                setError("Unexpected calendar response format.");
-                setEvents([]);
-                return;
+                throw new Error("Unexpected calendar response format.");
             }
 
-            const normalized: CalendarEvent[] = payload.map((item) => ({
+            return payload.map((item: any) => ({
                 id: String(item.id),
                 title: String(item.title ?? ""),
                 startTime: String(item.startTime),
                 endTime: item.endTime ?? null,
                 type: item.type === "appointment" ? "appointment" : "physical",
-            }));
-
-            setEvents(normalized);
-        } catch (err) {
-            if (axios.isAxiosError(err) && err.response?.status === 401) {
-                setError("Session expired. Please login again.");
-                setEvents([]);
-                router.replace("/login");
-                return;
-            }
-
-            console.error(err);
-            setError("Unable to load calendar data.");
-            setEvents([]);
-        } finally {
-            setLoading(false);
+            })) as CalendarEvent[];
         }
-    }, [router, viewDate]);
+    });
 
     useEffect(() => {
-        fetchCalendar();
-    }, [fetchCalendar]);
+        if (queryError) {
+            if (axios.isAxiosError(queryError) && queryError.response?.status === 401) {
+                router.replace("/login");
+            } else {
+                setError("ไม่สามารถโหลดข้อมูลปฏิทินได้");
+            }
+        } else {
+            setError(null);
+        }
+    }, [queryError, router]);
 
     useEffect(() => {
         if (!selectedDateKey) {
@@ -252,11 +243,11 @@ export default function Calendar() {
     }, [monthEvents, viewDate]);
 
     const monthLabel = useMemo(() => {
-        return new Intl.DateTimeFormat("en-US", { month: "long" }).format(viewDate);
+        return new Intl.DateTimeFormat("th-TH", { month: "long" }).format(viewDate);
     }, [viewDate]);
 
     const monthOptions = useMemo(
-        () => Array.from({ length: 12 }, (_, idx) => new Date(2000, idx, 1).toLocaleString("en-US", { month: "long" })),
+        () => Array.from({ length: 12 }, (_, idx) => new Date(2000, idx, 1).toLocaleString("th-TH", { month: "long" })),
         []
     );
     const yearOptions = useMemo(
@@ -270,7 +261,7 @@ export default function Calendar() {
     const selectedDayLabel = useMemo(
         () =>
             selectedDate
-                ? selectedDate.toLocaleDateString("en-US", {
+                ? selectedDate.toLocaleDateString("th-TH", {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
@@ -338,11 +329,11 @@ export default function Calendar() {
                 endTime: newEndTime ? new Date(newEndTime).toISOString() : undefined,
                 calories: newCalories.trim() ? Number(newCalories) : undefined,
             });
-            await fetchCalendar();
+            await queryClient.invalidateQueries({ queryKey: ["calendar"] });
             setIsAddMode(false);
         } catch (err) {
             console.error(err);
-            setError("Unable to create activity.");
+            setError("ไม่สามารถสร้างกิจกรรมได้");
         } finally {
             setIsSaving(false);
         }
@@ -356,38 +347,39 @@ export default function Calendar() {
                 startTime: new Date(editStartTime).toISOString(),
                 endTime: editEndTime ? new Date(editEndTime).toISOString() : null,
             });
-            await fetchCalendar();
+            await queryClient.invalidateQueries({ queryKey: ["calendar"] });
             handleCancelEdit();
         } catch (err) {
             console.error(err);
-            setError("Unable to update activity.");
+            setError("ไม่สามารถอัปเดตกิจกรรมได้");
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleRemoveEvent = async (eventId: string) => {
-        if (!window.confirm("Delete this activity?")) {
+        if (!window.confirm("ยืนยันการลบกิจกรรมนี้?")) {
             return;
         }
 
         try {
             await api.delete(`/calendar/${eventId}`);
-            await fetchCalendar();
+            await queryClient.invalidateQueries({ queryKey: ["calendar"] });
         } catch (err) {
             console.error(err);
-            setError("Unable to remove activity.");
+
+            setError("ไม่สามารถลบกิจกรรมได้");
         }
     };
 
-    const displayName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "WellMate User";
+    const displayName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "ผู้ใช้งาน WellMate";
     const roleLabelMap: Record<string, string> = {
-        patient: "Patient",
-        nutritionist: "Nutritionist",
-        food_partner: "Food Partner",
-        admin: "Admin",
+        patient: "ผู้ป่วย",
+        nutritionist: "นักโภชนาการ",
+        food_partner: "พาร์ทเนอร์อาหาร",
+        admin: "ผู้ดูแลระบบ",
     };
-    const roleLabel = user?.role ? roleLabelMap[user.role] ?? "Member" : "Member";
+    const roleLabel = user?.role ? roleLabelMap[user.role] ?? "สมาชิก" : "สมาชิก";
     const avatarName = encodeURIComponent(displayName);
 
     return (
@@ -396,26 +388,29 @@ export default function Calendar() {
             <Sidebar />
 
             <main className="flex-1 overflow-y-auto px-8 py-10 z-10 custom-scrollbar ml-64">
-                <header className="mb-8 flex justify-between items-center">
-                    <h1 className="text-3xl font-bold text-slate-800">Calendar</h1>
-                    <div className="flex items-center gap-4">
-                        <button className="text-slate-600 hover:text-slate-800"><Search size={22} /></button>
-                        <button className="text-slate-600 hover:text-slate-800"><Bell size={22} /></button>
-                        <div className="w-px h-6 bg-slate-200"></div>
-                        <div className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-100 transition-colors">
-                            <div className="w-10 h-10 bg-slate-300 rounded-xl overflow-hidden flex items-center justify-center">
-                                <Image
-                                    src={`https://ui-avatars.com/api/?name=${avatarName}&background=94a3b8&color=ffffff`}
-                                    alt="User"
-                                    width={40}
-                                    height={40}
-                                />
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 animate-fadeIn">
+                    <h1 className="text-3xl font-black text-[#1a1a1a] tracking-tight">ปฏิทิน</h1>
+
+                    <div className="flex items-center gap-4 self-end sm:self-auto">
+                        <div className="w-[46px] h-[46px] rounded-full bg-white flex items-center justify-center shadow-sm relative cursor-pointer hover:bg-gray-50 transition-all">
+                            <Search size={22} className="text-gray-400" />
+                        </div>
+
+                        <div className="w-[46px] h-[46px] rounded-full bg-white flex items-center justify-center shadow-sm relative cursor-pointer transition-all">
+                            <NotificationDropdown />
+                        </div>
+
+                        <div className="flex items-center gap-3 ml-2 bg-white/50 pl-2 pr-4 py-1.5 rounded-2xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100">
+                            <ImageUpload sizeClasses="w-11 h-11" />
+                            <div className="hidden sm:block cursor-pointer">
+                                <p className="text-[15px] font-bold text-[#111111] leading-tight">
+                                    {displayName}
+                                </p>
+                                <p className="text-[11px] text-gray-400 font-bold tracking-wide uppercase">
+                                    {roleLabel}
+                                </p>
                             </div>
-                            <div className="hidden sm:block">
-                                <div className="font-bold text-sm text-slate-800">{displayName}</div>
-                                <div className="text-xs text-slate-500 font-medium text-right">{roleLabel}</div>
-                            </div>
-                            <ChevronDown size={18} className="text-slate-500 hidden sm:block" />
+                            <ChevronDown size={18} className="text-gray-400" />
                         </div>
                     </div>
                 </header>
@@ -423,7 +418,7 @@ export default function Calendar() {
                 <div className="grid grid-cols-2 gap-6 mb-8">
                     { }
                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
-                        <h3 className="font-semibold text-slate-500 mb-6 text-sm border-b border-slate-200 pb-3 w-full text-center">Total Physical Activities Schedule</h3>
+                        <h3 className="font-semibold text-slate-500 mb-6 text-sm border-b border-slate-200 pb-3 w-full text-center">จำนวนกิจกรรมทางกายทั้งหมด</h3>
                         <div className="flex items-center gap-4">
                             <div className="bg-[#ffe8a1] w-14 h-14 rounded-2xl flex items-center justify-center">
                                 { }
@@ -433,20 +428,20 @@ export default function Calendar() {
                             </div>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-black text-slate-800">{summary.physical}</span>
-                                <span className="text-xl font-bold text-slate-500">agendas</span>
+                                <span className="text-xl font-bold text-slate-500">รายการ</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
-                        <h3 className="font-semibold text-slate-500 mb-6 text-sm border-b border-slate-200 pb-3 w-full text-center">Total Appointments / Events Schedule</h3>
+                        <h3 className="font-semibold text-slate-500 mb-6 text-sm border-b border-slate-200 pb-3 w-full text-center">จำนวนนัดหมาย / กิจกรรมทั้งหมด</h3>
                         <div className="flex items-center gap-4">
                             <div className="bg-orange-200 w-14 h-14 rounded-2xl flex items-center justify-center">
                                 <CalendarIcon className="text-orange-600" size={28} />
                             </div>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-black text-slate-800">{summary.appointment}</span>
-                                <span className="text-xl font-bold text-slate-500">agendas</span>
+                                <span className="text-xl font-bold text-slate-500">รายการ</span>
                             </div>
                         </div>
                     </div>
@@ -478,7 +473,7 @@ export default function Calendar() {
                                 onClick={() => setIsMonthPickerOpen((prev) => !prev)}
                             >
                                 {monthLabel}
-                                <span className="text-slate-400 font-semibold">{yearLabel}</span>
+                                <span className="text-slate-400 font-semibold">{yearLabel + 543}</span>
                                 <ChevronDown size={20} className={`text-slate-400 transition-transform ${isMonthPickerOpen ? "rotate-180" : ""}`} />
                             </button>
                             {isMonthPickerOpen && (
@@ -506,7 +501,7 @@ export default function Calendar() {
                                         }}
                                     >
                                         {yearOptions.map((year) => (
-                                            <option key={year} value={year}>{year}</option>
+                                            <option key={year} value={year}>{year + 543}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -518,7 +513,7 @@ export default function Calendar() {
                         onClick={handleOpenAddActivity}
                         className="px-5 py-2.5 rounded-lg bg-[#ccff00] text-slate-900 font-black text-sm hover:bg-[#bfe600] transition-colors"
                     >
-                        Add Activity
+                        เพิ่มกิจกรรม
                     </button>
                 </div>
 
@@ -530,7 +525,7 @@ export default function Calendar() {
                             onChange={(e) => setShowPhysical(e.target.checked)}
                             className="w-4 h-4 rounded text-yellow-400 focus:ring-yellow-400 accent-[#ffcc00]"
                         />
-                        <span className="text-sm font-bold text-slate-700">Physical Activities</span>
+                        <span className="text-sm font-bold text-slate-700">กิจกรรมทางกาย</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -539,12 +534,12 @@ export default function Calendar() {
                             onChange={(e) => setShowAppointments(e.target.checked)}
                             className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 accent-orange-500"
                         />
-                        <span className="text-sm font-bold text-slate-700">Appointments/Events</span>
+                        <span className="text-sm font-bold text-slate-700">การนัดหมาย/กิจกรรม</span>
                     </label>
                 </div>
                 {loading && (
                     <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-500">
-                        Loading calendar...
+                        กำลังโหลดปฏิทิน...
                     </div>
                 )}
                 {error && (
@@ -598,7 +593,12 @@ export default function Calendar() {
                                                             </button>
                                                         </div>
                                                         <div className="flex-1 flex flex-col gap-1 overflow-y-auto pr-1">
-                                                            {cell.events.map(ev => (
+                                                            {loading ? (
+                                                                <>
+                                                                    <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                                                                    <div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" />
+                                                                </>
+                                                            ) : cell.events.map(ev => (
                                                                 <div
                                                                     key={ev.id}
                                                                     onClick={() => {
@@ -620,7 +620,7 @@ export default function Calendar() {
                                 ) : (
                                     <tr>
                                         <td colSpan={7} className="h-[240px] border-b border-r border-slate-200 text-center text-sm font-medium text-slate-400">
-                                            No events in this month.
+                                            ไม่มีกิจกรรมในเดือนนี้
                                         </td>
                                     </tr>
                                 )}
@@ -636,7 +636,7 @@ export default function Calendar() {
                 <aside className="hidden xl:flex w-[380px] bg-gradient-to-b from-[#fff8df] via-[#fff4d6] to-[#fff0c8] border-l border-[#f1dfab] shrink-0 flex-col p-5 overflow-y-auto shadow-[-10px_0_30px_rgba(204,255,0,0.08)]">
                     <div className="mb-4 flex items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-[32px] leading-none font-black text-[#2f2a1c] mb-1">Schedule Detail</h2>
+                            <h2 className="text-[32px] leading-none font-black text-[#2f2a1c] mb-1">รายละเอียดกำหนดการ</h2>
                             <div className="text-sm font-bold text-[#7d7050]">{selectedDayLabel}</div>
                         </div>
                         <button
@@ -658,36 +658,36 @@ export default function Calendar() {
                                 <div className="flex items-start justify-between gap-3 mb-3">
                                     <div>
                                         <div className="inline-block rounded-md bg-gradient-to-r from-[#ccff00] to-[#dfff5f] px-2 py-0.5 text-[10px] font-black text-slate-900 mb-2 shadow-sm">
-                                            New Activity
+                                            กิจกรรมใหม่
                                         </div>
-                                        <div className="text-lg font-black text-[#2f2a1c] leading-none">Add Schedule</div>
+                                        <div className="text-lg font-black text-[#2f2a1c] leading-none">เพิ่มกำหนดการ</div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Title</label>
+                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">หัวข้อ</label>
                                         <input
                                             value={newTitle}
                                             onChange={(e) => setNewTitle(e.target.value)}
                                             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#bfe600] focus:ring-2 focus:ring-[#e7f5a5]"
-                                            placeholder="Activity title"
+                                            placeholder="หัวข้อกิจกรรม"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Description</label>
+                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">รายละเอียด</label>
                                         <textarea
                                             value={newDescription}
                                             onChange={(e) => setNewDescription(e.target.value)}
                                             rows={3}
                                             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#bfe600] focus:ring-2 focus:ring-[#e7f5a5] resize-none"
-                                            placeholder="Describe this activity"
+                                            placeholder="อธิบายกิจกรรมนี้"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Calories (kcal)</label>
+                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">แคลอรี่ (kcal)</label>
                                         <input
                                             type="number"
                                             min={0}
@@ -699,7 +699,7 @@ export default function Calendar() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Start Time</label>
+                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">เวลาเริ่มต้น</label>
                                         <input
                                             type="datetime-local"
                                             value={newStartTime}
@@ -709,7 +709,7 @@ export default function Calendar() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">End Time</label>
+                                        <label className="block text-[11px] font-bold text-slate-600 mb-1">เวลาสิ้นสุด</label>
                                         <input
                                             type="datetime-local"
                                             value={newEndTime}
@@ -723,14 +723,14 @@ export default function Calendar() {
                                             onClick={handleCancelAdd}
                                             className="text-[11px] px-3 py-1.5 rounded-lg bg-slate-200 text-slate-600 font-semibold hover:bg-slate-300 transition-colors"
                                         >
-                                            Cancel
+                                            ยกเลิก
                                         </button>
                                         <button
                                             onClick={handleCreateActivity}
                                             disabled={isSaving || !newTitle.trim() || !newStartTime}
                                             className="text-[11px] px-3 py-1.5 rounded-lg bg-[#ccff00] text-slate-900 font-black hover:bg-[#bfe600] transition-colors disabled:opacity-50"
                                         >
-                                            {isSaving ? "Saving..." : "Create Activity"}
+                                            {isSaving ? "กำลังบันทึก..." : "สร้างกิจกรรม"}
                                         </button>
                                     </div>
                                 </div>
@@ -738,7 +738,7 @@ export default function Calendar() {
                         )}
                         {selectedDayEvents.length === 0 ? (
                             <div className="rounded-2xl border border-[#e7d39d] bg-white/90 p-5 text-sm font-semibold text-[#8a7950]">
-                                No schedules for this day.
+                                ไม่มีกำหนดการสำหรับวันนี้
                             </div>
                         ) : (
                             selectedDayEvents.map((event) => (
@@ -752,7 +752,7 @@ export default function Calendar() {
                                             : "bg-gradient-to-r from-[#f39a61] to-[#ffb27d] text-white"
                                             }`}
                                     >
-                                        {event.type === "physical" ? "Physical Activities" : "Appointments"}
+                                        {event.type === "physical" ? "กิจกรรมทางกาย" : "การนัดหมาย"}
                                     </div>
                                     <h3 className="font-black text-[31px] leading-[1.05] text-[#2f2a1c] mb-3">{event.title}</h3>
 
@@ -775,9 +775,9 @@ export default function Calendar() {
                                     </div>
 
                                     <div className="rounded-xl bg-[#fffdf5] p-3 border border-[#e9ddb9] mb-3">
-                                        <div className="text-[10px] text-[#8a7950] font-semibold mb-1">Note</div>
+                                        <div className="text-[10px] text-[#8a7950] font-semibold mb-1">บันทึก</div>
                                         <div className="text-[10px] text-[#8a7950]">
-                                            No additional note.
+                                            ไม่มีบันทึกเพิ่มเติม
                                         </div>
                                     </div>
 
@@ -806,14 +806,14 @@ export default function Calendar() {
                                                     onClick={handleCancelEdit}
                                                     className="text-[10px] px-2.5 py-1 rounded bg-slate-200 text-slate-600 font-semibold"
                                                 >
-                                                    Cancel
+                                                    ยกเลิก
                                                 </button>
                                                 <button
                                                     onClick={() => handleSaveEdit(event.id)}
                                                     disabled={isSaving || !editTitle.trim() || !editStartTime}
                                                     className="text-[10px] px-2.5 py-1 rounded bg-gradient-to-r from-[#b7ea2e] to-[#d2f25c] text-[#4f6400] font-bold disabled:opacity-50"
                                                 >
-                                                    {isSaving ? "Saving..." : "Save"}
+                                                    {isSaving ? "กำลังบันทึก..." : "บันทึก"}
                                                 </button>
                                             </div>
                                         </div>
@@ -823,13 +823,13 @@ export default function Calendar() {
                                                 onClick={() => handleStartEdit(event)}
                                                 className="text-[10px] px-2.5 py-1 rounded bg-slate-200 text-slate-600 font-semibold"
                                             >
-                                                Edit
+                                                แก้ไข
                                             </button>
                                             <button
                                                 onClick={() => handleRemoveEvent(event.id)}
                                                 className="text-[10px] px-2.5 py-1 rounded bg-gradient-to-r from-[#b7ea2e] to-[#d2f25c] text-[#4f6400] font-bold"
                                             >
-                                                Remove
+                                                ลบ
                                             </button>
                                         </div>
                                     )}

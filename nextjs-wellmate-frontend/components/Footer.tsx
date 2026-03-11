@@ -5,9 +5,11 @@ export default function Footer() {
         <footer className="bg-white text-gray-600 py-16 border-t border-gray-100">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                    {}
+                    { }
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-gray-900">Wellmate</h3>
+                        <div className="pb-4 flex justify-center md:justify-start">
+                            <img src="/logo.png" alt="WellMate Logo" className="h-20 w-auto" />
+                        </div>
                         <p className="text-sm text-gray-500 leading-relaxed">
                             เพื่อนคู่คิดด้านสุขภาพของคุณ<br />เพื่อชีวิตที่ดีอย่างยั่งยืน
                         </p>
@@ -18,7 +20,7 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {}
+                    { }
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-4">เมนู</h4>
                         <ul className="space-y-3 text-sm">
@@ -28,7 +30,7 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {}
+                    { }
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-4">ช่วยเหลือ</h4>
                         <ul className="space-y-3 text-sm">
@@ -38,7 +40,7 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {}
+                    { }
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-4">ติดต่อ</h4>
                         <ul className="space-y-3 text-sm">
