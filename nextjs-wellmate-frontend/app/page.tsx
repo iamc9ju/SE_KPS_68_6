@@ -1,9 +1,9 @@
-import Navbar from "@/component/Navbar";
-import Hero from "@/component/Hero";
-import NutritionistList from "@/component/NutritionistList";
-import HowToUse from "@/component/HowToUse";
-import UserReviews from "@/component/UserReviews";
-import Footer from "@/component/Footer";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import NutritionistList from "@/components/NutritionistList";
+import HowToUse from "@/components/HowToUse";
+import UserReviews from "@/components/UserReviews";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (

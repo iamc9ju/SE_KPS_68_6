@@ -1,26 +1,44 @@
-import { IsString, IsUUID, IsOptional, IsNumber, IsDecimal } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateNutritionistDto {
-  @IsUUID()
-  userId: string;
-
+export class CreateFoodPartnerDto {
+  @ApiProperty({
+    example: 'ร้านสลัดสุขภาพใจ',
+    description: 'ชื่อร้านอาหารพาร์ทเนอร์',
+  })
   @IsString()
-  firstName: string;
+  name: string;
 
-  @IsString()
-  lastName: string;
-
+  @ApiPropertyOptional({
+    example: 'รวมเมนูสลัดและอาหารคลีนเพื่อสุขภาพ',
+    description: 'คำอธิบายร้าน',
+  })
   @IsOptional()
   @IsString()
-  licenseNumber?: string;
+  description?: string;
 
+  @ApiPropertyOptional({
+    example: '0812345678',
+    description: 'เบอร์ติดต่อร้าน',
+  })
   @IsOptional()
   @IsString()
-  licenseDocumentUrl?: string;
+  phone?: string;
 
+  @ApiPropertyOptional({
+    example: '123 ถ.สุขุมวิท กรุงเทพฯ',
+    description: 'ที่อยู่ร้าน',
+  })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional({ example: 15.0, description: 'อัตราค่าคอมมิชชัน (%)' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  consultationFee?: number; // default จะเป็น 500 ถ้าไม่ส่งมา
+  @Min(0)
+  @Max(100)
+  commissionRate?: number;
 }

@@ -14,9 +14,6 @@ export class HealthMetricsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Helper function to get the internal patientId bound to a user UUID.
-   */
   private async getPatientId(userId: string): Promise<string> {
     const patient = await this.prisma.patient.findUnique({
       where: { userId },
@@ -35,9 +32,13 @@ export class HealthMetricsService {
     const metric = await this.prisma.healthMetric.create({
       data: {
         patientId,
+        gender: dto.gender,
+        ageYears: dto.ageYears,
         weightKg: dto.weightKg,
         heightCm: dto.heightCm,
-        bodyFatPercent: dto.bodyFatPercent,
+        activityLevel: dto.activityLevel,
+        goal: dto.goal,
+        goalDetail: dto.goalDetail,
       },
     });
 
@@ -98,9 +99,13 @@ export class HealthMetricsService {
     return this.prisma.healthMetric.update({
       where: { id: metricId },
       data: {
+        gender: dto.gender,
+        ageYears: dto.ageYears,
         weightKg: dto.weightKg,
         heightCm: dto.heightCm,
-        bodyFatPercent: dto.bodyFatPercent,
+        activityLevel: dto.activityLevel,
+        goal: dto.goal,
+        goalDetail: dto.goalDetail,
       },
     });
   }

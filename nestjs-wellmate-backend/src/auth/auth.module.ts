@@ -5,19 +5,22 @@ import { AuthController } from './auth.controller';
 import { TokenService } from './token.service';
 import { PasswordService } from './password.service';
 import { PrismaModule } from '../prisma/prisma.module';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
+    ConfigModule,
     PrismaModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '15m' },
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRATION') || '15m',
+        } as JwtSignOptions,
       }),
       inject: [ConfigService],
     }),

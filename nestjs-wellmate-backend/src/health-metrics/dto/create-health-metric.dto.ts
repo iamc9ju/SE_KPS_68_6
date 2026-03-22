@@ -1,9 +1,46 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, Min, Max } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+
+const GENDER_OPTIONS = ['male', 'female', 'other'] as const;
+const ACTIVITY_LEVEL_OPTIONS = [
+  'sedentary',
+  'light',
+  'moderate',
+  'active',
+  'very_active',
+] as const;
 
 export class CreateHealthMetricDto {
   @ApiPropertyOptional({
-    description: 'น้ำหนัก (กิโลกรัม)',
+    description: 'Gender',
+    enum: GENDER_OPTIONS,
+  })
+  @IsIn(GENDER_OPTIONS)
+  @IsOptional()
+  gender?: (typeof GENDER_OPTIONS)[number];
+
+  @ApiPropertyOptional({
+    description: 'Age in years',
+    minimum: 1,
+    maximum: 130,
+  })
+  @IsInt()
+  @IsOptional()
+  @Min(1)
+  @Max(130)
+  ageYears?: number;
+
+  @ApiPropertyOptional({
+    description: 'Weight in kilograms',
     minimum: 1,
     maximum: 500,
   })
@@ -14,7 +51,7 @@ export class CreateHealthMetricDto {
   weightKg?: number;
 
   @ApiPropertyOptional({
-    description: 'ส่วนสูง (เซนติเมตร)',
+    description: 'Height in centimeters',
     minimum: 30,
     maximum: 300,
   })
@@ -25,13 +62,28 @@ export class CreateHealthMetricDto {
   heightCm?: number;
 
   @ApiPropertyOptional({
-    description: 'เปอร์เซ็นต์ไขมันในร่างกาย (%)',
-    minimum: 1,
-    maximum: 100,
+    description: 'Activity level for TDEE calculation',
+    enum: ACTIVITY_LEVEL_OPTIONS,
   })
-  @IsNumber()
+  @IsIn(ACTIVITY_LEVEL_OPTIONS)
   @IsOptional()
-  @Min(1)
-  @Max(100)
-  bodyFatPercent?: number;
+  activityLevel?: (typeof ACTIVITY_LEVEL_OPTIONS)[number];
+
+  @ApiPropertyOptional({
+    description: 'Health goal',
+    maxLength: 100,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  goal?: string;
+
+  @ApiPropertyOptional({
+    description: 'Additional health goal detail',
+    maxLength: 1000,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(1000)
+  goalDetail?: string;
 }

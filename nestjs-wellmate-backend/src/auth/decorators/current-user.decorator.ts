@@ -4,19 +4,38 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtPayload } from '../interface/jwt-payload.interface';
+import type { Request } from 'express';
 
 export const CurrentUser = createParamDecorator(
-  <K extends keyof JwtPayload>(
-    data: K | undefined,
-    ctx: ExecutionContext,
-  ): JwtPayload[K] | JwtPayload => {
-    const request = ctx.switchToHttp().getRequest();
-    const user = request.user as JwtPayload;
+  (data: keyof JwtPayload | undefined, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest<Request>();
+    const user = request.user as unknown;
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('User not found in request');
     }
 
-    return data ? user[data] : user;
+    if (!isValidJwtPayload(user)) {
+      throw new UnauthorizedException('Invalid user payload');
+    }
+
+    if (data) {
+      return user[data];
+    }
+
+    return user;
   },
 );
+
+function isValidJwtPayload(user: unknown): user is JwtPayload {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'sub' in user &&
+    typeof (user as JwtPayload).sub === 'string' &&
+    'email' in user &&
+    typeof (user as JwtPayload).email === 'string' &&
+    'role' in user &&
+    typeof (user as JwtPayload).role === 'string'
+  );
+}

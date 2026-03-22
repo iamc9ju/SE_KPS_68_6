@@ -1,9 +1,9 @@
-@import "tailwindcss";
+@import "../node_modules/tailwindcss/index.css";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  /* สีเขียวตามแบบ */
+  
   --primary: #a3d133;
   --primary-hover: #92bd2e;
 }
@@ -16,16 +16,12 @@
   --font-sans: var(--font-anuphan);
 }
 
-/* ... existing dark mode code ... */
-
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -59,6 +55,94 @@
   animation: slideUp 1s ease forwards;
 }
 
+<<<<<<< HEAD
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out forwards;
 }
+=======
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar {
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(0.85);
+  }
+  100% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+}
+
+@keyframes wave-slow {
+  0% {
+    transform: translateX(-50%) translateZ(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25%) translateZ(0) scaleY(1.1);
+  }
+  100% {
+    transform: translateX(0) translateZ(0) scaleY(1);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 10px rgba(198, 224, 101, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 20px rgba(198, 224, 101, 0.7));
+  }
+}
+
+.animate-wave {
+  animation: wave 8s linear infinite;
+}
+
+.animate-wave-slow {
+  animation: wave-slow 12s linear infinite;
+}
+
+.animate-glow-green {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Tracking page animations */
+@keyframes pulse-marker {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(163, 209, 51, 0.4); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(163, 209, 51, 0); }
+}
+
+@keyframes bounce-step {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.08); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pulse-marker {
+  animation: pulse-marker 2s ease-in-out infinite;
+}
+
+.animate-bounce-step {
+  animation: bounce-step 0.8s ease-out forwards;
+}
+
+>>>>>>> 2d88d27a5f1de6e160ca7642bf0073a053576e8d

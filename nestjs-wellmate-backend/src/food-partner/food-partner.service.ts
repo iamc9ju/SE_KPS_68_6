@@ -7,7 +7,6 @@ import { UpdateFoodPartnerDto } from './dto/update-food-partner.dto';
 export class FoodPartnerService {
   constructor(private prisma: PrismaService) {}
 
-  // ✅ Find all
   async findAll() {
     return this.prisma.foodPartner.findMany({
       include: {
@@ -16,7 +15,6 @@ export class FoodPartnerService {
     });
   }
 
-  // ✅ Find one
   async findOne(id: number) {
     const partner = await this.prisma.foodPartner.findUnique({
       where: { foodPartnerId: id },
@@ -32,23 +30,19 @@ export class FoodPartnerService {
     return partner;
   }
 
-  // ✅ Update
   async update(id: number, dto: UpdateFoodPartnerDto) {
     return this.prisma.foodPartner.update({
-        where: { foodPartnerId: id },
-        data: {
+      where: { foodPartnerId: id },
+      data: {
         ...dto,
-        rating: dto.rating !== undefined
-            ? new Prisma.Decimal(dto.rating)
-            : undefined,
-        commissionRate: dto.commissionRate !== undefined
+        commissionRate:
+          dto.commissionRate !== undefined
             ? new Prisma.Decimal(dto.commissionRate)
             : undefined,
-        },
+      },
     });
-    }
+  }
 
-  // ✅ Delete
   async remove(id: number) {
     await this.findOne(id);
 

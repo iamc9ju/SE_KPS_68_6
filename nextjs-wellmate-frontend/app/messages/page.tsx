@@ -171,6 +171,7 @@ const ChatBubble = ({ msg, onImageClick }: { msg: Message; onImageClick?: (url: 
                                 <ZoomIn size={18} className="text-white" />
                             </div>
                         </div>
+                        <div className="font-bold text-xl tracking-tight uppercase text-[#3A3A3A]">Wellmate</div>
                     </div>
                 ) : (
                     <div className={`px-4 py-3 text-[14px] leading-relaxed shadow-sm ${msg.isDoc

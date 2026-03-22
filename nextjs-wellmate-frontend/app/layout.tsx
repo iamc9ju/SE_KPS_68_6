@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Anuphan } from "next/font/google";
 import "./globals.css";
-import Footer from "@/component/Footer";
+import Footer from "@/components/Footer";
 
 const anuphan = Anuphan({
   subsets: ["thai", "latin"],

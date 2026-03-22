@@ -1,6 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -30,23 +30,16 @@ export class TokenService {
     this.refreshTokenExpiryMs = refreshDays * 24 * 60 * 60 * 1000;
   }
 
-  /**
-   * สร้าง JWT Access Token
-   */
   generateAccessToken(payload: {
     sub: string;
     email: string;
     role: string;
   }): string {
     return this.jwtService.sign(payload, {
-      expiresIn: this.accessTokenExpiry as any,
-    });
+      expiresIn: this.accessTokenExpiry,
+    } as JwtSignOptions);
   }
 
-  /**
-   * สร้าง Refresh Token ใหม่และบันทึกลง DB
-   * format: {tokenId}.{secret}
-   */
   async createRefreshToken(
     userId: string,
     ip: string,
@@ -73,14 +66,6 @@ export class TokenService {
     return `${tokenId}.${secret}`;
   }
 
-  /**
-   * Rotate Refresh Token:
-   * 1. ตรวจสอบ token เก่า
-   * 2. ตรวจ reuse detection (family-based)
-   * 3. Mark token เก่า usedAt
-   * 4. สร้าง token ใหม่ใน family เดียวกัน
-   * 5. สร้าง access token ใหม่
-   */
   async rotateRefreshToken(
     oldRefreshToken: string,
     ip?: string,
@@ -106,7 +91,6 @@ export class TokenService {
       throw new UnauthorizedException('Refresh token expired or revoked');
     }
 
-    // Reuse detection — ถ้า token ถูกใช้แล้ว = มีคน steal token
     if (token.usedAt) {
       await this.prisma.refreshToken.updateMany({
         where: { family: token.family },
@@ -120,13 +104,11 @@ export class TokenService {
       );
     }
 
-    // Verify secret
     const isValid = await bcrypt.compare(secret, token.secretHash);
     if (!isValid) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Rotate: mark old → create new
     const newTokenId = crypto.randomUUID();
     const newSecret = crypto.randomBytes(32).toString('hex');
     const newRefreshToken = `${newTokenId}.${newSecret}`;
@@ -161,9 +143,6 @@ export class TokenService {
     return { accessToken, refreshToken: newRefreshToken };
   }
 
-  /**
-   * Revoke single refresh token (logout จากอุปกรณ์เดียว)
-   */
   async revokeToken(refreshToken: string): Promise<void> {
     const [tokenId, secret] = refreshToken.split('.');
     if (!tokenId || !secret) {
@@ -187,9 +166,6 @@ export class TokenService {
     }
   }
 
-  /**
-   * Revoke ทุก refresh token ของ user (logout จากทุกอุปกรณ์)
-   */
   async revokeAllTokens(userId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: {
