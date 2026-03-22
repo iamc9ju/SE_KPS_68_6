@@ -1,327 +1,191 @@
 "use client";
 
 import { useState } from "react";
-import {
-    LayoutDashboard,
-    CalendarDays,
-    Heart,
-    Calendar,
-    MessageCircle,
-    Utensils,
-    Package,
-    BookOpen,
-    ClipboardList,
-    BarChart3,
-    Settings,
-    LogOut,
-    CheckCircle,
-    Circle
-} from "lucide-react";
+import Link from "next/link";
+import { CheckCircle, Circle, ChevronLeft, ChevronRight, Flame, BookOpen } from "lucide-react";
 
-type Meal = {
-    name: string;
-    calories: number;
-    time: string;
-    done?: boolean;
+type Meal = { name: string; calories: number; time: string; done?: boolean };
+
+const mealImages: Record<string, string> = {
+    "เช้า": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=60&h=60&fit=crop",
+    "กลางวัน": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=60&h=60&fit=crop",
+    "เย็น": "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=60&h=60&fit=crop",
 };
 
 export default function FoodDiaryPage() {
+    const today = new Date().toISOString().split("T")[0];
+    const [selectedDate, setSelectedDate] = useState(today);
 
-    const [selectedDate, setSelectedDate] = useState(
-        new Date().toISOString().split("T")[0]
-    );
-
-    // 📌 PLAN (มาจากหน้า MealPlan)
     const [plannedMeals, setPlannedMeals] = useState<Record<string, Meal[]>>({
-        [selectedDate]: [
+        [today]: [
             { name: "Avocado Bowl", calories: 350, time: "เช้า", done: false },
             { name: "Chicken Salad", calories: 420, time: "กลางวัน", done: false },
         ],
     });
-
-    // ✅ กินจริง
     const [loggedMeals, setLoggedMeals] = useState<Record<string, Meal[]>>({});
+
+    const changeDate = (offset: number) => {
+        const d = new Date(selectedDate);
+        d.setDate(d.getDate() + offset);
+        setSelectedDate(d.toISOString().split("T")[0]);
+    };
+
+    const formatDateThai = (dateStr: string) => {
+        const d = new Date(dateStr);
+        const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+    };
 
     const toggleDone = (index: number) => {
         const updated = [...(plannedMeals[selectedDate] || [])];
-        const meal = updated[index];
-
+        const meal = { ...updated[index] };
         meal.done = !meal.done;
-
-        // ถ้าติ๊ก = ย้ายไป logged
+        updated[index] = meal;
         if (meal.done) {
-            setLoggedMeals((prev) => ({
-                ...prev,
-                [selectedDate]: [...(prev[selectedDate] || []), meal],
-            }));
+            setLoggedMeals(prev => ({ ...prev, [selectedDate]: [...(prev[selectedDate] || []), meal] }));
+        } else {
+            setLoggedMeals(prev => ({ ...prev, [selectedDate]: (prev[selectedDate] || []).filter((_, i) => i !== (prev[selectedDate] || []).findIndex(m => m.name === meal.name)) }));
         }
-
-        setPlannedMeals({
-            ...plannedMeals,
-            [selectedDate]: updated,
-        });
+        setPlannedMeals(prev => ({ ...prev, [selectedDate]: updated }));
     };
 
-    const totalKcal = (loggedMeals[selectedDate] || [])
-        .reduce((sum, m) => sum + m.calories, 0);
+    const dayMeals = plannedMeals[selectedDate] || [];
+    const logged = loggedMeals[selectedDate] || [];
+    const totalKcal = logged.reduce((sum, m) => sum + m.calories, 0);
+    const totalPlanned = dayMeals.reduce((sum, m) => sum + m.calories, 0);
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#f3f4f6" }}>
-
-            {/* SIDEBAR */}
-            <div style={sidebarStyle}>
-                <div>
-                    <div style={{ textAlign: "center", marginBottom: 30 }}>
-                        <div style={{ color: "#84cc16", fontWeight: 800 }}>
-                            WALLMATE
-                        </div>
+        <div className="min-h-screen">
+            {/* Banner */}
+            <div className="relative h-44 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1400&h=400&fit=crop" alt="Banner" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex flex-col justify-center px-10">
+                    <div className="flex items-center gap-2 text-[#ffd980] mb-1">
+                        <BookOpen className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">FOOD DIARY</span>
                     </div>
-
-                    {menuItems.map((item, i) => {
-                        const active = item.name === "บันทึกอาหาร";
-                        const Icon = item.icon;
-
-                        return (
-                            <div key={i} style={{
-                                ...menuItemStyle,
-                                background: active ? "#a3e635" : "transparent",
-                                color: active ? "#1a2e05" : "#6b7280"
-                            }}>
-                                <Icon size={20} />
-                                {item.name}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <div style={logoutStyle}>
-                    <LogOut size={20} />
-                    ออกจากระบบ
+                    <h1 className="text-white text-3xl font-black">บันทึกการกิน</h1>
+                    <p className="text-white/60 text-sm mt-1">ติดตามสิ่งที่คุณ "วางแผน" และ "กินจริง"</p>
                 </div>
             </div>
 
-            {/* MAIN */}
-            <div style={{ flex: 1, padding: "30px" }}>
+            <div className="p-8">
+                {/* Date row */}
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">วันที่เลือก</p>
+                        <h2 className="text-xl font-black text-gray-900">{formatDateThai(selectedDate)}</h2>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => changeDate(-1)} className="p-2 rounded-2xl bg-white hover:bg-green-50 text-gray-500 hover:text-[#4d7c0f] shadow-sm transition-colors">
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+                            className="border border-gray-200 rounded-2xl px-4 py-2 text-sm outline-none focus:border-[#a3e635] bg-white shadow-sm" />
+                        <button onClick={() => changeDate(1)} className="p-2 rounded-2xl bg-white hover:bg-green-50 text-gray-500 hover:text-[#4d7c0f] shadow-sm transition-colors">
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <Link href="/mealplan" className="flex items-center gap-2 bg-[#a3e635] hover:bg-[#84cc16] text-[#1a2e05] font-bold px-5 py-2.5 rounded-2xl text-sm shadow-sm transition-colors">
+                        📋 ไปหน้าแผนการกิน
+                    </Link>
+                </div>
 
-                {/* BANNER */}
-                <div style={bannerStyle}>
-                    <div style={overlayStyle}>
-                        <h1 style={titleStyle}>บันทึกการกิน</h1>
-                        <p style={subtitleStyle}>
-                            ติดตามสิ่งที่คุณ “วางแผน” และ “กินจริง”
-                        </p>
+                {/* Summary */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-50 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-[#fff3cc] rounded-2xl flex items-center justify-center"><Flame className="w-6 h-6 text-[#4d7c0f]" /></div>
+                        <div><p className="text-2xl font-black text-gray-900">{totalKcal}</p><p className="text-xs text-gray-400">กินไปแล้ว (kcal)</p></div>
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-50 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center"><CheckCircle className="w-6 h-6 text-green-500" /></div>
+                        <div><p className="text-2xl font-black text-gray-900">{logged.length}/{dayMeals.length}</p><p className="text-xs text-gray-400">มื้อที่บันทึกแล้ว</p></div>
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-50 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-[#fff8e1] rounded-2xl flex items-center justify-center"><span className="text-xl">🎯</span></div>
+                        <div><p className="text-2xl font-black text-gray-900">{Math.max(0, 2000 - totalKcal)}</p><p className="text-xs text-gray-400">เหลือเป้าหมาย</p></div>
                     </div>
                 </div>
 
-                {/* DATE + SUMMARY */}
-                <div style={topBar}>
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        style={dateStyle}
-                    />
-
-                    <div style={kcalBox}>
-                        🔥 กินไปแล้ว {totalKcal} kcal
-                    </div>
-                </div>
-
-                {/* CONTENT */}
-                <div style={{ display: "flex", gap: "30px", marginTop: "20px" }}>
-
-                    {/* LEFT - PLAN */}
-                    <div style={{ flex: 1 }}>
-                        <h2>📋 แผนที่วางไว้</h2>
-
-                        {(plannedMeals[selectedDate] || []).map((meal, i) => (
-                            <div key={i} style={planCard}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <div onClick={() => toggleDone(i)} style={{ cursor: "pointer" }}>
-                                        {meal.done ? <CheckCircle color="green" /> : <Circle />}
-                                    </div>
-
-                                    <div>
-                                        <h4 style={{ margin: 0 }}>{meal.name}</h4>
-                                        <p style={{ margin: 0, color: "#888" }}>
-                                            {meal.calories} kcal • {meal.time}
-                                        </p>
-                                    </div>
-                                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Planned */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-50">
+                        <h2 className="text-lg font-black text-gray-900 mb-4">📋 แผนที่วางไว้</h2>
+                        {dayMeals.length === 0 ? (
+                            <div className="text-center py-10 text-gray-300">
+                                <p>ยังไม่มีแผน</p>
+                                <Link href="/mealplan" className="text-[#4d7c0f] text-xs font-bold hover:underline mt-2 inline-block">+ เพิ่มแผนการกิน</Link>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="space-y-3">
+                                {dayMeals.map((meal, i) => (
+                                    <div key={i} className={`flex items-center gap-4 p-4 rounded-2xl transition-colors ${meal.done ? "bg-green-50" : "bg-[#fffdf0]"}`}>
+                                        <button onClick={() => toggleDone(i)} className="flex-shrink-0 transition-transform hover:scale-110">
+                                            {meal.done
+                                                ? <CheckCircle className="w-6 h-6 text-green-500" />
+                                                : <Circle className="w-6 h-6 text-gray-300" />}
+                                        </button>
+                                        <img src={mealImages[meal.time]} alt={meal.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <p className={`font-bold text-sm ${meal.done ? "line-through text-gray-400" : "text-gray-800"}`}>{meal.name}</p>
+                                            <p className="text-xs text-gray-400">{meal.calories} kcal · {meal.time}</p>
+                                        </div>
+                                        {meal.done && <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">บันทึกแล้ว ✓</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* RIGHT - LOGGED */}
-                    <div style={{ width: "400px" }}>
-                        <h2>✅ กินแล้ว</h2>
-
-                        {(loggedMeals[selectedDate] || []).map((meal, i) => (
-                            <div key={i} style={logCard}>
-                                <h4 style={{ margin: 0 }}>{meal.name}</h4>
-                                <p style={{ color: "#666" }}>
-                                    {meal.calories} kcal
-                                </p>
-                            </div>
-                        ))}
-
-                        {/* Nutrition Tip 1 */}
-                        <div
-                            style={{ ...tipCardStyle, cursor: "pointer" }}
-                            onClick={() => window.open("https://health.kapook.com/view289834.html", "_blank")}
-                        >
-                            <img
-                                src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800"
-                                alt="การทานอาหารหลากสี"
-                                style={tipImgStyle}
-                            />
-                            <div style={{ padding: "20px" }}>
-                                <h3 style={{ margin: "0 0 10px 0", color: "#4d7c0f", fontSize: "16px" }}>💡 ทานอาหารหลากสี</h3>
-                                <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.5, fontSize: "14px" }}>
-                                    สุขภาพที่ดีเริ่มจากการกิน ควรเน้นผักและผลไม้หลากสีสันให้ได้ 50% ของจาน และเลือกธัญพืชไม่ขัดสีอย่างข้าวกล้อง เพื่อรับวิตามินและกากใยอย่างครบถ้วน
-                                </p>
-                                <div style={{ marginTop: "10px", fontSize: "12px", color: "#3b82f6", display: "flex", alignItems: "center", gap: "4px" }}>
-                                    ที่มา: health.kapook.com 🔗
+                    {/* Logged + Tips */}
+                    <div className="space-y-4">
+                        {/* Logged */}
+                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-50">
+                            <h2 className="text-lg font-black text-gray-900 mb-4">✅ กินจริงแล้ว</h2>
+                            {logged.length === 0 ? (
+                                <div className="text-center py-8 text-gray-300 text-sm">กดติ๊กช่องซ้ายเพื่อบันทึก</div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {logged.map((meal, i) => (
+                                        <div key={i} className="flex items-center gap-3 p-3 bg-[#fffdf0] rounded-2xl">
+                                            <img src={mealImages[meal.time]} alt={meal.name} className="w-10 h-10 rounded-xl object-cover" />
+                                            <div className="flex-1">
+                                                <p className="font-bold text-sm text-gray-800">{meal.name}</p>
+                                                <p className="text-xs text-gray-400">{meal.calories} kcal</p>
+                                            </div>
+                                            <span className="text-[#4d7c0f] font-black text-sm">{meal.calories} kcal</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100 mt-2">
+                                        <span className="text-sm font-bold text-gray-500">รวมทั้งหมด</span>
+                                        <span className="font-black text-gray-900">{totalKcal} kcal</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Nutrition Tip 2 */}
-                        <div
-                            style={{ ...tipCardStyle, cursor: "pointer" }}
-                            onClick={() => window.open("https://www.thairath.co.th/lifestyle/food/2914708", "_blank")}
-                        >
-                            <img
-                                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=800"
-                                alt="โปรตีนกับการลดน้ำหนัก"
-                                style={tipImgStyle}
-                            />
-                            <div style={{ padding: "20px" }}>
-                                <h3 style={{ margin: "0 0 10px 0", color: "#4d7c0f", fontSize: "16px" }}>💪 โปรตีนคุมน้ำหนัก</h3>
-                                <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.5, fontSize: "14px" }}>
-                                    การลดน้ำหนักที่ดีคือการลดไขมันแต่รักษากล้ามเนื้อ การเพิ่มโปรตีนในมื้ออาหารจะช่วยให้อิ่มนานขึ้นและลดความอยากอาหารจุบจิบในระหว่างวัน
-                                </p>
-                                <div style={{ marginTop: "10px", fontSize: "12px", color: "#3b82f6", display: "flex", alignItems: "center", gap: "4px" }}>
-                                    ที่มา: www.thairath.co.th 🔗
-                                </div>
+                        {/* Tips */}
+                        <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-50 cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => window.open("https://health.kapook.com/view289834.html", "_blank")}>
+                            <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&h=300&fit=crop" alt="tip" className="w-full h-32 object-cover" />
+                            <div className="p-4">
+                                <h3 className="font-black text-sm text-[#4d7c0f] mb-1">💡 ทานอาหารหลากสี</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">ควรเน้นผักและผลไม้หลากสีสันให้ได้ 50% ของจาน และเลือกธัญพืชไม่ขัดสีอย่างข้าวกล้อง</p>
+                                <p className="text-xs text-blue-400 mt-2">ที่มา: health.kapook.com 🔗</p>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-50 cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => window.open("https://www.thairath.co.th/lifestyle/food/2914708", "_blank")}>
+                            <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=300&fit=crop" alt="tip2" className="w-full h-32 object-cover" />
+                            <div className="p-4">
+                                <h3 className="font-black text-sm text-[#4d7c0f] mb-1">💪 โปรตีนคุมน้ำหนัก</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">การเพิ่มโปรตีนในมื้ออาหารจะช่วยให้อิ่มนานขึ้นและลดความอยากอาหารจุบจิบ</p>
+                                <p className="text-xs text-blue-400 mt-2">ที่มา: thairath.co.th 🔗</p>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
     );
 }
-
-/* STYLE */
-
-const sidebarStyle = {
-    width: "260px",
-    background: "#f9fafb",
-    padding: "20px 16px",
-    borderRight: "1px solid #e5e7eb",
-    display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "space-between",
-};
-
-const menuItemStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    padding: "12px",
-    borderRadius: "12px",
-    marginTop: "6px",
-    cursor: "pointer",
-};
-
-const logoutStyle = {
-    display: "flex",
-    gap: "10px",
-    color: "#9ca3af",
-};
-
-const bannerStyle = {
-    backgroundImage: "url(https://images.unsplash.com/photo-1498837167922-ddd27525d352)",
-    height: "160px",
-    borderRadius: "20px",
-    display: "flex",
-};
-
-const overlayStyle = {
-    background: "rgba(0,0,0,0.4)",
-    width: "100%",
-    borderRadius: "20px",
-    padding: "30px",
-};
-
-const titleStyle = {
-    color: "#fff",
-    fontSize: "34px",
-    fontWeight: 800,
-};
-
-const subtitleStyle = {
-    color: "#ddd",
-};
-
-const topBar = {
-    display: "flex",
-    justifyContent: "space-between",
-    marginTop: "20px",
-};
-
-const dateStyle = {
-    padding: "8px",
-    borderRadius: "8px",
-};
-
-const kcalBox = {
-    background: "#84cc16",
-    color: "#fff",
-    padding: "10px 20px",
-    borderRadius: "10px",
-};
-
-const planCard = {
-    background: "#fff",
-    padding: "15px",
-    borderRadius: "12px",
-    marginTop: "10px",
-};
-
-const tipCardStyle = {
-    marginTop: "30px",
-    borderRadius: "16px",
-    overflow: "hidden",
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-};
-
-const tipImgStyle = {
-    width: "100%",
-    height: "180px",
-    objectFit: "cover" as const,
-};
-
-const logCard = {
-    background: "#ecfccb",
-    padding: "15px",
-    borderRadius: "12px",
-    marginTop: "10px",
-};
-
-const menuItems = [
-    { name: "แดชบอร์ด", icon: LayoutDashboard },
-    { name: "ประวัติการนัดหมาย", icon: CalendarDays },
-    { name: "บริการโภชนาการ", icon: Heart },
-    { name: "ปฏิทิน", icon: Calendar },
-    { name: "ข้อความ", icon: MessageCircle },
-    { name: "ร้านอาหารสุขภาพ", icon: Utensils },
-    { name: "รายการสั่งซื้อ", icon: Package },
-    { name: "แผนการกิน", icon: BookOpen },
-    { name: "บันทึกอาหาร", icon: ClipboardList },
-    { name: "ความคืบหน้า", icon: BarChart3 },
-    { name: "ตั้งค่า", icon: Settings },
-];
