@@ -107,3 +107,25 @@
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
+
+/* Tracking page animations */
+@keyframes pulse-marker {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(163, 209, 51, 0.4); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(163, 209, 51, 0); }
+}
+
+@keyframes bounce-step {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.08); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pulse-marker {
+  animation: pulse-marker 2s ease-in-out infinite;
+}
+
+.animate-bounce-step {
+  animation: bounce-step 0.8s ease-out forwards;
+}
+

@@ -48,7 +48,7 @@ export class RegisterDto {
 
   @ApiPropertyOptional({ example: 'LIC-12345' })
   @ValidateIf((o) => o.role === UserRole.nutritionist)
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   licenseNumber?: string;
 

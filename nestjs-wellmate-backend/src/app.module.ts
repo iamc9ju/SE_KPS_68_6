@@ -26,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SchedulersModule } from './schedulers/schedulers.module';
 import { CartModule } from './cart/cart.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { TrackingModule } from './tracking/tracking.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { CalendarModule } from './calendar/calendar.module';
     SchedulersModule,
     CartModule,
     CalendarModule,
+    TrackingModule,
   ],
   controllers: [AppController],
   providers: [
@@ -76,4 +78,4 @@ import { CalendarModule } from './calendar/calendar.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

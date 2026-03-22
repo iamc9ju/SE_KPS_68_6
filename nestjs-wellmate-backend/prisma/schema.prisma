@@ -405,6 +405,8 @@ model Order {
   deliveryAddress   String        @map("delivery_address") @db.Text
   deliveryLatitude  Decimal?      @map("delivery_latitude") @db.Decimal(10, 8)
   deliveryLongitude Decimal?      @map("delivery_longitude") @db.Decimal(11, 8)
+  driverLatitude    Decimal?      @map("driver_latitude") @db.Decimal(10, 8)
+  driverLongitude   Decimal?      @map("driver_longitude") @db.Decimal(11, 8)
   deliveryFee       Decimal?      @default(0) @map("delivery_fee") @db.Decimal(10, 2)
   subtotal          Decimal       @db.Decimal(10, 2)
   total             Decimal       @db.Decimal(10, 2)
