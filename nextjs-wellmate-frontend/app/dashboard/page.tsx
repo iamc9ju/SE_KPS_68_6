@@ -12,14 +12,29 @@ import {
     TrendingUp,
     LogOut,
     Bell,
+    Search,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     MoreHorizontal,
+    MoreVertical,
     Flame,
     CheckCircle2,
-    Clock
+    Clock,
+    Droplet
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import {
+    PieChart,
+    Pie,
+    Cell,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip
+} from 'recharts';
 
 export default function Dashboard() {
     const calorieData = [
@@ -28,15 +43,19 @@ export default function Dashboard() {
     ];
     const COLORS = ['#F97316', '#F1F5F9'];
 
+    const [showAdvanced, setShowAdvanced] = React.useState(false);
+
     return (
         <div className="flex h-screen bg-[#fdf6ec] font-sans text-slate-800 overflow-hidden">
             {/* LEFT SIDEBAR */}
             <aside className="w-[260px] bg-white border-r border-slate-200 flex-col justify-between py-6 px-4 shrink-0 overflow-y-auto hidden md:flex">
                 <div>
                     <div className="flex items-center gap-2 px-2 mb-10">
-                        <div className="font-bold text-2xl tracking-tighter flex items-center">
-                            <span className="text-[#a1ce4f] mr-1 italic">WM</span>
-                            <span className="text-slate-800">WELLMATE</span>
+                        <div className="flex items-center gap-2">
+                            <div className="text-[#8CC63F] font-black italic text-2xl tracking-tighter">
+                                W<span className="text-[#F7931E]">M</span>
+                            </div>
+                            <div className="font-bold text-[17px] text-[#3A3A3A] uppercase tracking-tight">WELLMATE</div>
                         </div>
                     </div>
 
@@ -69,9 +88,17 @@ export default function Dashboard() {
 
             {/* MAIN CONTENT */}
             <main className="flex-1 overflow-y-auto p-8">
-                <header className="mb-8">
-                    <h1 className="text-3xl font-bold mb-1 text-slate-800">Hello , New User!</h1>
-                    <p className="text-slate-500 font-medium">let's begin our journey to better health today</p>
+                <header className="mb-8 flex justify-between items-start">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-1 text-slate-800">Hello , New User!</h1>
+                        <p className="text-slate-500 font-medium">let's begin our journey to better health today</p>
+                    </div>
+                    <button
+                        onClick={() => setShowAdvanced(true)}
+                        className="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                    >
+                        <MoreVertical size={20} />
+                    </button>
                 </header>
 
                 {/* TOP STATS CARDS */}
@@ -255,6 +282,8 @@ export default function Dashboard() {
                 </div>
 
             </main>
+            
+            <AdvancedStatsDrawer isOpen={showAdvanced} onClose={() => setShowAdvanced(false)} />
 
             {/* RIGHT SIDEBAR */}
             <aside className="w-[320px] bg-white border-l border-slate-200 overflow-y-auto shrink-0 flex-col hidden xl:flex">
@@ -364,6 +393,226 @@ export default function Dashboard() {
                 </div>
             </aside>
         </div>
+    );
+}
+
+// ─── Sub-Components ─────────────────────────────────────────────────────────────
+
+function AdvancedStatsDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+    if (!isOpen) return null;
+
+    // Internal sub-component for timeframe selection
+    const TimeframeSelector = ({ selected, onChange, options }: { selected: string, onChange: (val: string) => void, options: string[] }) => {
+        const [showDropdown, setShowDropdown] = React.useState(false);
+        return (
+            <div className="relative">
+                <div 
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="bg-[#cceb7c] px-3 py-1.5 rounded-lg text-[11px] font-bold text-[#558019] flex items-center gap-1 cursor-pointer hover:bg-[#bde068] transition-colors"
+                >
+                    {selected} <ChevronDown size={12} className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
+                </div>
+                {showDropdown && (
+                    <>
+                        <div className="fixed inset-0 z-[120]" onClick={() => setShowDropdown(false)} />
+                        <div className="absolute right-0 mt-2 w-36 bg-white border border-zinc-100 rounded-xl shadow-xl z-[130] py-1 animate-in fade-in zoom-in duration-200">
+                            {options.map((opt) => (
+                                <div 
+                                    key={opt}
+                                    onClick={() => { onChange(opt); setShowDropdown(false); }}
+                                    className={`px-4 py-2.5 text-[11px] font-bold cursor-pointer hover:bg-[#f3f9e4] transition-colors border-b last:border-0 border-zinc-50 ${selected === opt ? 'text-[#558019]' : 'text-zinc-500'}`}
+                                >
+                                    {opt}
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    };
+
+    const CALORIES_CHART_DATA = [
+        { day: 'Sun', kcal: 1800 },
+        { day: 'Mon', kcal: 1500 },
+        { day: 'Tue', kcal: 1600 },
+        { day: 'Wed', kcal: 2200 },
+        { day: 'Thu', kcal: 1400 },
+    ];
+
+    const [calTimeframe, setCalTimeframe] = React.useState('5 วันที่ผ่านมา');
+    const [healthTimeframe, setHealthTimeframe] = React.useState('5 วันที่ผ่านมา');
+    const [hydroTimeframe, setHydroTimeframe] = React.useState('สัปดาห์นี้');
+    const [historyTimeframe, setHistoryTimeframe] = React.useState('ดูทั้งหมด');
+
+    const timeframeOptions = ["วันนี้", "เมื่อวาน", "5 วันที่ผ่านมา", "7 วันที่ผ่านมา", "เดือนนี้"];
+    const historyOptions = ["ดูทั้งหมด", "สัปดาห์นี้", "สัปดาห์ที่แล้ว", "เดือนนี้"];
+
+    return (
+        <>
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/20 z-[100] transition-opacity duration-300 opacity-100" onClick={onClose} />
+            
+            {/* Drawer */}
+            <div className="fixed inset-y-0 right-0 w-full md:w-[460px] bg-[#FCFBF8] shadow-2xl z-[110] transform transition-transform duration-300 ease-in-out overflow-y-auto translate-x-0">
+                {/* Header Profile */}
+                <div className="flex items-center justify-between p-6 pb-4 border-b border-zinc-100 mb-6 bg-[#FCFBF8]">
+                    <div className="flex items-center gap-4">
+                        <button className="text-zinc-400 hover:text-zinc-600"><Search size={22} /></button>
+                        <button className="text-zinc-400 hover:text-zinc-600 relative">
+                            <Bell size={22} />
+                            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#FCFBF8]"></span>
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-zinc-200 rounded-full overflow-hidden">
+                            <img src="https://ui-avatars.com/api/?name=Thanapat+Hongaram&background=E2E8F0&color=475569" alt="User" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex flex-col text-left">
+                            <span className="text-sm font-bold text-zinc-800 leading-tight">Thanapat Hongaram</span>
+                            <span className="text-[11px] text-zinc-500 font-medium">Member</span>
+                        </div>
+                        <ChevronDown size={14} className="text-zinc-400 ml-1" />
+                    </div>
+                </div>
+                
+                {/* Content */}
+                <div className="px-8 pb-10 flex flex-col gap-10">
+                    
+                    {/* Calories Activities */}
+                    <div className="pt-2">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-[18px] font-black text-zinc-800 tracking-tight">สถิติแคลอรีและกิจกรรม</h2>
+                            <TimeframeSelector 
+                                selected={calTimeframe} 
+                                onChange={setCalTimeframe} 
+                                options={timeframeOptions} 
+                            />
+                        </div>
+                        <div className="mb-8">
+                            <div className="flex items-baseline gap-1.5 mb-1">
+                                <span className="text-4xl font-black text-zinc-800">450</span>
+                                <span className="text-[13px] text-zinc-400 font-medium">kcal คงเหลือ</span>
+                            </div>
+                            <p className="text-[11px] text-zinc-400 font-medium tracking-wide">เป้าหมายแคลอรี 2500 kcal</p>
+                        </div>
+                        <div className="h-44 w-full mb-2">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={CALORIES_CHART_DATA} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
+                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#A1A1AA', fontWeight: 500 }} dy={15} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#A1A1AA', fontWeight: 500 }} tickCount={5} domain={[0, 2200]} />
+                                    <Bar dataKey="kcal" fill="#F6D365" radius={[4, 4, 0, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Health Indicators */}
+                    <div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-[18px] font-black text-zinc-800 tracking-tight">ตัวบ่งชี้สุขภาพ</h2>
+                            <TimeframeSelector 
+                                selected={healthTimeframe} 
+                                onChange={setHealthTimeframe} 
+                                options={timeframeOptions} 
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-[#F6EFE9] rounded-3xl p-5 flex flex-col justify-between min-h-[110px]">
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className="text-[13px] font-bold text-zinc-700">BMI</span>
+                                    <span className="bg-[#BCE875] text-[#4d7018] text-[10px] font-bold px-2 py-0.5 rounded-full">ปกติ</span>
+                                </div>
+                                <span className="text-3xl font-black text-zinc-800">22.5</span>
+                            </div>
+                            <div className="bg-[#F6EFE9] rounded-3xl p-5 flex flex-col justify-between min-h-[110px]">
+                                <span className="text-[13px] font-bold text-zinc-700 mb-3">% Body Fat</span>
+                                <span className="text-3xl font-black text-zinc-800">18%</span>
+                            </div>
+                            <div className="bg-[#F6EFE9] rounded-3xl p-5 flex flex-col justify-between min-h-[110px]">
+                                <span className="text-[13px] font-bold text-zinc-700 mb-3">BMR</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl font-black text-zinc-800">1650</span>
+                                    <span className="text-[11px] font-bold text-zinc-500">kcal</span>
+                                </div>
+                            </div>
+                            <div className="bg-[#F6EFE9] rounded-3xl p-5 flex flex-col justify-between min-h-[110px]">
+                                <span className="text-[13px] font-bold text-zinc-700 mb-3">TDEE</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl font-black text-zinc-800">2300</span>
+                                    <span className="text-[11px] font-bold text-zinc-500">kcal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Hydration */}
+                    <div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-[18px] font-black text-zinc-800 tracking-tight">การดื่มน้ำ</h2>
+                            <TimeframeSelector 
+                                selected={hydroTimeframe} 
+                                onChange={setHydroTimeframe} 
+                                options={["สัปดาห์นี้", "สัปดาห์ที่แล้ว", "เดือนนี้"]} 
+                            />
+                        </div>
+                        <div className="flex gap-8 items-center mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-[#E5F5C1] flex items-center justify-center text-[#6CA920]">
+                                    <Droplet size={24} fill="currentColor" strokeWidth={0} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[11px] font-medium text-zinc-500 mb-0.5">ระดับความชุ่มชื้น</span>
+                                    <span className="text-[15px] font-black text-zinc-800">ปกติ</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-[#FFAEB4] flex items-center justify-center text-white">
+                                    <Droplet size={24} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[11px] font-medium text-zinc-500 mb-0.5">ปริมาณที่ดื่ม</span>
+                                    <span className="text-[15px] font-black text-zinc-800">2.0 L</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Historical Results Summary */}
+                    <div className="pb-10">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-[18px] font-black text-zinc-800 tracking-tight">ประวัติผลลัพธ์ย้อนหลัง</h2>
+                            <TimeframeSelector 
+                                selected={historyTimeframe} 
+                                onChange={setHistoryTimeframe} 
+                                options={historyOptions} 
+                            />
+                        </div>
+                        <div className="space-y-3">
+                            {[
+                                { date: '15 มี.ค. 2026', weight: '72.5 kg', bmi: '22.8', status: 'ปกติ' },
+                                { date: '08 มี.ค. 2026', weight: '73.2 kg', bmi: '23.0', status: 'ปกติ' },
+                                { date: '01 มี.ค. 2026', weight: '74.0 kg', bmi: '23.4', status: 'เริ่มมีน้ำหนักเกิน' },
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-white border border-zinc-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-bold text-zinc-400 mb-0.5">{item.date}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-black text-zinc-800">{item.weight}</span>
+                                            <span className="text-[11px] font-bold text-zinc-500">BMI {item.bmi}</span>
+                                        </div>
+                                    </div>
+                                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${item.status === 'ปกติ' ? 'bg-[#EEF7F1] text-[#4d7018]' : 'bg-[#FFF5F5] text-[#E53E3E]'}`}>
+                                        {item.status}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
     );
 }
 
