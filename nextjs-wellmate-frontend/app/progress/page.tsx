@@ -240,14 +240,6 @@ function UpdateProgressModal({ onClose, onSave, defaultData }: { onClose: () => 
     };
 
     return (
-<<<<<<< HEAD
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="flex items-start justify-between px-8 pt-8 pb-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-zinc-800">Update Progress</h2>
-                        <p className="text-sm text-zinc-500 mt-1">{dateStr}</p>
-=======
         <div className="flex h-screen bg-white text-zinc-800 font-sans overflow-hidden">
             {/* Sidebar */}
             <div className="w-64 flex-shrink-0 border-r border-zinc-100 flex flex-col justify-between py-6 px-4 bg-white z-10 overflow-y-auto">
@@ -268,7 +260,6 @@ function UpdateProgressModal({ onClose, onSave, defaultData }: { onClose: () => 
                         <NavItem icon={<Utensils size={20} />} label="Meal Plan" />
                         <NavItem icon={<BookOpen size={20} />} label="Food Diary" />
                         <NavItem icon={<TrendingUp size={20} />} label="Progress" active={true} />
->>>>>>> 2d88d27a5f1de6e160ca7642bf0073a053576e8d
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-700 mt-1"><X size={18} /></button>
                 </div>

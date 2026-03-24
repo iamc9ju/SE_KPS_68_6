@@ -61,9 +61,9 @@ export default function NutritionistCard({
                 router.push(`/dashboard/nutrition/${nutritionist.nutritionistId}`)
             }
         >
-            {}
+            { }
             <div className="aspect-[4/3] bg-gradient-to-br from-[#faf8f2] to-[#f0e6cc]/30 relative overflow-hidden">
-                {}
+                { }
                 <img
                     src={photoUrl}
                     alt={`${nutritionist.firstName} ${nutritionist.lastName}`}
@@ -76,7 +76,7 @@ export default function NutritionistCard({
                 )}
             </div>
 
-            {}
+            { }
             <div className="p-4">
                 <h3 className="font-bold text-[#3d3522] text-sm mb-0.5 group-hover:text-[#4A6707] transition-colors leading-tight">
                     {nutritionist.firstName} {nutritionist.lastName}
@@ -85,7 +85,7 @@ export default function NutritionistCard({
                     {primarySpecialty}
                 </p>
 
-                {}
+                { }
                 <div className="flex items-center gap-1.5">
                     <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
