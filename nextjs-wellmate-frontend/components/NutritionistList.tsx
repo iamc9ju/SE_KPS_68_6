@@ -88,7 +88,7 @@ export default function NutritionistList() {
                                     </Button>
                                 </Link>
                             </div>
->>>>>>> 97f29b793709bc26138f87259945fab9abb004c1
+
 
                                     <div className="mb-3">
                                         {/* Link to public profile or let them use the dashboard if logged in */}
