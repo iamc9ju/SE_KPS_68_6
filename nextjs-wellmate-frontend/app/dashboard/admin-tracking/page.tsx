@@ -1,24 +1,85 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Package, Navigation, UtensilsCrossed, AlertCircle, ChevronRight, User, MapPin } from "lucide-react";
 
 export default function AdminTrackingDashboard() {
     const [filter, setFilter] = useState("all");
-
-    const stats = [
+    
+    // Fallback Mock Data
+    const [stats, setStats] = useState([
         { label: "ออเดอร์ทั้งหมดวันนี้", value: 142, icon: <Package size={20} className="text-[#85B22E]" />, color: "bg-[#f0f4d8]" },
         { label: "กำลังจัดส่ง", value: 24, icon: <Navigation size={20} className="text-orange-500" />, color: "bg-orange-50" },
         { label: "รอทำอาหาร", value: 12, icon: <UtensilsCrossed size={20} className="text-blue-500" />, color: "bg-blue-50" },
         { label: "ล่าช้า (เกิน 45 นาที)", value: 2, icon: <AlertCircle size={20} className="text-red-500" />, color: "bg-red-50" },
-    ];
+    ]);
 
-    const orders = [
+    const [orders, setOrders] = useState([
         { id: "#WM-8492", customer: "Somchai K.", phone: "081-xxx-xxxx", status: "delivering", time: "18 mins", driver: "Winai R." },
         { id: "#WM-8493", customer: "Ariya M.", phone: "089-xxx-xxxx", status: "preparing", time: "5 mins", driver: "Waiting..." },
         { id: "#WM-8494", customer: "Napat T.", phone: "082-xxx-xxxx", status: "delayed", time: "50 mins", driver: "Sompop T." },
         { id: "#WM-8495", customer: "Ploy P.", phone: "083-xxx-xxxx", status: "accepted", time: "1 min", driver: "Waiting..." },
-    ];
+    ]);
+
+    useEffect(() => {
+        // อัปเดตข้อมูลจาก API ที่เราเขียนใน backend (แบบไม่มี WebSocket)
+        const fetchData = async () => {
+            try {
+                const token = localStorage.getItem('accessToken') || '';
+                const headers = { 'Authorization': `Bearer ${token}` };
+                
+                // Fetch Stats
+                const statsRes = await fetch('http://localhost:3000/orders/admin/tracking-stats', { headers });
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    setStats([
+                        { label: "ออเดอร์ทั้งหมดวันนี้", value: statsData.totalToday || 0, icon: <Package size={20} className="text-[#85B22E]" />, color: "bg-[#f0f4d8]" },
+                        { label: "กำลังจัดส่ง", value: statsData.delivering || 0, icon: <Navigation size={20} className="text-orange-500" />, color: "bg-orange-50" },
+                        { label: "รอทำอาหาร", value: statsData.preparing || 0, icon: <UtensilsCrossed size={20} className="text-blue-500" />, color: "bg-blue-50" },
+                        { label: "ล่าช้า (เกิน 45 นาที)", value: statsData.delayed || 0, icon: <AlertCircle size={20} className="text-red-500" />, color: "bg-red-50" },
+                    ]);
+                }
+
+                // Fetch Live Orders
+                const ordersRes = await fetch('http://localhost:3000/orders/admin/live-orders', { headers });
+                if (ordersRes.ok) {
+                    const ordersData = await ordersRes.json();
+                    if (ordersData && ordersData.length > 0) {
+                        setOrders(ordersData.map((o: any) => ({
+                            id: `#WM-${o.id}`,
+                            customer: o.customer,
+                            phone: o.phone,
+                            status: o.status,
+                            time: o.time,
+                            driver: o.driver
+                        })));
+                    }
+                }
+            } catch (err) {
+                console.log("Using mock data as fallback");
+            }
+        };
+
+        fetchData();
+        const interval = setInterval(fetchData, 30000); // Poll every 30s instead of ws
+        return () => clearInterval(interval);
+    }, []);
+
+    // Generate random mock tracking pins
+    const [mockPins, setMockPins] = useState<{top: string, left: string, color: string, delay: string, duration: string}[]>([]);
+    
+    useEffect(() => {
+        // เพิ่มหมุด random ขึ้นมาอีก 4 หมุด ตามที่ Requested
+        const colors = ["text-orange-500", "text-[#85B22E]", "text-blue-500", "text-purple-500"];
+        const newPins = Array.from({ length: 4 }).map(() => ({
+            top: `${Math.floor(Math.random() * 60) + 15}%`,
+            left: `${Math.floor(Math.random() * 60) + 15}%`,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            delay: `${Math.random() * 2}s`,
+            duration: `${1.8 + Math.random()}s`
+        }));
+        setMockPins(newPins);
+    }, []);
 
     return (
         <div className="flex-1 flex flex-col min-h-screen">
@@ -31,13 +92,13 @@ export default function AdminTrackingDashboard() {
                                 จัดการการจัดส่ง
                             </h1>
                             <p className="text-gray-500 font-medium text-lg">
-                                ดูแลภาพรวมออเดอร์และตำแหน่งไรเดอร์แบบ Real-time
+                                ดูภาพรวมออเดอร์และตำแหน่งไรเดอร์ (จำลอง) แบบ Real-time
                             </p>
                         </div>
                         <div className="flex gap-2">
                             <button className="bg-white px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-700 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 hover:bg-gray-50 transition-all flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-[#85B22E] animate-pulse"></div>
-                                Live Sync (Online)
+                                Live Sync (Mock Online)
                             </button>
                         </div>
                     </header>
@@ -171,7 +232,7 @@ export default function AdminTrackingDashboard() {
                                     <path d="M 250 500 Q 450 600 700 250 T 1000 450" fill="none" stroke="#E2E8F0" strokeWidth="6" strokeDasharray="10,10" strokeLinecap="round" />
                                 </svg>
 
-                                {/* Map pins mockups */}
+                                {/* Base Mock Map pins */}
                                 <div className="absolute top-[35%] left-[45%] text-orange-500 animate-[bounce_2s_infinite]">
                                     <MapPin size={38} fill="currentColor" stroke="white" strokeWidth={2} />
                                 </div>
@@ -185,6 +246,26 @@ export default function AdminTrackingDashboard() {
                                     <MapPin size={38} fill="currentColor" stroke="white" strokeWidth={2} />
                                 </div>
 
+                                {/* Random Dynamically Generated Pins */}
+                                {mockPins.map((pin, index) => (
+                                    <div 
+                                        key={`random-pin-${index}`} 
+                                        className={`absolute ${pin.color} animate-bounce`} 
+                                        style={{ 
+                                            top: pin.top, 
+                                            left: pin.left, 
+                                            animationDelay: pin.delay, 
+                                            animationDuration: pin.duration,
+                                            animationIterationCount: 'infinite'
+                                        }}
+                                    >
+                                        <MapPin size={32} fill="currentColor" stroke="white" strokeWidth={2} />
+                                        <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded shadow-sm border border-gray-100 text-[9px] font-bold text-gray-600">
+                                            Rider {index + 1}
+                                        </div>
+                                    </div>
+                                ))}
+
                                 <div className="absolute top-[50%] left-[80%] flex flex-col items-center gap-1 opacity-60">
                                     <div className="w-3 h-3 rounded-full bg-red-400 animate-pulse"></div>
                                     <div className="bg-white px-2 py-0.5 rounded-lg border border-gray-100 text-[10px] font-black shadow-sm">Sompop T. (Delay)</div>
@@ -194,7 +275,7 @@ export default function AdminTrackingDashboard() {
                                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                                         <MapPin size={16} className="text-gray-400" />
                                     </div>
-                                    Interactive Admin Map
+                                    Mocked Admin Map (Randomized Pins)
                                 </div>
                             </div>
                         </div>

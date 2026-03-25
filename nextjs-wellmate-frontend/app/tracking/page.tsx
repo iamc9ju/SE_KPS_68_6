@@ -18,11 +18,31 @@ export default function OrderTrackingPage() {
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
 
+    const MOCK_RESTAURANTS = [
+        { lat: 13.7563, lng: 100.5018 }, // Phra Nakhon
+        { lat: 13.7367, lng: 100.5231 }, // Silom
+        { lat: 13.7225, lng: 100.5815 }, // Ekkamai
+        { lat: 13.8055, lng: 100.5401 }  // Chatuchak
+    ];
+
+    const MOCK_DESTINATIONS = [
+        { lat: 13.7450, lng: 100.5340 }, // Siam
+        { lat: 13.7150, lng: 100.5520 }, // Sathorn
+        { lat: 13.7650, lng: 100.5100 }, // Dusit
+        { lat: 13.7900, lng: 100.5600 }  // Ratchada
+    ];
+
     // Restaurant location (mock — could come from API)
-    const restaurantLocation = { lat: 13.7563, lng: 100.5018 }; // Bangkok example
+    const [restaurantLocation, setRestaurantLocation] = useState(MOCK_RESTAURANTS[0]);
 
     // Get user's real GPS location
     useEffect(() => {
+        // Randomize the restaurant on mount
+        setRestaurantLocation(MOCK_RESTAURANTS[Math.floor(Math.random() * MOCK_RESTAURANTS.length)]);
+
+        // Randomize the fallback destination on mount
+        const randomDest = MOCK_DESTINATIONS[Math.floor(Math.random() * MOCK_DESTINATIONS.length)];
+
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -33,13 +53,13 @@ export default function OrderTrackingPage() {
                 },
                 (error) => {
                     console.warn('Geolocation error:', error.message);
-                    // Fallback location (near Bangkok)
-                    setUserLocation({ lat: 13.7450, lng: 100.5340 });
+                    // Fallback random location
+                    setUserLocation(randomDest);
                 },
                 { enableHighAccuracy: true }
             );
         } else {
-            setUserLocation({ lat: 13.7450, lng: 100.5340 });
+            setUserLocation(randomDest);
         }
     }, []);
 
@@ -80,7 +100,7 @@ export default function OrderTrackingPage() {
             clearTimeout(timer3);
             clearTimeout(timer4);
         };
-    }, [userLocation]);
+    }, [userLocation, restaurantLocation]);
 
     const STEPS = [
         { key: 1, title: "Order Accepted", icon: <CheckCircle2 size={18} />, shortTitle: "Accepted" },
