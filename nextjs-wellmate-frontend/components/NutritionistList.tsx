@@ -76,8 +76,19 @@ export default function NutritionistList() {
                                         />
                                     </div>
 
+<<<<<<< HEAD
                                     <h3 className="font-bold text-base mb-1">{fullName}</h3>
                                     <p className="text-xs text-gray-500 mb-3">{title}</p>
+=======
+                            {}
+                            <div className="mb-3">
+                                <Link href={`/nutritionist-profile/${person.id}`}>
+                                    <Button variant="outline" size="sm" className="text-sm px-6 py-1 border-2 border-black rounded-lg">
+                                        ดูโปรไฟล์
+                                    </Button>
+                                </Link>
+                            </div>
+>>>>>>> 97f29b793709bc26138f87259945fab9abb004c1
 
                                     <div className="mb-3">
                                         {/* Link to public profile or let them use the dashboard if logged in */}

@@ -26,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SchedulersModule } from './schedulers/schedulers.module';
 import { CartModule } from './cart/cart.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { TrackingModule } from './tracking/tracking.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
@@ -67,6 +68,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     SchedulersModule,
     CartModule,
     CalendarModule,
+    TrackingModule,
     CloudinaryModule,
   ],
   controllers: [AppController],
@@ -78,4 +80,4 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -48,8 +48,14 @@ export default function NutritionistCard({
             }
             className="group cursor-pointer bg-white rounded-3xl border border-gray-100/80 p-3.5 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-[#F2E6D0] transition-all duration-300 flex flex-col h-full"
         >
+<<<<<<< HEAD
             {/* Image Container */}
             <div className="relative overflow-hidden rounded-[20px] mb-4 bg-gray-50 aspect-[4/3]">
+=======
+            { }
+            <div className="aspect-[4/3] bg-gradient-to-br from-[#faf8f2] to-[#f0e6cc]/30 relative overflow-hidden">
+                { }
+>>>>>>> 97f29b793709bc26138f87259945fab9abb004c1
                 <img
                     src={photoUrl}
                     alt={`${nutritionist.firstName} ${nutritionist.lastName}`}
@@ -67,6 +73,7 @@ export default function NutritionistCard({
                 )}
             </div>
 
+<<<<<<< HEAD
             {/* Content Section */}
             <div className="px-1 flex flex-col flex-1">
                 {/* Title and Price Row */}
@@ -86,6 +93,19 @@ export default function NutritionistCard({
 
                 {/* Rating & Reviews */}
                 <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3">
+=======
+            { }
+            <div className="p-4">
+                <h3 className="font-bold text-[#3d3522] text-sm mb-0.5 group-hover:text-[#4A6707] transition-colors leading-tight">
+                    {nutritionist.firstName} {nutritionist.lastName}
+                </h3>
+                <p className="text-xs text-[#8a7550] mb-3 line-clamp-1">
+                    {primarySpecialty}
+                </p>
+
+                { }
+                <div className="flex items-center gap-1.5">
+>>>>>>> 97f29b793709bc26138f87259945fab9abb004c1
                     <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                             <Star
