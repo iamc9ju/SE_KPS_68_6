@@ -21,6 +21,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { ChatModule } from './chat/chat.module';
 import { FoodMenuModule } from './food-menu/food-menu.module';
 import { FoodPartnerModule } from './food-partner/food-partner.module';
+import { FoodpartnerSystemModule } from './foodpartner_system/foodpartner_system.module';
 import { OrdersModule } from './orders/orders.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SchedulersModule } from './schedulers/schedulers.module';
@@ -62,6 +63,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     ChatModule,
     FoodMenuModule,
     FoodPartnerModule,
+    FoodpartnerSystemModule,
     OrdersModule,
     NotificationsModule,
     SchedulersModule,

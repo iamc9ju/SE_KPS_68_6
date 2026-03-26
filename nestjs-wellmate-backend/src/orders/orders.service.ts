@@ -11,6 +11,12 @@ import { Prisma, OrderStatus, PaymentStatus, UserRole } from '@prisma/client';
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: {
+    patient: {
+      select: {
+        firstName: true;
+        lastName: true;
+      };
+    };
     orderItems: {
       include: {
         menuItem: true;
@@ -92,6 +98,7 @@ export class OrdersService {
           },
         },
         include: {
+          patient: { select: { firstName: true, lastName: true } },
           orderItems: {
             include: {
               menuItem: true,
@@ -106,6 +113,7 @@ export class OrdersService {
 
   async findAll(userId: string, role: string) {
     const where: Prisma.OrderWhereInput = {};
+    let partnerId: number | null = null;
 
     if (role === UserRole.patient) {
       const patient = await this.prisma.patient.findUnique({
@@ -119,6 +127,7 @@ export class OrdersService {
       });
       if (!partner)
         throw new NotFoundException('Food Partner profile not found');
+      partnerId = partner.foodPartnerId;
       where.orderItems = {
         some: {
           menuItem: {
@@ -131,6 +140,7 @@ export class OrdersService {
     const orders = await this.prisma.order.findMany({
       where,
       include: {
+        patient: { select: { firstName: true, lastName: true } },
         orderItems: {
           include: {
             menuItem: true,
@@ -140,13 +150,14 @@ export class OrdersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map((o) => this.mapOrder(o));
+    return orders.map((o) => this.mapOrder(o, partnerId));
   }
 
   async findOne(id: string, userId: string, role: string) {
     const order = await this.prisma.order.findUnique({
       where: { orderId: id },
       include: {
+        patient: { select: { firstName: true, lastName: true } },
         orderItems: {
           include: {
             menuItem: true,
@@ -156,6 +167,7 @@ export class OrdersService {
     });
 
     if (!order) throw new NotFoundException(`Order #${id} not found`);
+    let partnerId: number | null = null;
 
     if (role === UserRole.patient) {
       const patient = await this.prisma.patient.findUnique({
@@ -168,6 +180,7 @@ export class OrdersService {
         where: { userId },
       });
       if (!partner) throw new ForbiddenException();
+      partnerId = partner.foodPartnerId;
 
       const hasPartnerItems = order.orderItems.some(
         (i) => i.menuItem.foodPartnerId === partner.foodPartnerId,
@@ -175,7 +188,7 @@ export class OrdersService {
       if (!hasPartnerItems) throw new ForbiddenException();
     }
 
-    return this.mapOrder(order as unknown as OrderWithItems);
+    return this.mapOrder(order as unknown as OrderWithItems, partnerId);
   }
 
   async updateStatus(
@@ -190,6 +203,7 @@ export class OrdersService {
       where: { orderId: id },
       data: { status },
       include: {
+        patient: { select: { firstName: true, lastName: true } },
         orderItems: {
           include: {
             menuItem: true,
@@ -201,18 +215,32 @@ export class OrdersService {
     return this.mapOrder(updated as unknown as OrderWithItems);
   }
 
-  private mapOrder(order: OrderWithItems) {
+  private mapOrder(order: OrderWithItems, partnerId?: number | null) {
+    const items =
+      partnerId != null
+        ? order.orderItems.filter(
+            (i) => i.menuItem.foodPartnerId === partnerId,
+          )
+        : order.orderItems;
+    const subtotal = items.reduce(
+      (sum, i) => sum + Number(i.totalPrice || Number(i.unitPrice) * i.quantity),
+      0,
+    );
     return {
       orderId: order.orderId,
       patientId: order.patientId,
-      totalAmount: Number(order.total),
+      customerName: [order.patient?.firstName, order.patient?.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim() || undefined,
+      totalAmount: partnerId != null ? subtotal : Number(order.total),
       status: order.status,
       paymentStatus: order.paymentStatus,
       deliveryAddress: order.deliveryAddress,
       contactPhone: order.contactPhone,
       qrCodeUrl: order.qrCodeUrl,
       createdAt: order.createdAt,
-      items: order.orderItems.map((i) => ({
+      items: items.map((i) => ({
         orderItemId: i.orderItemId,
         menuItemId: i.menuItemId,
         name: i.menuItem.name,

@@ -25,7 +25,25 @@ export class MenuItemResponseDto {
   imageUrl?: string;
 
   @ApiProperty({ required: false })
+  category?: string;
+
+  @ApiProperty({ required: false })
   caloriesKcal?: number;
+
+  @ApiProperty({ required: false })
+  proteinG?: number;
+
+  @ApiProperty({ required: false })
+  carbsG?: number;
+
+  @ApiProperty({ required: false })
+  fatG?: number;
+
+  @ApiProperty({ required: false, type: [String] })
+  allergens?: string[];
+
+  @ApiProperty({ required: false })
+  allergenAlert?: string;
 
   @ApiProperty()
   isAvailable: boolean;

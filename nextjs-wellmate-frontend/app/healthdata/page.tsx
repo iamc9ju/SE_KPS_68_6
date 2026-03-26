@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, Calendar, Ruler, Scale, Activity, Target, FileText, CheckCircle2, ChevronRight, ChevronLeft, Droplets, AlertCircle, LogOut, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -35,6 +35,21 @@ export default function HealthProfilePage() {
         goal: "",
         goalDetail: "",
     });
+
+    useEffect(() => {
+        if (!user) return;
+        if (user.role === "patient") {
+            if (user.isProfileComplete) {
+                router.replace("/dashboard");
+            }
+            return;
+        }
+        if (user.role === "food_partner") {
+            router.replace("/Foodpartner/profile");
+            return;
+        }
+        router.replace("/dashboard");
+    }, [user, router]);
 
     const handleChange = (field: string, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));

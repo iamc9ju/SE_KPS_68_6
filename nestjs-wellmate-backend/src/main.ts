@@ -15,6 +15,12 @@ async function bootstrap() {
     bufferLogs: true,
     rawBody: true,
   });
+  // Avoid 304 cached responses for dynamic JSON endpoints
+  const httpAdapter = app.getHttpAdapter();
+  const instance = httpAdapter.getInstance?.();
+  if (instance?.set) {
+    instance.set('etag', false);
+  }
   app.useLogger(app.get(MyLoggerService));
 
   app.use(helmet());

@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsInt, IsBoolean, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsBoolean,
+  IsNumber,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateMenuItemDto {
@@ -22,6 +29,10 @@ export class CreateMenuItemDto {
   imageUrl?: string;
 
   @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
   @IsInt()
   caloriesKcal?: number;
 
@@ -39,6 +50,15 @@ export class CreateMenuItemDto {
   @Type(() => Number)
   @IsNumber()
   fatG?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allergens?: string[];
+
+  @IsOptional()
+  @IsString()
+  allergenAlert?: string;
 
   @IsOptional()
   @IsInt()
