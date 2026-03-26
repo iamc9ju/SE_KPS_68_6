@@ -61,7 +61,7 @@ describe('AuthService', () => {
     const registerDto: RegisterDto = {
       email: 'test@example.com',
       password: 'password123',
-      firstName: 'John',
+      name: 'John',
       lastName: 'Doe',
       role: UserRole.patient,
     };
@@ -104,7 +104,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.patient.create).toHaveBeenCalledWith({
         data: {
           userId: mockCreatedUser.userId,
-          firstName: registerDto.firstName,
+          name: registerDto.firstName,
           lastName: registerDto.lastName,
         },
       });
@@ -141,7 +141,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.nutritionist.create).toHaveBeenCalledWith({
         data: {
           userId: mockCreatedUser.userId,
-          firstName: nutritionistDto.firstName,
+          name: nutritionistDto.firstName,
           lastName: nutritionistDto.lastName,
         },
       });
@@ -215,7 +215,7 @@ describe('AuthService', () => {
         role: 'patient',
         is2faEnabled: false,
         createdAt: new Date(),
-        patient: { firstName: 'John', lastName: 'Doe' },
+        patient: { name: 'John', lastName: 'Doe' },
       };
       mockPrismaService.user.findUnique.mockResolvedValue(mockUserBase);
       mockPasswordService.compare.mockResolvedValue(true);
@@ -253,7 +253,7 @@ describe('AuthService', () => {
         role: UserRole.nutritionist,
         is2faEnabled: false,
         createdAt: new Date(),
-        nutritionist: { firstName: 'Doctor', lastName: 'Strange' },
+        nutritionist: { name: 'Doctor', lastName: 'Strange' },
       };
 
       // ครั้งแรก findUnique เอา role, ครั้งสอง เอา full user beserta relation

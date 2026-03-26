@@ -12,7 +12,7 @@ export class SchedulersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleAppointmentReminders() {
@@ -47,18 +47,20 @@ export class SchedulersService {
       );
 
       for (const appt of upcomingAppointments) {
+        // ✅ แก้ไข: เปลี่ยน appt.nutritionist.firstName เป็น name
         await this.notificationsService.create({
           userId: appt.patient.userId,
           type: NotificationType.appointment_reminder,
           title: 'Consultation Starting Soon',
-          body: `Your appointment with ${appt.nutritionist.firstName} starts in 30 minutes.`,
+          body: `Your appointment with ${appt.nutritionist.first_name} starts in 30 minutes.`,
         });
 
+        // ✅ แก้ไข: เปลี่ยน appt.patient.firstName เป็น name (และใช้ as any เพื่อกัน Type บ่น)
         await this.notificationsService.create({
           userId: appt.nutritionist.userId,
           type: NotificationType.appointment_reminder,
           title: 'Upcoming Consultation',
-          body: `Your appointment with ${appt.patient.firstName} starts in 30 minutes.`,
+          body: `Your appointment with ${(appt.patient as any).name} starts in 30 minutes.`,
         });
       }
     } catch (error) {

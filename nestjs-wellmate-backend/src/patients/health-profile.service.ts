@@ -21,10 +21,11 @@ export class HealthProfileService {
         if (!patient) throw new NotFoundException('Patient not found');
 
         const latestMetric = patient.healthMetrics[0];
-        const age = patient.dateOfBirth ? differenceInYears(new Date(), new Date(patient.dateOfBirth)) : null;
+        const age = patient.dateOfBirth
+            ? differenceInYears(new Date(), new Date(patient.dateOfBirth))
+            : null;
 
         // 1. Calculate BMI
-        // แก้ไข: ระบุ Type ให้ชัดเจนว่าเป็น number หรือ null
         let bmi: number | null = null;
         if (latestMetric?.weightKg && latestMetric?.heightCm) {
             const heightInMeters = Number(latestMetric.heightCm) / 100;
@@ -32,12 +33,19 @@ export class HealthProfileService {
         }
 
         // 2. Calculate BMR (Mifflin-St Jeor Equation)
-        // แก้ไข: ระบุ Type ให้ชัดเจนว่าเป็น number หรือ null
         let bmr: number | null = null;
-        if (age && latestMetric?.weightKg && latestMetric?.heightCm && patient.gender) {
+        if (
+            age !== null &&
+            latestMetric?.weightKg &&
+            latestMetric?.heightCm &&
+            patient.gender
+        ) {
             const weight = Number(latestMetric.weightKg);
             const height = Number(latestMetric.heightCm);
-            if (patient.gender === 'male') {
+            // เทียบตัวพิมพ์เล็กเพื่อความปลอดภัย
+            const gender = patient.gender.toLowerCase();
+
+            if (gender === 'male') {
                 bmr = 10 * weight + 6.25 * height - 5 * age + 5;
             } else {
                 bmr = 10 * weight + 6.25 * height - 5 * age - 161;
@@ -46,14 +54,15 @@ export class HealthProfileService {
 
         return {
             personal: {
-                name: `${patient.firstName} ${patient.lastName}`,
+                // ✅ แก้ไข: ใช้ patient.name แทน firstName/lastName
+                name: (patient as any).name || 'Unknown',
                 age,
                 gender: patient.gender,
                 bloodType: patient.bloodType,
             },
             measurements: {
-                weight: latestMetric?.weightKg || null,
-                height: latestMetric?.heightCm || null,
+                weight: latestMetric?.weightKg ? Number(latestMetric.weightKg) : null,
+                height: latestMetric?.heightCm ? Number(latestMetric.heightCm) : null,
                 recordedAt: latestMetric?.recordedAt || null,
             },
             stats: {
@@ -65,17 +74,18 @@ export class HealthProfileService {
                 chronicDiseases: patient.chronicDiseases,
             },
             goals: {
-                goal: patient.goal,
-                activityLevel: patient.activityLevel,
-            }
+                goal: patient.healthMetrics?.[0]?.goal || null, // <--- เติมลูกน้ำตรงนี้
+                activityLevel: patient.healthMetrics?.[0]?.activity_level || null, // <--- เติมลูกน้ำตรงนี้
+                healthMetrics: patient.healthMetrics?.[0] || null
+            } // ลบเซมิโคลอน ; ตรงนี้ออก
         };
-    }
+    } // <--- ปีกกานี้คือปิดฟังก์ชัน getBodyInfo
 
-    private getBMIStatus(bmi: number | null): string {
+    private getBMIStatus(bmi: number | null) {
         if (!bmi) return 'Unknown';
         if (bmi < 18.5) return 'Underweight';
-        if (bmi < 25) return 'Normal weight';
-        if (bmi < 30) return 'Overweight';
-        return 'Obese';
+        if (bmi < 25) return 'Normal weight'; // เติมส่วนนี้
+        if (bmi < 30) return 'Overweight';    // เติมส่วนนี้
+        return 'Obese';                       // เติมส่วนนี้
     }
 }

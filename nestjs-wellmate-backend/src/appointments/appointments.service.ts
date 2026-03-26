@@ -19,7 +19,7 @@ export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymentsService: PaymentsService,
-  ) {}
+  ) { }
 
   async create(userId: string, dto: CreateAppointmentDto) {
     const requestedStartTime = new Date(dto.startTime);
@@ -175,6 +175,7 @@ export class AppointmentsService {
       },
     };
   }
+
   async findAllForPatient(userId: string) {
     const patient = await this.prisma.patient.findUnique({
       where: { userId },
@@ -190,8 +191,8 @@ export class AppointmentsService {
         nutritionist: {
           select: {
             nutritionistId: true,
-            firstName: true,
-            lastName: true,
+            first_name: true, // แก้ตรงนี้
+            last_name: true,  // แก้ตรงนี้
             user: {
               select: {
                 email: true,
@@ -211,8 +212,9 @@ export class AppointmentsService {
         nutritionist: {
           select: {
             nutritionistId: true,
-            firstName: true,
-            lastName: true,
+            // แก้ไข: เปลี่ยนจาก name เป็น firstName และ lastName
+            first_name: true, // แก้ตรงนี้
+            last_name: true,  // แก้ตรงนี้
           },
         },
         patient: {
@@ -262,13 +264,14 @@ export class AppointmentsService {
       throw new NotFoundException(ErrorMessages.NUTRITIONISTS.NOT_FOUND);
     }
 
-    const appointments = await this.prisma.appointment.findMany({
+    return this.prisma.appointment.findMany({
       where: { nutritionistId: nutritionist.nutritionistId },
       include: {
         patient: {
           select: {
-            firstName: true,
-            lastName: true,
+            // แก้ไข: เปลี่ยนจาก name เป็น firstName และ lastName
+            first_name: true, // แก้ตรงนี้
+            last_name: true,  // แก้ตรงนี้
             user: {
               select: {
                 email: true,
@@ -280,7 +283,5 @@ export class AppointmentsService {
       },
       orderBy: { startTime: 'desc' },
     });
-
-    return appointments;
   }
 }

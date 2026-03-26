@@ -10,15 +10,13 @@ import { UserRole } from '@prisma/client';
 
 interface UpdateActivityDto {
   title?: string;
-  description?: string;
   startTime?: string;
-  endTime?: string;
   calories?: number;
 }
 
 @Injectable()
 export class CalendarService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private async getPatient(userId: string) {
     const patient = await this.prisma.patient.findUnique({
@@ -40,7 +38,7 @@ export class CalendarService {
       where: {
         activityId,
         patientId,
-        deletedAt: null,
+        // ลบ deletedAt ออกแล้ว
       },
     });
 
@@ -63,11 +61,11 @@ export class CalendarService {
     return this.prisma.physicalActivity.create({
       data: {
         title: dto.title,
-        description: dto.description,
         startTime: dto.startTime,
-        endTime: dto.endTime,
         calories: dto.calories,
         patientId: patient.patientId,
+        updated_at: new Date(),
+        // ลบ description และ endTime ออกแล้ว
       },
     });
   }
@@ -114,18 +112,18 @@ export class CalendarService {
         .findMany({
           where: {
             patientId: patient.patientId,
-            deletedAt: null,
+            // ลบ deletedAt ออกแล้ว
             ...(startDate && endDate
               ? {
-                  startTime: { gte: startDate, lte: endDate },
-                }
+                startTime: { gte: startDate, lte: endDate },
+              }
               : {}),
           },
           select: {
             activityId: true,
             title: true,
             startTime: true,
-            endTime: true,
+            // ลบ endTime ออกแล้ว
           },
           orderBy: { startTime: 'asc' },
         })
@@ -134,8 +132,8 @@ export class CalendarService {
             id: a.activityId,
             title: a.title,
             startTime: a.startTime,
-            endTime: a.endTime,
             type: 'physical',
+            // ลบ endTime ออกแล้ว
           })),
         );
 
@@ -143,7 +141,8 @@ export class CalendarService {
     }
 
     // 2. Fetch Appointments
-    let appointmentWhere: any = { deletedAt: null };
+    // ลบ deletedAt ออกจาก Where condition เริ่มต้น
+    let appointmentWhere: any = {};
     if (user.role === UserRole.patient && patient) {
       appointmentWhere.patientId = patient.patientId;
     } else if (user.role === UserRole.nutritionist && nutritionist) {
@@ -169,26 +168,30 @@ export class CalendarService {
             endTime: true,
             nutritionist:
               user.role === UserRole.patient
-                ? { select: { firstName: true, lastName: true } }
+                // แก้ไข: เปลี่ยนไปดึง first_name และ last_name แทน
+                ? { select: { first_name: true, last_name: true } }
                 : false,
             patient:
               user.role === UserRole.nutritionist
-                ? { select: { firstName: true, lastName: true } }
+                // แก้ไข: เปลี่ยนไปดึง first_name และ last_name แทน
+                ? { select: { first_name: true, last_name: true } }
                 : false,
           },
         })
         .then((appointments) =>
           appointments.map((a: any) => {
             let title = 'Appointment';
+
+            // แก้ไข: เอา first_name กับ last_name มาต่อกัน
             if (user.role === UserRole.patient && a.nutritionist) {
-              title = `Consultation with ${a.nutritionist.firstName}`;
+              title = `Consultation with ${a.nutritionist.first_name} ${a.nutritionist.last_name}`;
             } else if (user.role === UserRole.nutritionist && a.patient) {
-              title = `Patient: ${a.patient.firstName} ${a.patient.lastName}`;
+              title = `Patient: ${a.patient.first_name} ${a.patient.last_name}`;
             }
 
             return {
               id: a.appointmentId,
-              title: title,
+              title: title.trim(), // ใส่ trim() เผื่อกรณีค่าว่าง
               startTime: a.startTime,
               endTime: a.endTime,
               type: 'appointment',
@@ -225,8 +228,6 @@ export class CalendarService {
 
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
-    if (data.description !== undefined)
-      updateData.description = data.description;
     if (data.calories !== undefined) updateData.calories = data.calories;
 
     if (data.startTime) {
@@ -236,12 +237,7 @@ export class CalendarService {
       updateData.startTime = start;
     }
 
-    if (data.endTime) {
-      const end = new Date(data.endTime);
-      if (isNaN(end.getTime()))
-        throw new BadRequestException('Invalid endTime format');
-      updateData.endTime = end;
-    }
+    // ลบเช็ก description กับ endTime ออก
 
     return this.prisma.physicalActivity.update({
       where: { activityId },
@@ -249,7 +245,7 @@ export class CalendarService {
     });
   }
 
-  // Soft delete
+  // เปลี่ยนมาเป็นลบข้อมูลจริงๆ (Hard Delete) แทน
   async remove(userId: string, activityId: string) {
     const patient = await this.getPatient(userId);
     if (!patient)
@@ -259,9 +255,8 @@ export class CalendarService {
 
     await this.findActivity(activityId, patient.patientId);
 
-    return this.prisma.physicalActivity.update({
+    return this.prisma.physicalActivity.delete({
       where: { activityId },
-      data: { deletedAt: new Date() },
     });
   }
 }

@@ -6,7 +6,7 @@ export class CreateNutritionistDto {
   userId: string;
 
   @IsString()
-  firstName: string;
+  name: string;
 
   @IsString()
   lastName: string;

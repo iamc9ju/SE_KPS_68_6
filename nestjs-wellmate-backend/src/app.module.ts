@@ -28,6 +28,9 @@ import { CartModule } from './cart/cart.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { NutritionOrdersModule } from './nutrition-orders/nutrition-orders.module';
+import { NutritionistApprovalModule } from './nutritionist-approval/nutritionist-approval.module';
+import { NutritionAppointmentsModule } from './nutrition-appointments/nutrition-appointments.module';
 
 @Module({
   imports: [
@@ -70,6 +73,9 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     CalendarModule,
     TrackingModule,
     CloudinaryModule,
+    NutritionOrdersModule,
+    NutritionistApprovalModule,
+    NutritionAppointmentsModule,
   ],
   controllers: [AppController],
   providers: [

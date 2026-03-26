@@ -12,7 +12,7 @@ export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   async validateRoomAccess(
     chatRoomId: string,
@@ -75,7 +75,6 @@ export class ChatService {
       },
     });
 
-    // @ts-ignore - Handle possible typing issues with deep includes
     const appt = message.chatRoom?.appointment;
     if (appt) {
       const recipientId =
@@ -84,11 +83,12 @@ export class ChatService {
           : appt.patient?.userId;
 
       if (recipientId) {
+        // แก้ไข: ใช้ name แทน firstName
         const senderName =
           // @ts-ignore
-          message.sender.patient?.firstName ||
+          message.sender.patient?.name ||
           // @ts-ignore
-          message.sender.nutritionist?.firstName ||
+          message.sender.nutritionist?.name ||
           'Someone';
 
         await this.notificationsService.create({
@@ -135,14 +135,12 @@ export class ChatService {
             endTime: true,
             patient: {
               select: {
-                firstName: true,
-                lastName: true,
+                first_name: true, // แก้ไข: ลบบรรทัดที่ name: ค้างไว้ออก
               },
             },
             nutritionist: {
               select: {
-                firstName: true,
-                lastName: true,
+                first_name: true, // แก้ไข: ลบบรรทัดที่ name: ค้างไว้ออก
               },
             },
           },
