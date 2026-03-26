@@ -20,6 +20,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -30,6 +31,19 @@
     opacity: 0;
     transform: translateY(40px);
   }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -42,6 +56,10 @@
 
 .animate-slideUp {
   animation: slideUp 1s ease forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -57,9 +75,11 @@
   0% {
     transform: translateX(0) translateZ(0) scaleY(1);
   }
+
   50% {
     transform: translateX(-25%) translateZ(0) scaleY(0.85);
   }
+
   100% {
     transform: translateX(-50%) translateZ(0) scaleY(1);
   }
@@ -69,20 +89,24 @@
   0% {
     transform: translateX(-50%) translateZ(0) scaleY(1);
   }
+
   50% {
     transform: translateX(-25%) translateZ(0) scaleY(1.1);
   }
+
   100% {
     transform: translateX(0) translateZ(0) scaleY(1);
   }
 }
 
 @keyframes glow {
+
   0%,
   100% {
     opacity: 0.8;
     filter: drop-shadow(0 0 10px rgba(198, 224, 101, 0.4));
   }
+
   50% {
     opacity: 1;
     filter: drop-shadow(0 0 20px rgba(198, 224, 101, 0.7));
@@ -117,4 +141,47 @@
   animation: shimmer 2s infinite linear;
   background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
   background-size: 1000px 100%;
+}
+
+/* Tracking page animations */
+@keyframes pulse-marker {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(163, 209, 51, 0.4);
+  }
+
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 10px rgba(163, 209, 51, 0);
+  }
+}
+
+@keyframes bounce-step {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+
+  70% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-marker {
+  animation: pulse-marker 2s ease-in-out infinite;
+}
+
+.animate-bounce-step {
+  animation: bounce-step 0.8s ease-out forwards;
 }
