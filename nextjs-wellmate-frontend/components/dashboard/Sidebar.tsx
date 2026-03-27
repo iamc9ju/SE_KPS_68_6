@@ -15,6 +15,9 @@ import {
     UserCog,
     Clock,
     Package,
+    Wallet,
+    RefreshCcw,
+    PieChart,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +40,9 @@ export default function Sidebar() {
         { icon: BookOpen, label: "\u0e41\u0e1c\u0e19\u0e01\u0e32\u0e23\u0e01\u0e34\u0e19", href: "/dashboard/meal-plan", roles: ["patient", "nutritionist", "admin"] },
         { icon: ScrollText, label: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e2d\u0e32\u0e2b\u0e32\u0e23", href: "/dashboard/food-diary", roles: ["patient"] },
         { icon: BarChart2, label: "\u0e04\u0e27\u0e32\u0e21\u0e04\u0e37\u0e1a\u0e2b\u0e19\u0e49\u0e32", href: "/dashboard/progress", roles: ["patient", "admin"] },
+        { icon: Wallet, label: "\u0e08\u0e31\u0e14\u0e01\u0e32\u0e23\u0e01\u0e32\u0e23\u0e08\u0e48\u0e32\u0e22\u0e40\u0e07\u0e34\u0e19", href: "/dashboard/admin/payouts", roles: ["admin"] },
+        { icon: RefreshCcw, label: "\u0e01\u0e32\u0e23\u0e04\u0e37\u0e19\u0e40\u0e07\u0e34\u0e19", href: "/dashboard/admin/refunds", roles: ["admin"] },
+        { icon: PieChart, label: "\u0e23\u0e32\u0e22\u0e07\u0e32\u0e19\u0e2a\u0e16\u0e34\u0e15\u0e34", href: "/dashboard/admin/analytics", roles: ["admin"] },
         { icon: UserCog, label: "\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32", href: "/dashboard/setting" },
     ];
 
