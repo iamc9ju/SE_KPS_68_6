@@ -7,6 +7,9 @@ import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "next/navigation";
+import Swal from "sweetalert2";
+import { Suspense } from "react";
 
 const loginSchema = z.object({
   email: z.string().min(1, "กรุณากรอกอีเมล").email("รูปแบบอีเมลไม่ถูกต้อง"),
@@ -16,6 +19,14 @@ const loginSchema = z.object({
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-[#3d3522]" /></div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const {
     register,
     handleSubmit,
@@ -30,6 +41,8 @@ export default function LoginPage() {
   });
 
   const { loginUser, isLoading, error } = useAuth();
+  const searchParams = useSearchParams();
+  const sessionExpired = searchParams.get("session_expired");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
     if (typeof window !== "undefined") {
@@ -43,7 +56,42 @@ export default function LoginPage() {
     if (savedEmail) {
       setValue("email", savedEmail);
     }
-  }, [setValue]);
+
+    if (sessionExpired === "true") {
+      Swal.fire({
+        html: `
+          <div style="padding: 8px 4px;">
+            <div style="width:64px;height:64px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;box-shadow:0 4px 20px rgba(251,191,36,0.25);">
+              ⏱️
+            </div>
+            <h2 style="font-size:22px;font-weight:900;color:#3d3522;margin:0 0 8px;letter-spacing:-0.3px;">
+              Session หมดอายุแล้ว
+            </h2>
+            <p style="font-size:14px;color:#8a7550;margin:0;line-height:1.6;">
+              เซสชันของคุณหมดอายุเนื่องจากไม่มีการใช้งาน<br/>กรุณาเข้าสู่ระบบใหม่อีกครั้งเพื่อดำเนินการต่อ
+            </p>
+          </div>
+        `,
+        showConfirmButton: true,
+        confirmButtonText: "เข้าสู่ระบบใหม่",
+        customClass: {
+          popup: "swal-wellmate-popup",
+          confirmButton: "swal-wellmate-btn",
+        },
+        buttonsStyling: false,
+        backdrop: "rgba(61,53,34,0.3)",
+        showClass: {
+          popup: "swal2-show",
+        },
+        hideClass: {
+          popup: "swal2-hide",
+        },
+      });
+      // URL cleanup
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [setValue, sessionExpired]);
 
   const onSubmit = async (data: LoginFormInputs) => {
     await loginUser(data, rememberMe);

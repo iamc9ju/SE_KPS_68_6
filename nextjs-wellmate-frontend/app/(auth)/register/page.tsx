@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
   Lock,
@@ -13,17 +14,20 @@ import {
   Stethoscope,
   Phone,
   Loader2,
+  Utensils,
+  Store,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface RegisterForm {
   firstName: string;
   lastName: string;
-  role: "patient" | "nutritionist" | "admin";
+  role: "patient" | "nutritionist" | "food_partner" | "admin";
   phone: string;
   email: string;
   password: string;
   confirmPassword: string;
+  partnerName?: string;
 }
 
 export default function RegisterPage() {
@@ -47,6 +51,14 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterForm) => {
     const { confirmPassword: _confirmPassword, ...payload } = data;
+
+    // For food_partner, map partnerName to firstName and partnerName
+    if (payload.role === "food_partner") {
+      payload.firstName = payload.partnerName || "ร้านอาหารของฉัน";
+      payload.lastName = " "; // Backend might require a non-empty string
+      payload.partnerName = payload.firstName;
+    }
+
     await registerUser(payload);
   };
 
@@ -70,29 +82,59 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-1.5 block">ชื่อ</label>
-            <div className="relative">
-              <User className="absolute left-4 top-[14px] w-5 h-5 text-[#c9b88a]" />
-              <input
-                {...register("firstName", { required: "กรุณากรอกชื่อ" })}
-                className="w-full pl-12 pr-4 py-[13px] bg-white rounded-2xl border-2 border-[#f0e6cc] focus:border-[#C6E065] focus:shadow-[0_0_0_3px_rgba(198,224,101,0.15)] outline-none transition-all text-[#3d3522] font-medium"
-                placeholder="ชื่อ"
-              />
-            </div>
-            {errors.firstName && <p className="text-red-400 text-xs mt-1 ml-1">{errors.firstName.message}</p>}
-          </div>
-          <div>
-            <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-1.5 block">นามสกุล</label>
-            <input
-              {...register("lastName", { required: "กรุณากรอกนามสกุล" })}
-              className="w-full px-4 py-[13px] bg-white rounded-2xl border-2 border-[#f0e6cc] focus:border-[#C6E065] focus:shadow-[0_0_0_3px_rgba(198,224,101,0.15)] outline-none transition-all text-[#3d3522] font-medium"
-              placeholder="นามสกุล"
-            />
-            {errors.lastName && <p className="text-red-400 text-xs mt-1 ml-1">{errors.lastName.message}</p>}
-          </div>
-        </div>
+        <AnimatePresence mode="wait">
+          {selectedRole === "food_partner" ? (
+            <motion.div
+              key="store-field"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-1.5 block">ชื่อร้านอาหาร</label>
+              <div className="relative">
+                <Store className="absolute left-4 top-[14px] w-5 h-5 text-[#c9b88a]" />
+                <input
+                  {...register("partnerName", { required: selectedRole === "food_partner" ? "กรุณากรอกชื่อร้าน" : false })}
+                  className="w-full pl-12 pr-4 py-[13px] bg-white rounded-2xl border-2 border-[#f0e6cc] focus:border-[#C6E065] focus:shadow-[0_0_0_3px_rgba(198,224,101,0.15)] outline-none transition-all text-[#3d3522] font-medium"
+                  placeholder="ชื่อร้านอาหารของคุณ"
+                />
+              </div>
+              {errors.partnerName && <p className="text-red-400 text-xs mt-1 ml-1">{errors.partnerName.message}</p>}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="personal-fields"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-2 gap-3"
+            >
+              <div>
+                <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-1.5 block">ชื่อ</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-[14px] w-5 h-5 text-[#c9b88a]" />
+                  <input
+                    {...register("firstName", { required: (selectedRole as string) !== "food_partner" ? "กรุณากรอกชื่อ" : false })}
+                    className="w-full pl-12 pr-4 py-[13px] bg-white rounded-2xl border-2 border-[#f0e6cc] focus:border-[#C6E065] focus:shadow-[0_0_0_3px_rgba(198,224,101,0.15)] outline-none transition-all text-[#3d3522] font-medium"
+                    placeholder="ชื่อ"
+                  />
+                </div>
+                {errors.firstName && <p className="text-red-400 text-xs mt-1 ml-1">{errors.firstName.message}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-1.5 block">นามสกุล</label>
+                <input
+                  {...register("lastName", { required: (selectedRole as string) !== "food_partner" ? "กรุณากรอกนามสกุล" : false })}
+                  className="w-full px-4 py-[13px] bg-white rounded-2xl border-2 border-[#f0e6cc] focus:border-[#C6E065] focus:shadow-[0_0_0_3px_rgba(198,224,101,0.15)] outline-none transition-all text-[#3d3522] font-medium"
+                  placeholder="นามสกุล"
+                />
+                {errors.lastName && <p className="text-red-400 text-xs mt-1 ml-1">{errors.lastName.message}</p>}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div>
           <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-1.5 block">อีเมล</label>
@@ -162,21 +204,28 @@ export default function RegisterPage() {
 
         <div>
           <label className="text-xs font-bold text-[#8a7550] uppercase tracking-[0.15em] mb-3 block">ประเภทบัญชี</label>
-          <div className="grid grid-cols-2 gap-4">
-            <label className={`relative cursor-pointer rounded-2xl border-2 p-4 flex flex-col items-center gap-3 ${selectedRole === "patient" ? "bg-[#fcfeda] border-[#C6E065]" : "bg-white border-[#f0e6cc]"}`}>
+          <div className="grid grid-cols-3 gap-3">
+            <label className={`relative cursor-pointer rounded-2xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${selectedRole === "patient" ? "bg-[#fcfeda] border-[#C6E065] shadow-sm" : "bg-white border-[#f0e6cc] hover:border-[#e8d5a8]"}`}>
               <input type="radio" value="patient" {...register("role")} className="hidden" />
-              <div className={`p-3 rounded-full ${selectedRole === "patient" ? "bg-[#C6E065] text-[#3d3522]" : "bg-[#f4ebd0] text-[#8a7550]"}`}><User className="w-6 h-6" /></div>
-              <span className={`font-bold text-sm ${selectedRole === "patient" ? "text-[#3d3522]" : "text-[#8a7550]"}`}>ผู้ป่วย</span>
-              {selectedRole === "patient" && <CheckCircle2 className="absolute top-3 right-3 w-5 h-5 text-[#4A6707]" />}
+              <div className={`p-2.5 rounded-full transition-colors ${selectedRole === "patient" ? "bg-[#C6E065] text-[#3d3522]" : "bg-[#f4ebd0] text-[#8a7550]"}`}><User className="w-5 h-5 md:w-6 md:h-6" /></div>
+              <span className={`font-bold text-[10px] md:text-xs text-center ${selectedRole === "patient" ? "text-[#3d3522]" : "text-[#8a7550]"}`}>ผู้ป่วย</span>
+              {selectedRole === "patient" && <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-[#4A6707]" />}
             </label>
-            <label className={`relative cursor-pointer rounded-2xl border-2 p-4 flex flex-col items-center gap-3 ${selectedRole === "nutritionist" ? "bg-[#fcfeda] border-[#C6E065]" : "bg-white border-[#f0e6cc]"}`}>
+            <label className={`relative cursor-pointer rounded-2xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${selectedRole === "nutritionist" ? "bg-[#fcfeda] border-[#C6E065] shadow-sm" : "bg-white border-[#f0e6cc] hover:border-[#e8d5a8]"}`}>
               <input type="radio" value="nutritionist" {...register("role")} className="hidden" />
-              <div className={`p-3 rounded-full ${selectedRole === "nutritionist" ? "bg-[#C6E065] text-[#3d3522]" : "bg-[#f4ebd0] text-[#8a7550]"}`}><Stethoscope className="w-6 h-6" /></div>
-              <span className={`font-bold text-sm ${selectedRole === "nutritionist" ? "text-[#3d3522]" : "text-[#8a7550]"}`}>นักโภชนาการ</span>
-              {selectedRole === "nutritionist" && <CheckCircle2 className="absolute top-3 right-3 w-5 h-5 text-[#4A6707]" />}
+              <div className={`p-2.5 rounded-full transition-colors ${selectedRole === "nutritionist" ? "bg-[#C6E065] text-[#3d3522]" : "bg-[#f4ebd0] text-[#8a7550]"}`}><Stethoscope className="w-5 h-5 md:w-6 md:h-6" /></div>
+              <span className={`font-bold text-[10px] md:text-xs text-center ${selectedRole === "nutritionist" ? "text-[#3d3522]" : "text-[#8a7550]"}`}>นักโภชนาการ</span>
+              {selectedRole === "nutritionist" && <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-[#4A6707]" />}
+            </label>
+            <label className={`relative cursor-pointer rounded-2xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${selectedRole === "food_partner" ? "bg-[#fcfeda] border-[#C6E065] shadow-sm" : "bg-white border-[#f0e6cc] hover:border-[#e8d5a8]"}`}>
+              <input type="radio" value="food_partner" {...register("role")} className="hidden" />
+              <div className={`p-2.5 rounded-full transition-colors ${selectedRole === "food_partner" ? "bg-[#C6E065] text-[#3d3522]" : "bg-[#f4ebd0] text-[#8a7550]"}`}><Utensils className="w-5 h-5 md:w-6 md:h-6" /></div>
+              <span className={`font-bold text-[10px] md:text-xs text-center ${selectedRole === "food_partner" ? "text-[#3d3522]" : "text-[#8a7550]"}`}>ร้านอาหาร</span>
+              {selectedRole === "food_partner" && <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-[#4A6707]" />}
             </label>
           </div>
         </div>
+
 
         <button
           type="submit"

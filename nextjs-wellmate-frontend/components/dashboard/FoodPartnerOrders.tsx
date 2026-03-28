@@ -11,8 +11,6 @@ import {
     Store,
     UtensilsCrossed,
 } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 
@@ -45,11 +43,8 @@ type Order = {
     riderName?: string;
     riderPhone?: string;
     eta?: string;
+    createdAt: string;
 };
-
-
-
-
 
 type ApiOrderItem = {
     orderItemId: number;
@@ -136,8 +131,6 @@ const pickRider = (orderId: string) => {
     return RIDER_POOL[sum % RIDER_POOL.length];
 };
 
-
-
 function Toggle({
     on,
     onClick,
@@ -162,14 +155,12 @@ function Toggle({
                     <p className="text-xs text-[#6b5d4b]">{description}</p>
                 </div>
                 <div
-                    className={`relative inline-flex h-7 w-14 items-center rounded-full border ${
-                        on ? onColor : "border-[#d8cbb6] bg-[#ece4d7]"
-                    }`}
+                    className={`relative inline-flex h-7 w-14 items-center rounded-full border ${on ? onColor : "border-[#d8cbb6] bg-[#ece4d7]"
+                        }`}
                 >
                     <span
-                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${
-                            on ? "translate-x-7" : "translate-x-1"
-                        }`}
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${on ? "translate-x-7" : "translate-x-1"
+                            }`}
                     />
                 </div>
             </div>
@@ -251,9 +242,8 @@ function Modal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10">
             <div
-                className={`w-full rounded-3xl bg-white p-6 shadow-xl ${
-                    wide ? "max-w-3xl" : "max-w-lg"
-                }`}
+                className={`w-full rounded-3xl bg-white p-6 shadow-xl ${wide ? "max-w-3xl" : "max-w-lg"
+                    }`}
             >
                 <div className="mb-4 flex items-center justify-between gap-2">
                     <h3 className="text-xl font-black text-[#2f2a1d]">{title}</h3>
@@ -365,7 +355,7 @@ function OrderCard({
     );
 }
 
-export default function FoodPartnerOrdersPage() {
+export default function FoodPartnerOrders() {
     const [storeOpen, setStoreOpen] = useState(true);
     const [soundOn, setSoundOn] = useState(true);
     const [mobileTab, setMobileTab] = useState<OrderStatus>("new");
@@ -602,187 +592,180 @@ export default function FoodPartnerOrdersPage() {
     };
 
     return (
-        <div className="relative flex min-h-screen bg-[#faf4ea] text-[#3f3425]">
-            <BackgroundPattern />
-            <Sidebar />
-
-            <main className="flex-1 px-8 py-8 md:ml-64">
-                <div className="mx-auto max-w-[1300px] space-y-6">
-                    <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
-                        {loadError && (
-                            <div className="mb-4 rounded-2xl border border-[#f0e6d8] bg-[#fff5f5] px-4 py-3 text-xs font-bold text-[#b13a3a]">
-                                {loadError}
+        <main className="flex-1 px-8 py-8 lg:pl-64">
+            <div className="mx-auto max-w-[1300px] space-y-6">
+                <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
+                    {loadError && (
+                        <div className="mb-4 rounded-2xl border border-[#f0e6d8] bg-[#fff5f5] px-4 py-3 text-xs font-bold text-[#b13a3a]">
+                            {loadError}
+                        </div>
+                    )}
+                    {!loadError && lastUpdated && (
+                        <div className="mb-4 text-[11px] font-semibold text-[#8c7a66]">
+                            Updated: {lastUpdated.toLocaleTimeString("th-TH")}
+                        </div>
+                    )}
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <div className="inline-flex items-center gap-2 rounded-full bg-[#f4ead8] px-3 py-1 text-xs font-bold text-[#7b6a55]">
+                                <Store size={14} /> WellMate Food Partner
                             </div>
-                        )}
-                        {!loadError && lastUpdated && (
-                            <div className="mb-4 text-[11px] font-semibold text-[#8c7a66]">
-                                Updated: {lastUpdated.toLocaleTimeString("th-TH")}
-                            </div>
-                        )}
-                        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                            <div>
-                                <div className="inline-flex items-center gap-2 rounded-full bg-[#f4ead8] px-3 py-1 text-xs font-bold text-[#7b6a55]">
-                                    <Store size={14} /> WellMate Food Partner
-                                </div>
-                                <h1 className="mt-3 text-3xl font-black text-[#2f2a1d]">
-                                    หน้ารับออเดอร์ร้านค้า
-                                </h1>
-                                <p className="mt-1 text-sm text-[#6b5d4b]">
-                                    จัดการออเดอร์ได้ทันที เห็นภาพรวมทั้งวันและไม่พลาดแจ้งเตือนสำคัญ
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                <Toggle
-                                    on={storeOpen}
-                                    onClick={toggleStore}
-                                    label="สถานะร้าน"
-                                    description={storeOpen ? "เปิดรับออเดอร์" : "ปิดรับออเดอร์ชั่วคราว"}
-                                    onColor="border-[#2f7d57] bg-[#2f7d57]"
-                                />
-                                <Toggle
-                                    on={soundOn}
-                                    onClick={() => setSoundOn((prev) => !prev)}
-                                    label="เสียงแจ้งเตือน"
-                                    description={soundOn ? "เปิดเสียงแจ้งเตือนออเดอร์ใหม่" : "ปิดเสียงชั่วคราว"}
-                                    onColor="border-[#f4c84a] bg-[#f4c84a]"
-                                />
-                            </div>
+                            <h1 className="mt-3 text-3xl font-black text-[#2f2a1d]">
+                                หน้ารับออเดอร์ร้านค้า
+                            </h1>
+                            <p className="mt-1 text-sm text-[#6b5d4b]">
+                                จัดการออเดอร์ได้ทันที เห็นภาพรวมทั้งวันและไม่พลาดแจ้งเตือนสำคัญ
+                            </p>
                         </div>
 
-                        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            <StatCard
-                                title="ออเดอร์ใหม่"
-                                value={`${stats.newOrders} ใบ`}
-                                hint="รอการกดรับ"
-                                accent="bg-[#2f7d57]"
-                                icon={<Clock3 size={18} />}
-                                pulse
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <Toggle
+                                on={storeOpen}
+                                onClick={toggleStore}
+                                label="สถานะร้าน"
+                                description={storeOpen ? "เปิดรับออเดอร์" : "ปิดรับออเดอร์ชั่วคราว"}
+                                onColor="border-[#2f7d57] bg-[#2f7d57]"
                             />
-                            <StatCard
-                                title="กำลังเตรียมอาหาร"
-                                value={`${stats.preparing} ใบ`}
-                                hint="อยู่ในครัว"
-                                accent="bg-[#f4c84a]"
-                                icon={<Flame size={18} />}
-                            />
-                            <StatCard
-                                title="ยอดขายวันนี้"
-                                value={`${stats.sales.toFixed(0)} บาท`}
-                                hint="รวมค่าส่งแล้ว"
-                                accent="bg-[#3f6fb5]"
-                                icon={<CheckCircle2 size={18} />}
+                            <Toggle
+                                on={soundOn}
+                                onClick={() => setSoundOn((prev) => !prev)}
+                                label="เสียงแจ้งเตือน"
+                                description={soundOn ? "เปิดเสียงแจ้งเตือนออเดอร์ใหม่" : "ปิดเสียงชั่วคราว"}
+                                onColor="border-[#f4c84a] bg-[#f4c84a]"
                             />
                         </div>
-                    </section>
+                    </div>
 
-                    <section className="rounded-[28px] border border-[#eadfce] bg-white p-6 shadow-sm">
-                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#6b5d4b]">
-                                <Badge text="โหมด Kanban" />
-                                <span className="inline-flex items-center gap-1">
-                                    <Bell size={12} /> แจ้งเตือนออเดอร์ใหม่แบบเรียลไทม์
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                    <Bike size={12} /> ดูสถานะไรเดอร์ได้ทันที
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-[#6b5d4b]">
-                                <span className="h-2 w-2 rounded-full bg-[#2f7d57]" />
-                                เปิดร้านอยู่
-                            </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <StatCard
+                            title="ออเดอร์ใหม่"
+                            value={`${stats.newOrders} ใบ`}
+                            hint="รอการกดรับ"
+                            accent="bg-[#2f7d57]"
+                            icon={<Clock3 size={18} />}
+                            pulse
+                        />
+                        <StatCard
+                            title="กำลังเตรียมอาหาร"
+                            value={`${stats.preparing} ใบ`}
+                            hint="อยู่ในครัว"
+                            accent="bg-[#f4c84a]"
+                            icon={<Flame size={18} />}
+                        />
+                        <StatCard
+                            title="ยอดขายวันนี้"
+                            value={`${stats.sales.toFixed(0)} บาท`}
+                            hint="รวมค่าส่งแล้ว"
+                            accent="bg-[#3f6fb5]"
+                            icon={<CheckCircle2 size={18} />}
+                        />
+                    </div>
+                </section>
+
+                <section className="rounded-[28px] border border-[#eadfce] bg-white p-6 shadow-sm">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#6b5d4b]">
+                            <Badge text="โหมด Kanban" />
+                            <span className="inline-flex items-center gap-1">
+                                <Bell size={12} /> แจ้งเตือนออเดอร์ใหม่แบบเรียลไทม์
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                                <Bike size={12} /> ดูสถานะไรเดอร์ได้ทันที
+                            </span>
                         </div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#6b5d4b]">
+                            <span className="h-2 w-2 rounded-full bg-[#2f7d57]" />
+                            เปิดร้านอยู่
+                        </div>
+                    </div>
 
-                        <div className="flex gap-2 md:hidden">
-                            {([
-                                { key: "new", label: "ออเดอร์ใหม่" },
-                                { key: "preparing", label: "กำลังเตรียม" },
-                                { key: "ready", label: "รอจัดส่ง" },
-                            ] as const).map((tab) => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setMobileTab(tab.key)}
-                                    className={`flex-1 rounded-full border px-3 py-2 text-xs font-black ${
-                                        mobileTab === tab.key
-                                            ? "border-[#2f7d57] bg-[#2f7d57] text-white"
-                                            : "border-[#eadfce] bg-white text-[#6b5d4b]"
+                    <div className="flex gap-2 md:hidden">
+                        {([
+                            { key: "new", label: "ออเดอร์ใหม่" },
+                            { key: "preparing", label: "กำลังเตรียม" },
+                            { key: "ready", label: "รอจัดส่ง" },
+                        ] as const).map((tab) => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setMobileTab(tab.key)}
+                                className={`flex-1 rounded-full border px-3 py-2 text-xs font-black ${mobileTab === tab.key
+                                    ? "border-[#2f7d57] bg-[#2f7d57] text-white"
+                                    : "border-[#eadfce] bg-white text-[#6b5d4b]"
                                     }`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
 
-                        <div className="mt-5 grid gap-4 md:grid-cols-3">
-                            {([
-                                {
-                                    key: "new",
-                                    title: "ออเดอร์ใหม่",
-                                    description: "รอการกดรับ",
-                                    accent: "bg-[#e7f2e9] text-[#2f7d57]",
-                                    orders: grouped.new,
-                                },
-                                {
-                                    key: "preparing",
-                                    title: "กำลังเตรียมอาหาร",
-                                    description: "กำลังทำในครัว",
-                                    accent: "bg-[#fff6df] text-[#8c6b13]",
-                                    orders: grouped.preparing,
-                                },
-                                {
-                                    key: "ready",
-                                    title: "รอจัดส่ง",
-                                    description: "เสร็จแล้ว รอไรเดอร์",
-                                    accent: "bg-[#e6f0ff] text-[#3f6fb5]",
-                                    orders: grouped.ready,
-                                },
-                            ] as const).map((column) => (
-                                <div
-                                    key={column.key}
-                                    className={`space-y-3 ${
-                                        mobileTab !== column.key ? "hidden md:block" : ""
+                    <div className="mt-5 grid gap-4 md:grid-cols-3">
+                        {([
+                            {
+                                key: "new",
+                                title: "ออเดอร์ใหม่",
+                                description: "รอการกดรับ",
+                                accent: "bg-[#e7f2e9] text-[#2f7d57]",
+                                orders: grouped.new,
+                            },
+                            {
+                                key: "preparing",
+                                title: "กำลังเตรียมอาหาร",
+                                description: "กำลังทำในครัว",
+                                accent: "bg-[#fff6df] text-[#8c6b13]",
+                                orders: grouped.preparing,
+                            },
+                            {
+                                key: "ready",
+                                title: "รอจัดส่ง",
+                                description: "เสร็จแล้ว รอไรเดอร์",
+                                accent: "bg-[#e6f0ff] text-[#3f6fb5]",
+                                orders: grouped.ready,
+                            },
+                        ] as const).map((column) => (
+                            <div
+                                key={column.key}
+                                className={`space-y-3 ${mobileTab !== column.key ? "hidden md:block" : ""
                                     }`}
-                                >
-                                    <div className="rounded-2xl border border-[#f0e6d8] bg-[#faf4ea] px-4 py-3">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-black text-[#2f2a1d]">
-                                                    {column.title}
-                                                </p>
-                                                <p className="text-xs text-[#6b5d4b]">
-                                                    {column.description}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`rounded-full px-3 py-1 text-xs font-black ${column.accent}`}
-                                            >
-                                                {column.orders.length}
-                                            </span>
+                            >
+                                <div className="rounded-2xl border border-[#f0e6d8] bg-[#faf4ea] px-4 py-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-black text-[#2f2a1d]">
+                                                {column.title}
+                                            </p>
+                                            <p className="text-xs text-[#6b5d4b]">
+                                                {column.description}
+                                            </p>
                                         </div>
+                                        <span
+                                            className={`rounded-full px-3 py-1 text-xs font-black ${column.accent}`}
+                                        >
+                                            {column.orders.length}
+                                        </span>
                                     </div>
-
-                                    {column.orders.length === 0 && (
-                                        <div className="rounded-2xl border border-dashed border-[#eadfce] bg-white p-4 text-sm text-[#6b5d4b]">
-                                            ยังไม่มีออเดอร์ในคอลัมน์นี้
-                                        </div>
-                                    )}
-
-                                    {column.orders.map((order) => (
-                                        <OrderCard
-                                            key={order.id}
-                                            order={order}
-                                            onAccept={() => acceptOrder(order)}
-                                            onReject={() => openReject(order)}
-                                            onReady={() => markReady(order)}
-                                            onView={() => openDetails(order)}
-                                        />
-                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </section>
-                </div>
-            </main>
+
+                                {column.orders.length === 0 && (
+                                    <div className="rounded-2xl border border-dashed border-[#eadfce] bg-white p-4 text-sm text-[#6b5d4b]">
+                                        ยังไม่มีออเดอร์ในคอลัมน์นี้
+                                    </div>
+                                )}
+
+                                {column.orders.map((order) => (
+                                    <OrderCard
+                                        key={order.id}
+                                        order={order}
+                                        onAccept={() => acceptOrder(order)}
+                                        onReject={() => openReject(order)}
+                                        onReady={() => markReady(order)}
+                                        onView={() => openDetails(order)}
+                                    />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </div>
 
             {showDetails && selectedOrder && (
                 <div
@@ -927,7 +910,7 @@ export default function FoodPartnerOrdersPage() {
                                         <span>
                                             {formatBaht(
                                                 selectedOrder.subtotal -
-                                                    (selectedOrder.discount ?? 0),
+                                                (selectedOrder.discount ?? 0),
                                             )}
                                         </span>
                                     </div>
@@ -1079,8 +1062,6 @@ export default function FoodPartnerOrdersPage() {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </main>
     );
 }
-
-

@@ -26,8 +26,8 @@ api.interceptors.response.use(
       if (typeof window !== "undefined" && !isLoginRequest) {
         // Clear zustand persisted auth store from localStorage
         localStorage.removeItem("auth-storage");
-        // Redirect to login page
-        window.location.href = "/login";
+        // Redirect to login page with session_expired query parameter
+        window.location.href = "/login?session_expired=true";
       }
     }
 

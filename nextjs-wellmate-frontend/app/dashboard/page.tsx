@@ -17,6 +17,8 @@ import {
 import RightPanel from "@/components/dashboard/RightPanel";
 import StatCard from "@/components/dashboard/StatCard";
 import { useAuthStore } from "@/store/auth-store";
+import FoodPartnerDashboard from "@/components/dashboard/FoodPartnerDashboard";
+import NutritionistDashboard from "@/components/dashboard/NutritionistDashboard";
 import { StatCardSkeleton, MacroBlockSkeleton, MenuCardSkeleton } from "@/components/dashboard/DashboardSkeletons";
 
 export default function DashboardPage() {
@@ -27,6 +29,14 @@ export default function DashboardPage() {
         const timer = setTimeout(() => setLoading(false), 800);
         return () => clearTimeout(timer);
     }, []);
+
+    if (user?.role === "food_partner") {
+        return <FoodPartnerDashboard />;
+    }
+
+    if (user?.role === "nutritionist") {
+        return <NutritionistDashboard />;
+    }
 
     const calorieData = [
         { name: "ได้รับแล้ว", value: 1750 },
