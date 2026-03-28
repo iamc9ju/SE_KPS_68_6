@@ -30,7 +30,7 @@ export class NutritionistsService {
 
     if (search) {
       where.OR = [
-        { first_name: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
         { user: { email: { contains: search, mode: 'insensitive' } } },
       ];
     }
@@ -140,7 +140,7 @@ export class NutritionistsService {
             createdAt: true,
             patient: {
               select: {
-                first_name: true, // ตรวจสอบว่าใน Schema เปลี่ยนจาก first_name เป็น name หรือยัง
+                firstName: true, // ตรวจสอบว่าใน Schema เปลี่ยนจาก first_name เป็น name หรือยัง
               },
             },
           },
@@ -204,23 +204,30 @@ export class NutritionistsService {
     }
 
     const requestDate = parseISO(dateString);
-    const requestDayOfWeek = getDay(requestDate);
-
+    
+    // Set start/end of day specialized for database query (Start of date at 00:00:00)
     const startOfDay = new Date(`${dateString}T00:00:00.000Z`);
     const endOfDay = new Date(`${dateString}T23:59:59.999Z`);
 
-    const schedule = await this.prisma.nutritionistSchedule.findFirst({
+    // 1. ตรวจสอบกก่อนว่านักโภชนาการ "ลงเวลาทำงาน" ในวันนี้ไว้หรือไม่ (ผ่านตาราง NutritionistLeave)
+    const log = await this.prisma.nutritionistLeave.findFirst({
       where: {
         nutritionistId,
-        dayOfWeek: requestDayOfWeek,
-        isAvailable: true,
+        leaveDate: startOfDay,
       },
     });
 
-    if (!schedule) return [];
+    // ถ้าไม่เคยลงเวลาไว้เลย หรือ ลงเป็น "ลาหยุดเต็มวัน" (isFullDay: true)
+    // ให้ถือว่าไม่ว่าง (Unavailable) ตามความต้องการใหม่ที่ให้ลงเวลาเองทุกวัน
+    if (!log || log.isFullDay || !log.newStartTime || !log.newEndTime) {
+      return [];
+    }
 
-    const [startHour, startMin] = schedule.startTime.split(':').map(Number);
-    const [endHour, endMin] = schedule.endTime.split(':').map(Number);
+    const startTime = log.newStartTime;
+    const endTime = log.newEndTime;
+
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
 
     const actualStartDateTime = new Date(requestDate);
     actualStartDateTime.setHours(startHour, startMin, 0, 0);

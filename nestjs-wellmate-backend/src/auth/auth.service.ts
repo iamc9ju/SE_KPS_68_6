@@ -47,8 +47,8 @@ export class AuthService {
           data: {
             userId: user.userId,
             // แก้ไข: แยก firstName และ lastName ตามที่ Schema ต้องการ
-            first_name: dto.firstName || '',
-            last_name: dto.lastName || '',
+            firstName: dto.firstName || '',
+            lastName: dto.lastName || '',
           },
         });
       } else if (dto.role === 'nutritionist') {
@@ -56,8 +56,8 @@ export class AuthService {
           data: {
             userId: user.userId,
             // แก้ไข: แยก firstName และ lastName
-            first_name: dto.firstName || '',
-            last_name: dto.lastName || '',
+            firstName: dto.firstName || '',
+            lastName: dto.lastName || '',
             //email: dto.email,
             //phone: '',
             //expertise: 'Not specified',
@@ -177,8 +177,8 @@ export class AuthService {
     let roleId: string | number | undefined;
 
     if (role === 'patient' && patient) {
-      firstName = patient.first_name || '';  // <--- แก้กลับมาใช้แบบนี้ถ้า Autocomplete แนะนำ
-      lastName = patient.last_name || '';    // <--- แก้กลับมาใช้แบบนี้ถ้า Autocomplete แนะนำ
+      firstName = patient.firstName || '';  // <--- แก้กลับมาใช้แบบนี้ถ้า Autocomplete แนะนำ
+      lastName = patient.lastName || '';    // <--- แก้กลับมาใช้แบบนี้ถ้า Autocomplete แนะนำ
       roleId = patient.patientId;
 
       return {
@@ -196,8 +196,8 @@ export class AuthService {
         isProfileComplete: patient.isProfileComplete,
       };
     } else if (role === 'nutritionist' && nutritionist) {
-      firstName = nutritionist.first_name || '';
-      lastName = nutritionist.last_name || '';
+      firstName = nutritionist.firstName || '';
+      lastName = nutritionist.lastName || '';
       roleId = nutritionist.nutritionistId;
       return {
         userId,

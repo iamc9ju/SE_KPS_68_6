@@ -20,7 +20,7 @@ export class NutritionistService {
         deletedAt: null,
 
         // ค้นหาชื่อ (ลบ lastName ทิ้งไปแล้ว ค้นหาแค่จาก name อย่างเดียว)
-        first_name: query.search
+        firstName: query.search
           ? {
             contains: query.search,
             mode: 'insensitive',

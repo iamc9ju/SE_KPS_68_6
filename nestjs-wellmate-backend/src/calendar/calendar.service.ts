@@ -64,7 +64,7 @@ export class CalendarService {
         startTime: dto.startTime,
         calories: dto.calories,
         patientId: patient.patientId,
-        updated_at: new Date(),
+        updatedAt: new Date(),
         // ลบ description และ endTime ออกแล้ว
       },
     });
@@ -169,12 +169,12 @@ export class CalendarService {
             nutritionist:
               user.role === UserRole.patient
                 // แก้ไข: เปลี่ยนไปดึง first_name และ last_name แทน
-                ? { select: { first_name: true, last_name: true } }
+                ? { select: { firstName: true, lastName: true } }
                 : false,
             patient:
               user.role === UserRole.nutritionist
                 // แก้ไข: เปลี่ยนไปดึง first_name และ last_name แทน
-                ? { select: { first_name: true, last_name: true } }
+                ? { select: { firstName: true, lastName: true } }
                 : false,
           },
         })
@@ -184,9 +184,9 @@ export class CalendarService {
 
             // แก้ไข: เอา first_name กับ last_name มาต่อกัน
             if (user.role === UserRole.patient && a.nutritionist) {
-              title = `Consultation with ${a.nutritionist.first_name} ${a.nutritionist.last_name}`;
+              title = `Consultation with ${a.nutritionist.firstName} ${a.nutritionist.lastName}`;
             } else if (user.role === UserRole.nutritionist && a.patient) {
-              title = `Patient: ${a.patient.first_name} ${a.patient.last_name}`;
+              title = `Patient: ${a.patient.firstName} ${a.patient.lastName}`;
             }
 
             return {

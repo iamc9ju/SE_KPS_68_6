@@ -592,7 +592,7 @@ export default function FoodPartnerOrders() {
     };
 
     return (
-        <main className="flex-1 px-8 py-8 lg:pl-64">
+        <main className="flex-1 h-screen overflow-y-auto px-8 py-10 lg:pl-64 bg-[#fffbf5] scroll-smooth">
             <div className="mx-auto max-w-[1300px] space-y-6">
                 <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
                     {loadError && (

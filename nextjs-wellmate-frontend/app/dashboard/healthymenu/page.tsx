@@ -167,7 +167,7 @@ function AddToCartButton({ item }: { item: LocalMenuItem }) {
     return (
         <button
             onClick={() => addItem(item, 1)}
-            className="mt-auto w-full rounded-2xl bg-[#C6E065]/10 text-[#C6E065] py-3 text-[13px] font-black hover:bg-[#C6E065] hover:text-white transition-all flex items-center justify-center gap-2 group/btn border border-[#C6E065]/20"
+            className="mt-auto w-full rounded-2xl bg-[#3d3522] text-[#fffbf5] py-4 text-[13px] font-black hover:bg-black transition-all flex items-center justify-center gap-2 group/btn shadow-lg shadow-[#3d3522]/10 active:scale-[0.98]"
         >
             <ShoppingBag size={16} className="group-hover/btn:scale-110 transition-transform" />
             เลือกรายการนี้
@@ -417,7 +417,7 @@ export default function HealthyMenu() {
                                         <button
                                             key={tab}
                                             onClick={() => setSelectedCategory(tab.toLowerCase() === "all" ? "all" : tab)}
-                                            className={`text-[13px] font-black transition-all ${isActive ? "text-[#C6E065] underline decoration-4 underline-offset-8" : "text-gray-400 hover:text-gray-600"}`}
+                                            className={`text-[13px] font-black transition-all ${isActive ? "text-[#3d3522] underline decoration-[#3d3522] decoration-4 underline-offset-8" : "text-[#3d3522]/30 hover:text-[#3d3522]"}`}
                                         >
                                             {displayTab}
                                         </button>

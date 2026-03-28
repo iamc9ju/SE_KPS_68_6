@@ -61,7 +61,7 @@ describe('AuthService', () => {
     const registerDto: RegisterDto = {
       email: 'test@example.com',
       password: 'password123',
-      name: 'John',
+      firstName: 'John',
       lastName: 'Doe',
       role: UserRole.patient,
     };
@@ -104,7 +104,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.patient.create).toHaveBeenCalledWith({
         data: {
           userId: mockCreatedUser.userId,
-          name: registerDto.firstName,
+          firstName: registerDto.firstName,
           lastName: registerDto.lastName,
         },
       });
@@ -141,7 +141,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.nutritionist.create).toHaveBeenCalledWith({
         data: {
           userId: mockCreatedUser.userId,
-          name: nutritionistDto.firstName,
+          firstName: nutritionistDto.firstName,
           lastName: nutritionistDto.lastName,
         },
       });
@@ -177,7 +177,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.foodPartner.create).toHaveBeenCalledWith({
         data: {
           userId: mockCreatedUser.userId,
-          name: 'ร้านอาหารสุขภาพ ABC',
+          partnerName: 'ร้านอาหารสุขภาพ ABC',
         },
       });
       expect(mockPrismaService.patient.create).not.toHaveBeenCalled();
@@ -215,7 +215,7 @@ describe('AuthService', () => {
         role: 'patient',
         is2faEnabled: false,
         createdAt: new Date(),
-        patient: { name: 'John', lastName: 'Doe' },
+        patient: { firstName: 'John', lastName: 'Doe' },
       };
       mockPrismaService.user.findUnique.mockResolvedValue(mockUserBase);
       mockPasswordService.compare.mockResolvedValue(true);
@@ -253,7 +253,7 @@ describe('AuthService', () => {
         role: UserRole.nutritionist,
         is2faEnabled: false,
         createdAt: new Date(),
-        nutritionist: { name: 'Doctor', lastName: 'Strange' },
+        nutritionist: { firstName: 'Doctor', lastName: 'Strange' },
       };
 
       // ครั้งแรก findUnique เอา role, ครั้งสอง เอา full user beserta relation

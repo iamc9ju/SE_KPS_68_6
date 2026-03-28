@@ -32,7 +32,6 @@ export default function Sidebar() {
         { icon: Heart, label: "บริการโภชนาการ", href: "/dashboard/nutrition", roles: ["patient", "admin"] },
         { icon: Calendar, label: "ปฏิทิน", href: "/dashboard/calendar", roles: ["patient", "nutritionist", "admin"] },
         { icon: Clock, label: "จัดการเวลาทำงาน", href: "/dashboard/nutritionists/schedule", roles: ["nutritionist", "admin"] },
-        { icon: Clock, label: "จัดการวันลา", href: "/dashboard/nutritionists/leave", roles: ["nutritionist", "admin"] },
         { icon: MessageSquare, label: "ข้อความ", href: "/dashboard/chat", roles: ["patient", "nutritionist", "admin"] },
         { icon: Utensils, label: "ร้านอาหารสุขภาพ", href: "/dashboard/healthymenu", roles: ["patient", "admin"] },
         { icon: Utensils, label: "จัดการเมนู", href: "/dashboard/menu", roles: ["food_partner", "admin"] },
