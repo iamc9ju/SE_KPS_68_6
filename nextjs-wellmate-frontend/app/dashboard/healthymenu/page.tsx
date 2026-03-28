@@ -7,6 +7,7 @@ import { Search, Bike, Store, UtensilsCrossed, Flame, Heart, ShoppingBag, Shoppi
 import api from "@/lib/api";
 import RightSidebar from "@/components/dashboard/RightSidebar";
 import RecipeCard from "@/components/healthymenu/RecipeCard";
+import FoodDetailModal from "@/components/ui/FoodDetail/FoodDetailModal";
 import { useCartStore, MenuItem as StoreMenuItem } from "@/store/cart-store";
 
 type LocalMenuItem = StoreMenuItem & {
@@ -29,6 +30,9 @@ type FoodPartnerMenuItemResponse = {
     imageUrl?: string | null;
     category?: string | null;
     caloriesKcal?: number | null;
+    proteinG?: number | string | null;
+    carbsG?: number | string | null;
+    fatG?: number | string | null;
 };
 
 type FoodPartnerResponse = {
@@ -107,13 +111,24 @@ function CategoryItem({ icon, label, count, active, onClick }: { icon: React.Rea
 
 function MenuCardWrapper({
     item,
+    onClick,
 }: {
     item: LocalMenuItem;
+    onClick: () => void;
 }) {
     // MenuCard expects the cart-store MenuItem type
     return (
-        <div className="group bg-white rounded-[32px] border border-gray-100 p-4 hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full relative">
-            <button className="absolute top-6 right-6 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors shadow-sm">
+        <div 
+            onClick={onClick}
+            className="group bg-white rounded-[32px] border border-gray-100 p-4 hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full relative cursor-pointer"
+        >
+            <button 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    // toggle heart later
+                }}
+                className="absolute top-6 right-6 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors shadow-sm"
+            >
                 <Heart size={16} />
             </button>
 
@@ -166,7 +181,10 @@ function AddToCartButton({ item }: { item: LocalMenuItem }) {
     const addItem = useCartStore(state => state.addItem);
     return (
         <button
-            onClick={() => addItem(item, 1)}
+            onClick={(e) => {
+                e.stopPropagation();
+                addItem(item, 1);
+            }}
             className="mt-auto w-full rounded-2xl bg-[#C6E065]/10 text-[#C6E065] py-3 text-[13px] font-black hover:bg-[#C6E065] hover:text-white transition-all flex items-center justify-center gap-2 group/btn border border-[#C6E065]/20"
         >
             <ShoppingBag size={16} className="group-hover/btn:scale-110 transition-transform" />
@@ -203,6 +221,7 @@ export default function HealthyMenu() {
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [selectedFoodType, setSelectedFoodType] = useState<FoodType>("all");
     const [showCart, setShowCart] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<LocalMenuItem | null>(null);
 
     const { items: cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, getTotalItems } = useCartStore();
 
@@ -264,6 +283,9 @@ export default function HealthyMenu() {
                                 item.caloriesKcal === null || item.caloriesKcal === undefined
                                     ? undefined
                                     : item.caloriesKcal,
+                            proteinG: item.proteinG ? toSafeNumber(item.proteinG) : undefined,
+                            carbsG: item.carbsG ? toSafeNumber(item.carbsG) : undefined,
+                            fatG: item.fatG ? toSafeNumber(item.fatG) : undefined,
                         })),
                 );
 
@@ -444,6 +466,7 @@ export default function HealthyMenu() {
                                     <MenuCardWrapper
                                         key={item.menuItemId}
                                         item={item}
+                                        onClick={() => setSelectedItem(item)}
                                     />
                                 ))}
                             </div>
@@ -482,6 +505,7 @@ export default function HealthyMenu() {
                                     <MenuCardWrapper
                                         key={item.menuItemId}
                                         item={item}
+                                        onClick={() => setSelectedItem(item)}
                                     />
                                 ))}
                             </div>
@@ -516,6 +540,11 @@ export default function HealthyMenu() {
             </main>
 
             <RightSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+            <FoodDetailModal 
+                isOpen={!!selectedItem} 
+                onClose={() => setSelectedItem(null)} 
+                item={selectedItem} 
+            />
 
             {/* Floating Cart Button (Shopee/Lazada style - Brown/Cream Edition) */}
             <button
