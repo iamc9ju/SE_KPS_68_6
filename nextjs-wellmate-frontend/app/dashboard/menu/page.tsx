@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
     Check,
     ChevronDown,
@@ -9,9 +9,8 @@ import {
     Plus,
     Search,
     Trash2,
+    UploadCloud,
 } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 
@@ -111,16 +110,14 @@ function Toggle({
     return (
         <button
             onClick={onClick}
-            className={`relative h-7 w-14 rounded-full border transition ${
-                on
-                    ? "border-[#1f6b4e] bg-[#1f6b4e]"
-                    : "border-[#d8cbb6] bg-[#ece4d7]"
-            }`}
+            className={`relative h-7 w-14 rounded-full border transition ${on
+                ? "border-[#1f6b4e] bg-[#1f6b4e]"
+                : "border-[#d8cbb6] bg-[#ece4d7]"
+                }`}
         >
             <span
-                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${
-                    on ? "left-7" : "left-1"
-                }`}
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${on ? "left-7" : "left-1"
+                    }`}
             />
         </button>
     );
@@ -169,16 +166,18 @@ export default function FoodPartnerMenuPage() {
     const [loadError, setLoadError] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [form, setForm] = useState({
         name: "",
         description: "",
-        price: 0,
+        price: "",
         imageUrl: "",
         category: "",
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
+        calories: "",
+        protein: "",
+        carbs: "",
+        fat: "",
         allergenAlert: "",
     });
 
@@ -187,6 +186,30 @@ export default function FoodPartnerMenuPage() {
             return (payload as ApiEnvelope<T>).data;
         }
         return payload as T;
+    };
+
+    const uploadAsset = async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        setIsUploading(true);
+        try {
+            const res = await api.post<ApiEnvelope<{ url: string }> | { url: string }>("/food-menu/upload/image", formData);
+            const data = unwrap(res.data);
+            if (data?.url) {
+                setForm((prev) => ({ ...prev, imageUrl: data.url }));
+            }
+        } catch (error) {
+            console.error("Upload failed:", error);
+            Swal.fire({
+                icon: "error",
+                title: "อัปโหลดไม่สำเร็จ",
+                text: "ไม่สามารถอัปโหลดรูปภาพได้ กรุณาลองใหม่",
+                confirmButtonColor: "#3d3522",
+                background: "#fffbf5",
+            });
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const buildTags = (item: MenuItemApi) => {
@@ -237,8 +260,8 @@ export default function FoodPartnerMenuPage() {
                 status === STATUS_ALL
                     ? true
                     : status === STATUS_AVAILABLE
-                      ? menu.active
-                      : !menu.active;
+                        ? menu.active
+                        : !menu.active;
             const matchesCategory =
                 category === CATEGORY_ALL ? true : menu.category === category;
             return matchesQuery && matchesStatus && matchesCategory;
@@ -251,13 +274,13 @@ export default function FoodPartnerMenuPage() {
         setForm({
             name: "",
             description: "",
-            price: 0,
+            price: "",
             imageUrl: "",
             category: "",
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fat: 0,
+            calories: "",
+            protein: "",
+            carbs: "",
+            fat: "",
             allergenAlert: "",
         });
         setShowModal(true);
@@ -269,13 +292,13 @@ export default function FoodPartnerMenuPage() {
         setForm({
             name: menu.name,
             description: menu.description,
-            price: menu.price,
+            price: String(menu.price),
             imageUrl: menu.imageUrl === FALLBACK_FOOD_IMAGE ? "" : menu.imageUrl,
             category: menu.category ?? "",
-            calories: menu.nutrition.calories,
-            protein: menu.nutrition.protein,
-            carbs: menu.nutrition.carbs,
-            fat: menu.nutrition.fat,
+            calories: String(menu.nutrition.calories),
+            protein: String(menu.nutrition.protein),
+            carbs: String(menu.nutrition.carbs),
+            fat: String(menu.nutrition.fat),
             allergenAlert: menu.allergenAlert ?? "",
         });
         setShowModal(true);
@@ -325,8 +348,8 @@ export default function FoodPartnerMenuPage() {
             const items = Array.isArray(payload)
                 ? payload
                 : Array.isArray(payload?.data)
-                  ? payload.data
-                  : [];
+                    ? payload.data
+                    : [];
             setMenus(items.map(mapMenuItem));
         } catch (error) {
             console.error("Failed to load menu items:", error);
@@ -347,7 +370,11 @@ export default function FoodPartnerMenuPage() {
             prev.map((item) => (item.id === menu.id ? { ...item, active: next } : item)),
         );
         try {
-            await api.patch(`/food-menu/${menu.id}`, { isAvailable: next });
+            await api.patch(`/food-menu/${menu.id}`, {
+                name: menu.name,
+                price: menu.price,
+                isAvailable: next,
+            });
         } catch (error) {
             console.error("Failed to update menu availability:", error);
             setMenus((prev) =>
@@ -458,12 +485,9 @@ export default function FoodPartnerMenuPage() {
     };
 
     return (
-        <div className="relative flex min-h-screen bg-[#faf4ea] text-[#3f3425]">
-            <BackgroundPattern />
-            <Sidebar />
-
-            <main className="flex-1 px-8 py-8 md:ml-64">
-                <div className="mx-auto max-w-[1300px] space-y-6">
+        <>
+            <main className="flex-1 overflow-y-auto px-8 py-8 ml-64">
+                <div className="w-full space-y-6">
                     <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                             <div>
@@ -604,26 +628,43 @@ export default function FoodPartnerMenuPage() {
             >
                 <div className="grid gap-6 lg:grid-cols-2">
                     <section className="space-y-4">
-                        <p className="text-sm font-black text-[#2f2a1d]">ข้อมูลทั่วไป</p>
-                        <div className="flex h-44 items-center justify-center rounded-2xl border-2 border-dashed border-[#eadfce] bg-[#faf4ea] text-center text-sm text-[#6b5d4b]">
-                            <div className="space-y-2">
-                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#6b5d4b] shadow-sm">
-                                    <ImageUp size={20} />
-                                </div>
-                                <p className="font-semibold">อัปโหลดรูปภาพเมนู</p>
-                                <p className="text-xs">
-                                    แนะนำขนาด 800x800 px พื้นหลังใสหรือสีสว่าง
-                                </p>
+                        <div className="flex flex-col gap-2">
+                            <p className="text-sm font-black text-[#2f2a1d]">ข้อมูลทั่วไป และรูปภาพ</p>
+                            <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`group relative mt-2 flex h-44 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition ${
+                                    isUploading ? "border-[#eadfce] bg-[#fdfaf5] opacity-70" : "border-[#eadfce] bg-[#faf4ea] hover:border-[#cbb89f] hover:bg-[#f4ead8]"
+                                }`}
+                            >
+                                {form.imageUrl ? (
+                                    <>
+                                        <img src={form.imageUrl} alt="Menu preview" className="h-full w-full object-cover" />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                            <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#2f2a1d]">
+                                                <UploadCloud size={16} /> เปลี่ยนรูปภาพ
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center text-sm text-[#6b5d4b]">
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#6b5d4b] shadow-sm transition group-hover:scale-105 group-hover:text-[#2f7d57]">
+                                            <ImageUp size={20} />
+                                        </div>
+                                        <p className="mt-2 font-semibold">อัปโหลดรูปภาพเมนู</p>
+                                        <p className="text-[11px]">แนะนำขนาด 800x800 px พื้นหลังใส</p>
+                                    </div>
+                                )}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) uploadAsset(file);
+                                    }}
+                                />
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-[#6b5d4b]">Image URL</label>
-                            <input
-                                value={form.imageUrl}
-                                onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                                placeholder="https://..."
-                                className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm"
-                            />
                         </div>
 
                         <div className="space-y-2">
@@ -667,7 +708,8 @@ export default function FoodPartnerMenuPage() {
                             <input
                                 type="number"
                                 value={form.price}
-                                onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) }))}
+                                onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                                placeholder="0"
                                 className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm"
                             />
                         </div>
@@ -691,13 +733,14 @@ export default function FoodPartnerMenuPage() {
                                         </label>
                                         <input
                                             type="number"
-                                            value={form[field.key as keyof Nutrition] as number}
+                                            value={form[field.key as keyof typeof form]}
                                             onChange={(e) =>
                                                 setForm((prev) => ({
                                                     ...prev,
-                                                    [field.key]: Number(e.target.value),
+                                                    [field.key]: e.target.value,
                                                 }))
                                             }
+                                            placeholder="0"
                                             className="w-full rounded-2xl border border-[#eadfce] bg-white px-3 py-2 text-sm"
                                         />
                                     </div>
@@ -721,11 +764,10 @@ export default function FoodPartnerMenuPage() {
                                                             : [...prev, allergen],
                                                     )
                                                 }
-                                                className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs font-bold transition ${
-                                                    active
-                                                        ? "border-[#1f6b4e] bg-[#e7f2e9] text-[#1f6b4e]"
-                                                        : "border-[#eadfce] bg-white text-[#6b5d4b]"
-                                                }`}
+                                                className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs font-bold transition ${active
+                                                    ? "border-[#1f6b4e] bg-[#e7f2e9] text-[#1f6b4e]"
+                                                    : "border-[#eadfce] bg-white text-[#6b5d4b]"
+                                                    }`}
                                             >
                                                 <span>{allergen}</span>
                                                 {active && <Check size={14} />}
@@ -736,7 +778,7 @@ export default function FoodPartnerMenuPage() {
                             </div>
                         </div>
 
-                        
+
                         <div className="mt-4 space-y-2">
                             <label className="text-xs font-bold text-[#6b5d4b]">
                                 Allergen alert
@@ -796,6 +838,6 @@ export default function FoodPartnerMenuPage() {
                     </button>
                 </div>
             </Modal>
-        </div>
+        </>
     );
 }

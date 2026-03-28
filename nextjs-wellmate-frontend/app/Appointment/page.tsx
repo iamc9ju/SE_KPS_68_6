@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import CalendarModal from '@/component/CalendarModal';
-import AppointmentDetailModal from '@/component/AppointmentDetailModal';
+import CalendarModal from '@/components/dashboard/CalendarModal';
+import AppointmentDetailModal from '@/components/dashboard/AppointmentDetailModal';
 
 // ─── Types & Logic ────────────────────────────────────────────────────────────
 type Status = 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';

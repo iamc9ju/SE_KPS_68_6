@@ -6,6 +6,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import type { Express } from 'express';
 import { FindMenuItemsQueryDto } from './dto/find-menu-items-query.dto';
 import {
   CreateMenuItemDto,
@@ -23,7 +25,10 @@ type MenuItemWithPartner = Prisma.MenuItemGetPayload<{
 export class FoodMenuService {
   private readonly logger = new Logger(FoodMenuService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll(query: FindMenuItemsQueryDto) {
     const {
@@ -157,6 +162,19 @@ export class FoodMenuService {
   async remove(id: number, userId: string, role: string) {
     await this.verifyOwnership(id, userId, role);
     return this.prisma.menuItem.delete({ where: { menuItemId: id } });
+  }
+
+  async uploadImage(file: Express.Multer.File) {
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      file,
+      'food_menus',
+      'auto',
+    );
+    const url = (uploadResult as { secure_url?: string }).secure_url;
+    if (!url) {
+      throw new BadRequestException('Image upload failed');
+    }
+    return { url };
   }
 
   private async verifyOwnership(itemId: number, userId: string, role: string) {

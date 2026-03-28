@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import OrderDetailModal from '@/component/OrderDetailModal';
+import OrderDetailModal from '@/components/dashboard/OrderDetailModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Status = 'Pending' | 'Completed' | 'Canceled';

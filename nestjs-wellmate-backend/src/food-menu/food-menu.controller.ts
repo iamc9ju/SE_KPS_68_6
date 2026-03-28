@@ -9,7 +9,11 @@ import {
   Query,
   ParseIntPipe,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -55,6 +59,17 @@ export class FoodMenuController {
   @ApiNotFoundResponse({ description: 'Menu item not found' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.foodMenuService.findOne(id);
+  }
+
+  @Post('upload/image')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.food_partner, UserRole.admin)
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload an image for a menu item' })
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    return this.foodMenuService.uploadImage(file);
   }
 
   @Post()
