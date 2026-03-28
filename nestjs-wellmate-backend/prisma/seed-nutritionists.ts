@@ -10,32 +10,17 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
 
   const firstNames = [
-    'ชลธิดา',
-    'ธิติพงศ์',
-    'กานต์สินี',
-    'นวพล',
-    'รัตนา',
-    'วีระพล',
-    'พิมพ์ชนก',
-    'ภาคิน',
-    'นภัสสร',
-    'ปกรจันทร์',
+    'ชลธิดา', 'ธิติพงศ์', 'กานต์สินี', 'นวพล', 'รัตนา',
+    'วีระพล', 'พิมพ์ชนก', 'ภาคิน', 'นภัสสร', 'ปกรจันทร์',
   ];
   const lastNames = [
-    'ชวนชิม',
-    'ใจดี',
-    'รักสุขภาพ',
-    'มั่นคง',
-    'สุขสันต์',
-    'แข็งแรง',
-    'สดใส',
-    'มีชัย',
-    'ใจเย็น',
-    'มั่นใจ',
+    'ชวนชิม', 'ใจดี', 'รักสุขภาพ', 'มั่นคง', 'สุขสันต์',
+    'แข็งแรง', 'สดใส', 'มีชัย', 'ใจเย็น', 'มั่นใจ',
   ];
 
   for (let i = 0; i < 10; i++) {
     const email = `mocknutri${i + 1}@example.com`;
+    const phone = `08199988${i.toString().padStart(2, '0')}`;
 
     let user = await prisma.user.findUnique({ where: { email } });
 
@@ -45,7 +30,7 @@ async function main() {
           email,
           passwordHash,
           role: UserRole.nutritionist,
-          phone: `08199988${i.toString().padStart(2, '0')}`,
+          phone,
         },
       });
       console.log(`Created user ${email}`);
@@ -59,8 +44,9 @@ async function main() {
       await prisma.nutritionist.create({
         data: {
           userId: user.userId,
-          firstName: firstNames[i],
-          lastName: lastNames[i],
+          // ใส่เฉพาะฟิลด์ที่มีใน Schema จริงๆ
+          first_name: firstNames[i],
+          last_name: lastNames[i],
           consultationFee: 500 + i * 50,
           verificationStatus: VerificationStatus.approved,
         },

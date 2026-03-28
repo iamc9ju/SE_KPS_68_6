@@ -66,22 +66,20 @@ export class TrackingGateway
         this.logger.log(`Client disconnected from Tracking: ${client.id}`);
     }
 
+    // ===============================
+    // JOIN TRACKING
+    // ===============================
     @SubscribeMessage('joinOrderTracking')
     async handleJoinOrderTracking(
         @ConnectedSocket() client: AuthenticatedSocket,
         @MessageBody() data: { orderId: string },
     ) {
         await client.join(`order_${data.orderId}`);
-        this.logger.log(
-            `User ${client.user.userId} joined tracking for order ${data.orderId}`,
-        );
 
-        // Send current driver location if available
         const order = await this.prisma.order.findUnique({
             where: { orderId: data.orderId },
             select: {
-                driverLatitude: true,
-                driverLongitude: true,
+                // ✅ เปลี่ยนจาก driver เป็น delivery ทั้งหมด
                 deliveryLatitude: true,
                 deliveryLongitude: true,
                 status: true,
@@ -92,61 +90,69 @@ export class TrackingGateway
             client.emit('orderInfo', {
                 orderId: data.orderId,
                 status: order.status,
-                driverLatitude: order.driverLatitude
-                    ? Number(order.driverLatitude)
-                    : null,
-                driverLongitude: order.driverLongitude
-                    ? Number(order.driverLongitude)
-                    : null,
-                deliveryLatitude: order.deliveryLatitude
-                    ? Number(order.deliveryLatitude)
-                    : null,
-                deliveryLongitude: order.deliveryLongitude
-                    ? Number(order.deliveryLongitude)
-                    : null,
+                // ✅ ปรับชื่อ property ให้ตรงกับที่ดึงมาจาก DB
+                deliveryLatitude:
+                    order.deliveryLatitude !== null
+                        ? Number(order.deliveryLatitude)
+                        : null,
+                deliveryLongitude:
+                    order.deliveryLongitude !== null
+                        ? Number(order.deliveryLongitude)
+                        : null,
             });
         }
     }
 
+    // ===============================
+    // UPDATE DELIVERY LOCATION (เปลี่ยนชื่อจาก Driver)
+    // ===============================
     @SubscribeMessage('updateDriverLocation')
     async handleUpdateDriverLocation(
         @ConnectedSocket() client: AuthenticatedSocket,
         @MessageBody()
         data: { orderId: string; latitude: number; longitude: number },
     ) {
-        // Update driver location in database
+        const lat =
+            data.latitude !== undefined ? Number(data.latitude) : null;
+        const lng =
+            data.longitude !== undefined ? Number(data.longitude) : null;
+
         await this.prisma.order.update({
             where: { orderId: data.orderId },
             data: {
-                driverLatitude: data.latitude,
-                driverLongitude: data.longitude,
+                // ✅ แก้เป็นชื่อฟิลด์ที่ถูกต้องใน Schema
+                deliveryLatitude: lat,
+                deliveryLongitude: lng,
             },
         });
 
-        // Broadcast to all clients watching this order
+        // แจ้งเตือนไปยังทุกคนที่ติดตาม order นี้ (รวมถึงหน้าบ้านที่รอรับของ)
         this.server.to(`order_${data.orderId}`).emit('driverLocationUpdate', {
             orderId: data.orderId,
-            latitude: data.latitude,
-            longitude: data.longitude,
+            latitude: lat,
+            longitude: lng,
             timestamp: new Date().toISOString(),
         });
 
         this.logger.log(
-            `📍 Driver location updated for order ${data.orderId}: [${data.latitude}, ${data.longitude}]`,
+            `📍 Location updated: ${data.orderId} → [${lat}, ${lng}]`,
         );
     }
 
+    // ===============================
+    // LEAVE
+    // ===============================
     @SubscribeMessage('leaveOrderTracking')
     async handleLeaveOrderTracking(
         @ConnectedSocket() client: AuthenticatedSocket,
         @MessageBody() data: { orderId: string },
     ) {
         await client.leave(`order_${data.orderId}`);
-        this.logger.log(
-            `User ${client.user.userId} left tracking for order ${data.orderId}`,
-        );
     }
 
+    // ===============================
+    // TOKEN EXTRACT
+    // ===============================
     private extractToken(client: Socket): string | undefined {
         const handshakeToken = client.handshake.auth?.token;
         if (handshakeToken && typeof handshakeToken === 'string')

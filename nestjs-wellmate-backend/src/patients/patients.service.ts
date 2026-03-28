@@ -6,7 +6,7 @@ import { CompleteProfileDto } from './dto/complete-profile.dto';
 export class PatientsService {
   private readonly logger = new Logger(PatientsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async completeProfile(userId: string, dto: CompleteProfileDto) {
     const patient = await this.prisma.patient.findUnique({
@@ -24,9 +24,9 @@ export class PatientsService {
         gender: dto.gender,
         bloodType: dto.bloodType,
         chronicDiseases: dto.chronicDiseases,
-        goal: dto.goal,
-        goalDetail: dto.goalDetail,
-        activityLevel: dto.activityLevel,
+
+
+
         isProfileComplete: true,
       },
     });
@@ -56,18 +56,20 @@ export class PatientsService {
       patientId: patient.patientId,
       email: patient.user.email,
       role: patient.user.role,
-      firstName: patient.firstName,
-      lastName: patient.lastName,
+      // ✅ แก้ไข: ใช้ name เพียงอย่างเดียว และใส่ as any เพื่อหลีกเลี่ยง Type Error ชั่วคราว
+      name: (patient as any).name || 'Unknown',
       phoneNumber: patient.user.phone,
       dateOfBirth: patient.dateOfBirth,
       gender: patient.gender,
       bloodType: patient.bloodType,
       chronicDiseases: patient.chronicDiseases,
-      goal: patient.goal,
-      goalDetail: patient.goalDetail,
-      activityLevel: patient.activityLevel,
+      // ... โค้ดด้านบน ...
+      goal: patient.healthMetrics?.[0]?.goal || null,
+      goalDetail: patient.healthMetrics?.[0]?.goal_detail || null,
+      activityLevel: patient.healthMetrics?.[0]?.activity_level || null,
       isProfileComplete: patient.isProfileComplete,
-      healthMetrics: patient.healthMetrics[0] || null,
+      healthMetrics: patient.healthMetrics?.[0] || null,
+      // ... โค้ดด้านล่าง ...
     };
   }
 }

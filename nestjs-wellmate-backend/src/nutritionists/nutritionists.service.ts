@@ -9,7 +9,7 @@ import { addMinutes, format, getDay, isAfter, parseISO } from 'date-fns';
 
 @Injectable()
 export class NutritionistsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: FindNutritionistsQueryDto) {
     const {
@@ -30,8 +30,8 @@ export class NutritionistsService {
 
     if (search) {
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
+        { first_name: { contains: search, mode: 'insensitive' } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
@@ -59,13 +59,7 @@ export class NutritionistsService {
     const allNutritionists = await this.prisma.nutritionist.findMany({
       where,
       orderBy,
-      select: {
-        nutritionistId: true,
-        firstName: true,
-        lastName: true,
-        licenseNumber: true,
-        consultationFee: true,
-        verificationStatus: true,
+      include: {
         user: {
           select: {
             email: true,
@@ -85,17 +79,19 @@ export class NutritionistsService {
 
     const formattedNutritionists = allNutritionists
       .map((nutri) => {
-        const totalReviews = nutri.reviews.length;
+        const reviews = (nutri as any).reviews || [];
+        const totalReviews = reviews.length;
         const avgRating =
           totalReviews > 0
-            ? nutri.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+            ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews
             : 0;
 
-        const { reviews: _reviews, ...rest } = nutri;
+        const { reviews: _unused, ...rest } = nutri;
+
         return {
           ...rest,
           consultationFee: Number(nutri.consultationFee),
-          avgRating,
+          avgRating: parseFloat(avgRating.toFixed(1)),
           totalReviews,
         };
       })
@@ -123,13 +119,7 @@ export class NutritionistsService {
   async findOne(nutritionistId: string) {
     const nutritionist = await this.prisma.nutritionist.findUnique({
       where: { nutritionistId },
-      select: {
-        nutritionistId: true,
-        firstName: true,
-        lastName: true,
-        licenseNumber: true,
-        consultationFee: true,
-        verificationStatus: true,
+      include: {
         user: {
           select: {
             email: true,
@@ -148,7 +138,11 @@ export class NutritionistsService {
             rating: true,
             comment: true,
             createdAt: true,
-            patient: { select: { firstName: true, lastName: true } },
+            patient: {
+              select: {
+                first_name: true, // ตรวจสอบว่าใน Schema เปลี่ยนจาก first_name เป็น name หรือยัง
+              },
+            },
           },
           orderBy: { createdAt: 'desc' },
           take: 10,
@@ -160,17 +154,18 @@ export class NutritionistsService {
       throw new NotFoundException('ไม่พบนักโภชนาการ');
     }
 
+    const reviews = (nutritionist as any).reviews || [];
+    const totalReviews = reviews.length;
     const avgRating =
-      nutritionist.reviews.length > 0
-        ? nutritionist.reviews.reduce((sum, r) => sum + r.rating, 0) /
-          nutritionist.reviews.length
+      totalReviews > 0
+        ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews
         : 0;
 
     return {
       ...nutritionist,
       consultationFee: Number(nutritionist.consultationFee),
-      avgRating,
-      totalReviews: nutritionist.reviews.length,
+      avgRating: parseFloat(avgRating.toFixed(1)),
+      totalReviews,
     };
   }
 
@@ -203,107 +198,70 @@ export class NutritionistsService {
         verificationStatus: 'approved',
       },
     });
+
     if (!nutritionist) {
-      throw new NotFoundException(
-        'ไม่พบนักโภชนาการ หรือยังไม่ได้รับการอนุมัติ',
-      );
+      throw new NotFoundException('ไม่พบนักโภชนาการ หรือยังไม่ได้รับการอนุมัติ');
     }
-    const requestDayOfWeek = getDay(parseISO(dateString));
 
-    const start = new Date(`${dateString}T00:00:00.000+07:00`);
-    const end = new Date(`${dateString}T23:59:59.999+07:00`);
+    const requestDate = parseISO(dateString);
+    const requestDayOfWeek = getDay(requestDate);
 
-    const existingLeave = await this.prisma.nutritionistLeave.findFirst({
+    const startOfDay = new Date(`${dateString}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateString}T23:59:59.999Z`);
+
+    const schedule = await this.prisma.nutritionistSchedule.findFirst({
       where: {
         nutritionistId,
-        leaveDate: {
-          gte: start,
-          lte: end,
-        },
+        dayOfWeek: requestDayOfWeek,
+        isAvailable: true,
       },
     });
 
-    if (existingLeave && existingLeave.isFullDay) {
-      return [];
-    }
+    if (!schedule) return [];
 
-    let startTimeString: string;
-    let endTimeString: string;
+    const [startHour, startMin] = schedule.startTime.split(':').map(Number);
+    const [endHour, endMin] = schedule.endTime.split(':').map(Number);
 
-    if (existingLeave && !existingLeave.isFullDay) {
-      if (!existingLeave.newStartTime || !existingLeave.newEndTime) {
-        return [];
-      }
-      startTimeString = existingLeave.newStartTime;
-      endTimeString = existingLeave.newEndTime;
-    } else {
-      const schedule = await this.prisma.nutritionistSchedule.findFirst({
-        where: {
-          nutritionistId,
-          dayOfWeek: requestDayOfWeek,
-          isAvailable: true,
-        },
-      });
+    const actualStartDateTime = new Date(requestDate);
+    actualStartDateTime.setHours(startHour, startMin, 0, 0);
 
-      if (!schedule) {
-        return [];
-      }
+    const actualEndDateTime = new Date(requestDate);
+    actualEndDateTime.setHours(endHour, endMin, 0, 0);
 
-      startTimeString = schedule.startTime;
-      endTimeString = schedule.endTime;
-    }
-
-    const actualStartDateTime = parseISO(`${dateString}T${startTimeString}:00`);
-    const actualEndDateTime = parseISO(`${dateString}T${endTimeString}:00`);
-    const consultationDurationMinutes = 60;
-    const allSlots: {
-      time: string;
-      startDateTime: Date;
-      endDateTime: Date;
-    }[] = [];
+    // แก้ไขจุดที่เคยแดง: ระบุ Type ให้ชัดเจนและจัดการ Loop ให้ถูกต้อง
+    const allSlots: { time: string; startDateTime: Date; endDateTime: Date }[] = [];
     let currentSlot = actualStartDateTime;
-    while (
-      isAfter(
-        actualEndDateTime,
-        addMinutes(currentSlot, consultationDurationMinutes - 1),
-      )
-    ) {
-      const nextSlot = addMinutes(currentSlot, consultationDurationMinutes);
+
+    while (isAfter(actualEndDateTime, currentSlot)) {
+      const nextSlot = addMinutes(currentSlot, 60);
+
+      if (isAfter(nextSlot, actualEndDateTime)) break;
+
       allSlots.push({
         time: format(currentSlot, 'HH:mm'),
-        startDateTime: currentSlot,
+        startDateTime: new Date(currentSlot),
         endDateTime: nextSlot,
       });
+
       currentSlot = nextSlot;
     }
+
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {
         nutritionistId,
-        startTime: {
-          gte: start,
-          lte: end,
-        },
-        status: {
-          in: ['pending', 'confirmed'],
-        },
+        startTime: { gte: startOfDay, lte: endOfDay },
+        status: { in: ['pending', 'confirmed'] },
       },
-      select: {
-        startTime: true,
-        endTime: true,
-      },
+      select: { startTime: true },
     });
 
     const bookedTimes = new Set(
       existingAppointments.map((appt) => appt.startTime.getTime()),
     );
 
-    const finalSlots = allSlots.map((slot) => {
-      return {
-        time: slot.time,
-        available: !bookedTimes.has(slot.startDateTime.getTime()),
-      };
-    });
-
-    return finalSlots;
+    return allSlots.map((slot) => ({
+      time: slot.time,
+      available: !bookedTimes.has(slot.startDateTime.getTime()),
+    }));
   }
 }

@@ -17,7 +17,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private passwordService: PasswordService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto) {
     const exists = await this.prisma.user.findUnique({
@@ -46,16 +46,24 @@ export class AuthService {
         await tx.patient.create({
           data: {
             userId: user.userId,
-            firstName: dto.firstName!,
-            lastName: dto.lastName!,
+            // แก้ไข: แยก firstName และ lastName ตามที่ Schema ต้องการ
+            first_name: dto.firstName || '',
+            last_name: dto.lastName || '',
           },
         });
       } else if (dto.role === 'nutritionist') {
         await tx.nutritionist.create({
           data: {
             userId: user.userId,
-            firstName: dto.firstName!,
-            lastName: dto.lastName!,
+            // แก้ไข: แยก firstName และ lastName
+            first_name: dto.firstName || '',
+            last_name: dto.lastName || '',
+            //email: dto.email,
+            //phone: '',
+            //expertise: 'Not specified',
+            //exp: '',           // 👈 แก้ตรงนี้เป็นสตริงว่างครับ
+            //education: '',
+            //bio: '',
           },
         });
       } else if (dto.role === 'food_partner') {
@@ -90,20 +98,21 @@ export class AuthService {
       throw new UnauthorizedException('การลงทะเบียนไม่สำเร็จ');
     }
 
+    // Cast fullUser ให้ตรงกับ UserWithRelation
     return {
       message: 'Registration successful',
-      data: this.flattenUser(fullUser as UserWithRelation),
+      data: this.flattenUser(fullUser as unknown as UserWithRelation),
     };
   }
 
   async login(dto: LoginDto) {
     const user = await this.validateUser(dto.email, dto.password);
-    return this.flattenUser(user);
+    return this.flattenUser(user as unknown as UserWithRelation);
   }
 
-  async logout(refreshToken: string) {}
+  async logout(refreshToken: string) { }
 
-  async logoutAllDevices(userId: string) {}
+  async logoutAllDevices(userId: string) { }
 
   async getMe(userId: string) {
     const userBase = await this.prisma.user.findUnique({
@@ -128,7 +137,7 @@ export class AuthService {
       throw new UnauthorizedException('ไม่พบข้อมูลผู้ใช้');
     }
 
-    return this.flattenUser(user);
+    return this.flattenUser(user as unknown as UserWithRelation);
   }
 
   private async validateUser(email: string, pass: string) {
@@ -162,20 +171,23 @@ export class AuthService {
       foodPartner,
     } = user;
 
+    // แก้ไข: ประกาศตัวแปรสำหรับชื่อเพื่อใช้ด้านล่าง
     let firstName = '';
     let lastName = '';
     let roleId: string | number | undefined;
 
     if (role === 'patient' && patient) {
-      firstName = patient.firstName;
-      lastName = patient.lastName;
+      firstName = patient.first_name || '';  // <--- แก้กลับมาใช้แบบนี้ถ้า Autocomplete แนะนำ
+      lastName = patient.last_name || '';    // <--- แก้กลับมาใช้แบบนี้ถ้า Autocomplete แนะนำ
       roleId = patient.patientId;
+
       return {
         userId,
         phone,
         email,
-        firstName,
-        lastName,
+        firstName, // คืนค่า firstName แทนการใช้ split 
+        lastName,  // คืนค่า lastName
+        name: `${firstName} ${lastName}`.trim(), // รวมเป็น name ให้ Frontend เผื่อเรียกใช้
         role,
         is2faEnabled,
         profileImageUrl,
@@ -184,8 +196,8 @@ export class AuthService {
         isProfileComplete: patient.isProfileComplete,
       };
     } else if (role === 'nutritionist' && nutritionist) {
-      firstName = nutritionist.firstName;
-      lastName = nutritionist.lastName;
+      firstName = nutritionist.first_name || '';
+      lastName = nutritionist.last_name || '';
       roleId = nutritionist.nutritionistId;
       return {
         userId,
@@ -193,6 +205,7 @@ export class AuthService {
         email,
         firstName,
         lastName,
+        name: `${firstName} ${lastName}`.trim(), // รวมเป็น name ให้ Frontend เผื่อเรียกใช้
         role,
         is2faEnabled,
         profileImageUrl,
@@ -221,6 +234,7 @@ export class AuthService {
       email,
       firstName,
       lastName,
+      name: `${firstName} ${lastName}`.trim(),
       role,
       is2faEnabled,
       profileImageUrl,

@@ -12,7 +12,7 @@ export class CreateNutritionistDto {
 
   @ApiProperty({ example: 'สมชาย', description: 'ชื่อจริง' })
   @IsString()
-  firstName: string;
+  name: string;
 
   @ApiProperty({ example: 'ใจดี', description: 'นามสกุล' })
   @IsString()

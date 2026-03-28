@@ -107,6 +107,8 @@ enum SubscriptionPlan {
   yearly
 }
 
+
+
 enum ConsentType {
   pdpa
   medical_disclaimer
@@ -235,12 +237,17 @@ model PatientAllergy {
 }
 
 model HealthMetric {
-  id         Int      @id @default(autoincrement()) @map("health_metric_id")
-  patientId  String   @map("patient_id") @db.Uuid
-  patient    Patient  @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
-  weightKg   Decimal? @map("weight_kg") @db.Decimal(5, 2)
-  heightCm   Decimal? @map("height_cm") @db.Decimal(5, 2)
-  recordedAt DateTime @default(now()) @map("recorded_at")
+  id            Int           @id @default(autoincrement()) @map("health_metric_id")
+  patientId     String        @map("patient_id") @db.Uuid
+  patient       Patient       @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+  weightKg      Decimal?      @map("weight_kg") @db.Decimal(5, 2)
+  heightCm      Decimal?      @map("height_cm") @db.Decimal(5, 2)
+  recordedAt    DateTime      @default(now()) @map("recorded_at")
+  activityLevel ActivityLevel @default(sedentary) @map("activity_level")
+  ageYears      Int?          @map("age_years")
+  gender        GenderType?
+  goal          String?       @db.VarChar(100)
+  goalDetail    String?       @map("goal_detail") @db.Text
 
   @@map("health_metrics")
 }
@@ -573,12 +580,14 @@ model MealPlan {
 }
 
 model MealPlanItem {
-  mealPlanItemId Int      @id @default(autoincrement()) @map("meal_plan_item_id")
-  mealPlanId     Int      @map("meal_plan_id")
-  planDate       DateTime @map("plan_date") @db.Date
-  menuItemId     Int?     @map("menu_item_id")
-  courseId       Int?     @map("course_id")
-  mealType       String?  @map("meal_type") @db.VarChar(20) // breakfast / lunch / dinner
+  mealPlanItemId Int       @id @default(autoincrement()) @map("meal_plan_item_id")
+  mealPlanId     Int       @map("meal_plan_id")
+  planDate       DateTime  @map("plan_date") @db.Date
+  menuItemId     Int?      @map("menu_item_id")
+  courseId       Int?      @map("course_id")
+  mealType       String?   @map("meal_type") @db.VarChar(20) // breakfast / lunch / dinner
+  isDone         Boolean   @default(false) @map("is_done")
+  loggedAt       DateTime? @map("logged_at")
 
   // Relations
   mealPlan MealPlan  @relation(fields: [mealPlanId], references: [mealPlanId])
