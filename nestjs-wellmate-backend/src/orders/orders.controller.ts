@@ -71,4 +71,15 @@ export class OrdersController {
   ) {
     return this.ordersService.updateStatus(id, status, user.sub, user.role);
   }
+
+  @Get(':id/check-payment')
+  @Roles(UserRole.patient)
+  @ApiOperation({ summary: 'Check payment status directly from Omise' })
+  @ApiResponse({ status: 200 })
+  async checkPayment(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.ordersService.checkAndUpdatePaymentStatus(id, user.sub);
+  }
 }

@@ -5,20 +5,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, Bike, Store, UtensilsCrossed, Flame, Heart, ShoppingBag, ShoppingCart, Leaf, Apple, Cake, CupSoda, Fish, Info, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
-import Sidebar from "@/components/dashboard/Sidebar";
-import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import RightSidebar from "@/components/dashboard/RightSidebar";
-import { useCartStore } from "@/store/cart-store";
+import RecipeCard from "@/components/healthymenu/RecipeCard";
+import { useCartStore, MenuItem as StoreMenuItem } from "@/store/cart-store";
 
-type MenuItem = {
-    id: number;
-    name: string;
-    desc: string;
-    price: number;
-    image: string;
+type LocalMenuItem = StoreMenuItem & {
     restaurantName: string;
-    category?: string;
-    caloriesKcal?: number;
 };
 
 type Restaurant = {
@@ -113,13 +105,12 @@ function CategoryItem({ icon, label, count, active, onClick }: { icon: React.Rea
     );
 }
 
-function MenuCard({
+function MenuCardWrapper({
     item,
-    onAdd,
 }: {
-    item: MenuItem;
-    onAdd: () => void;
+    item: LocalMenuItem;
 }) {
+    // MenuCard expects the cart-store MenuItem type
     return (
         <div className="group bg-white rounded-[32px] border border-gray-100 p-4 hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] transition-all duration-500 flex flex-col h-full relative">
             <button className="absolute top-6 right-6 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors shadow-sm">
@@ -128,7 +119,7 @@ function MenuCard({
 
             <div className="relative aspect-square rounded-[24px] overflow-hidden mb-4 bg-gray-50">
                 <img
-                    src={item.image}
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     onError={(e) => {
@@ -165,15 +156,22 @@ function MenuCard({
                     <span className="text-[11px] text-gray-400 font-bold">(5.00)</span>
                 </div>
 
-                <button
-                    onClick={onAdd}
-                    className="mt-auto w-full rounded-2xl bg-[#C6E065]/10 text-[#C6E065] py-3 text-[13px] font-black hover:bg-[#C6E065] hover:text-white transition-all flex items-center justify-center gap-2 group/btn border border-[#C6E065]/20"
-                >
-                    <ShoppingBag size={16} className="group-hover/btn:scale-110 transition-transform" />
-                    เลือกรายการนี้
-                </button>
+                <AddToCartButton item={item} />
             </div>
         </div>
+    );
+}
+
+function AddToCartButton({ item }: { item: LocalMenuItem }) {
+    const addItem = useCartStore(state => state.addItem);
+    return (
+        <button
+            onClick={() => addItem(item, 1)}
+            className="mt-auto w-full rounded-2xl bg-[#C6E065]/10 text-[#C6E065] py-3 text-[13px] font-black hover:bg-[#C6E065] hover:text-white transition-all flex items-center justify-center gap-2 group/btn border border-[#C6E065]/20"
+        >
+            <ShoppingBag size={16} className="group-hover/btn:scale-110 transition-transform" />
+            เลือกรายการนี้
+        </button>
     );
 }
 
@@ -206,10 +204,9 @@ export default function HealthyMenu() {
     const [selectedFoodType, setSelectedFoodType] = useState<FoodType>("all");
     const [showCart, setShowCart] = useState(false);
 
-    // Global Cart State
-    const { items: cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, getTotalItems, getTotalPrice, addItem } = useCartStore();
+    const { items: cartItems, isOpen: isCartOpen, setIsOpen: setIsCartOpen, getTotalItems } = useCartStore();
 
-    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [menuItems, setMenuItems] = useState<LocalMenuItem[]>([]);
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -245,23 +242,24 @@ export default function HealthyMenu() {
                             name: partner.partnerName,
                             desc: partner.description || "",
                             image: firstImage || FALLBACK_FOOD_IMAGE,
-                            link: `/restaurantmenu?partnerId=${partner.foodPartnerId}`,
+                            link: `/dashboard/restaurantmenu?partnerId=${partner.foodPartnerId}`,
                         };
                     })
                     .filter((r) => !!r.name);
 
                 // Show only menu items that have required fields.
-                const mappedMenuItems: MenuItem[] = partners.flatMap((partner) =>
+                const mappedMenuItems: LocalMenuItem[] = partners.flatMap((partner) =>
                     (partner.menuItems ?? [])
                         .filter((item) => !!item.name && item.price !== null)
                         .map((item) => ({
-                            id: item.menuItemId,
+                            menuItemId: item.menuItemId.toString(),
                             name: item.name,
-                            desc: item.description || "",
+                            description: item.description || "",
                             price: toSafeNumber(item.price),
-                            image: item.imageUrl || FALLBACK_FOOD_IMAGE,
+                            imageUrl: item.imageUrl || FALLBACK_FOOD_IMAGE,
                             restaurantName: partner.partnerName,
                             category: item.category || undefined,
+                            foodPartnerId: partner.foodPartnerId,
                             caloriesKcal:
                                 item.caloriesKcal === null || item.caloriesKcal === undefined
                                     ? undefined
@@ -289,8 +287,8 @@ export default function HealthyMenu() {
         return ["all", ...unique];
     }, [menuItems]);
 
-    const getFoodType = (item: MenuItem): FoodType => {
-        const text = `${item.name} ${item.desc} ${item.category ?? ""}`.toLowerCase();
+    const getFoodType = (item: LocalMenuItem): FoodType => {
+        const text = `${item.name} ${item.description} ${item.category ?? ""}`.toLowerCase();
         if (/(coffee|tea|juice|smoothie|drink|water|latte|americano)/.test(text)) return "drink";
         if (/(salad)/.test(text)) return "salad";
         if (/(snack|toast|yogurt|granola)/.test(text)) return "snack";
@@ -326,12 +324,9 @@ export default function HealthyMenu() {
     // total has been removed
 
     return (
-        <div className="flex h-screen bg-[#fffaf0] font-sans text-[#3d3522] overflow-hidden relative">
-            <BackgroundPattern />
-            <Sidebar />
-
-            <main className={`flex-1 overflow-y-auto px-8 py-8 z-10 custom-scrollbar ml-64 bg-[#FDF9F3] ${showCart ? "mr-80" : "mr-6"}`}>
-                <div className="max-w-[1400px] mx-auto">
+        <div className="flex-1 flex flex-col w-full h-screen bg-[#fffaf0] font-sans text-[#3d3522] overflow-hidden relative">
+            <main className={`flex-1 overflow-y-auto px-8 py-8 z-10 custom-scrollbar ml-64 bg-[#FDF9F3] mr-0`}>
+                <div className="max-w-none w-full">
 
 
                     {/* Category Circles Row */}
@@ -433,21 +428,22 @@ export default function HealthyMenu() {
 
                         {isLoading ? (
                             <div className="text-center py-12">
-                                <p className="text-gray-500 font-bold animate-pulse">กำลังโหลดข้อมูล...</p>
+                                <p className="text-[#8a7550] font-bold animate-pulse">กำลังโหลดข้อมูล...</p>
+                            </div>
+                        ) : filteredMenu.length === 0 ? (
+                            <div className="py-20 bg-white/50 backdrop-blur-sm rounded-[40px] border border-[#f0e6cc] flex flex-col items-center justify-center text-center">
+                                <div className="w-20 h-20 bg-[#faf8f2] rounded-full flex items-center justify-center mb-6">
+                                    <ShoppingBag size={40} className="text-[#8a7550] opacity-20" />
+                                </div>
+                                <h3 className="text-xl font-black text-[#3d3522] mb-2">ไม่พบเมนูแนะนำ</h3>
+                                <p className="text-[#8a7550] font-medium max-w-xs">ขออภัย ยังไม่มีรายการอาหารแนะนำที่ตรงตามโภชนาการของคุณในขณะนี้</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-slideUp">
                                 {filteredMenu.slice(0, 5).map((item) => (
-                                    <MenuCard
-                                        key={item.id}
+                                    <MenuCardWrapper
+                                        key={item.menuItemId}
                                         item={item}
-                                        onAdd={() => addItem({
-                                            menuItemId: item.id.toString(),
-                                            name: item.name,
-                                            price: item.price,
-                                            imageUrl: item.image,
-                                            category: item.category
-                                        }, 1)}
                                     />
                                 ))}
                             </div>
@@ -469,21 +465,27 @@ export default function HealthyMenu() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                            {filteredMenu.map((item) => (
-                                <MenuCard
-                                    key={item.id}
-                                    item={item}
-                                    onAdd={() => addItem({
-                                        menuItemId: item.id.toString(),
-                                        name: item.name,
-                                        price: item.price,
-                                        imageUrl: item.image,
-                                        category: item.category
-                                    }, 1)}
-                                />
-                            ))}
-                        </div>
+                        {filteredMenu.length === 0 ? (
+                            <div className="py-24 bg-white/40 backdrop-blur-md rounded-[50px] border border-[#fdf0d5] flex flex-col items-center justify-center text-center shadow-lg shadow-[#fdf0d5]/10">
+                                <div className="w-24 h-24 bg-[#fdf0d5] rounded-full flex items-center justify-center mb-8 relative">
+                                    <UtensilsCrossed size={48} className="text-[#8a7550] opacity-30" />
+                                    <div className="absolute -bottom-1 -right-1 bg-white p-2 rounded-full shadow-sm">
+                                        <Search size={20} className="text-[#C6E065]" />
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-black text-[#3d3522] mb-3">ไม่พบรายการอาหาร</h3>
+                                <p className="text-[#8a7550] font-medium max-w-sm px-6">ขออภัย เราไม่พบเมนูอาหารที่คุณกำลังมองหา ลองเปลี่ยนหมวดหมู่หรือคำค้นหาดูนะครับ</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                {filteredMenu.map((item) => (
+                                    <MenuCardWrapper
+                                        key={item.menuItemId}
+                                        item={item}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </section>
 
                     {/* Top Seller Users */}

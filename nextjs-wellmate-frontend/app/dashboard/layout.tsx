@@ -24,8 +24,6 @@ export default function DashboardLayout({
     return (
         <div className="flex h-screen bg-[#fffbf5] font-sans text-[#3d3522] overflow-hidden relative">
             <BackgroundPattern />
-
-
             <Sidebar />
             {children}
             <RightSidebar isOpen={isOpen} onClose={() => setIsOpen(false)} />

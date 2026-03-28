@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, Bike, Store, UtensilsCrossed, Flame, Heart, ShoppingBag, ShoppingCart, Leaf, Apple, Cake, CupSoda, Fish, Info, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
-import Sidebar from "@/components/dashboard/Sidebar";
-import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import RightSidebar from "@/components/dashboard/RightSidebar";
 import RecipeCard from "@/components/healthymenu/RecipeCard";
 import { useCartStore, MenuItem as StoreMenuItem } from "@/store/cart-store";
@@ -261,6 +259,7 @@ export default function HealthyMenu() {
                             imageUrl: item.imageUrl || FALLBACK_FOOD_IMAGE,
                             restaurantName: partner.partnerName,
                             category: item.category || undefined,
+                            foodPartnerId: partner.foodPartnerId,
                             caloriesKcal:
                                 item.caloriesKcal === null || item.caloriesKcal === undefined
                                     ? undefined
@@ -326,8 +325,6 @@ export default function HealthyMenu() {
 
     return (
         <div className="flex-1 flex flex-col w-full h-screen bg-[#fffaf0] font-sans text-[#3d3522] overflow-hidden relative">
-            {/* BackgroundPattern and Sidebar are provided by DashboardLayout */}
-
             <main className={`flex-1 overflow-y-auto px-8 py-8 z-10 custom-scrollbar ml-64 bg-[#FDF9F3] mr-0`}>
                 <div className="max-w-none w-full">
 

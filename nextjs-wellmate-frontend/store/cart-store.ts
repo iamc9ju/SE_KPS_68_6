@@ -14,6 +14,7 @@ export interface MenuItem {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
+  foodPartnerId?: number;
 }
 
 interface CartItem extends MenuItem {

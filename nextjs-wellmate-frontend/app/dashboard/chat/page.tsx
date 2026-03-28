@@ -145,6 +145,17 @@ export default function ChatPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [debugMode, setDebugMode] = useState(false);
 
+    // ─── Helper: Map DB Message to UI Message ───
+    const mapMessage = useCallback((m: any): Message => ({
+        id: String(m.chatMessageId),
+        text: m.content,
+        time: format(new Date(m.createdAt), "HH:mm"),
+        isDoc: String(m.senderId) !== String(user?.userId),
+        read: m.isRead || false,
+        type: m.messageType || "text",
+        avatarUrl: m.sender?.profileImageUrl,
+    }), [user?.userId]);
+
     const bottomRef = useRef<HTMLDivElement>(null);
     const emojiRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,8 +169,16 @@ export default function ChatPage() {
                 const res = await api.get("/chat/rooms");
                 const roomsData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
                 setRooms(roomsData);
+                
                 if (roomsData.length > 0 && !selectedRoomId) {
-                    setSelectedRoomId(roomsData[0].chatRoomId);
+                    const firstRoom = roomsData[0];
+                    setSelectedRoomId(firstRoom.chatRoomId);
+                    
+                    // Immediately populate messages from the room list to avoid "Waiting for load"
+                    if (firstRoom.chatMessages && firstRoom.chatMessages.length > 0) {
+                        const initialMsgs = firstRoom.chatMessages.map(mapMessage).reverse();
+                        setMessages(initialMsgs);
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching rooms:", err);
@@ -172,26 +191,40 @@ export default function ChatPage() {
 
     // Fetch messages when room selected
     useEffect(() => {
-        if (!selectedRoomId) return;
+        if (!selectedRoomId) {
+            setMessages([]);
+            return;
+        }
+
+        // 🌟 Fix: Clear immediately to prevent flicker from old room
+        setMessages([]);
+
+        let isCurrent = true;
+
+        // 1. Pre-populate from rooms list for instant switching
+        const localRoom = rooms.find(r => String(r.chatRoomId) === String(selectedRoomId));
+        if (localRoom?.chatMessages) {
+            const initialMsgs = localRoom.chatMessages.map(mapMessage).reverse();
+            if (isCurrent) setMessages(initialMsgs);
+        }
+
         const fetchMessages = async () => {
             try {
                 const res = await api.get(`/chat/${selectedRoomId}/messages`);
+                if (!isCurrent) return; // 🌟 Fix: Abandon if user switched rooms already
+                
                 const rawMessages = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-                const mapped: Message[] = rawMessages.map((m: any) => ({
-                    id: String(m.chatMessageId),
-                    text: m.content,
-                    time: format(new Date(m.createdAt), "HH:mm"),
-                    isDoc: String(m.senderId) !== String(user?.userId),
-                    read: m.isRead || false,
-                    type: m.messageType || "text",
-                    avatarUrl: m.sender?.profileImageUrl,
-                })).reverse();
+                const mapped: Message[] = rawMessages.map(mapMessage).reverse();
                 setMessages(mapped);
             } catch (err) {
                 console.error("Error fetching messages:", err);
             }
         };
         fetchMessages();
+
+        return () => {
+            isCurrent = false; // 🌟 Fix: Cleanup flag
+        };
     }, [selectedRoomId, user?.userId]);
 
     // Handle new messages from socket
@@ -200,14 +233,7 @@ export default function ChatPage() {
             console.log("📨 Received new_message:", newMsg);
             if (String(newMsg.chatRoomId) === String(selectedRoomId)) {
                 console.log("✅ Message belongs to active room. Updating UI...");
-                const mapped: Message = {
-                    id: String(newMsg.chatMessageId),
-                    text: newMsg.content,
-                    time: format(new Date(newMsg.createdAt), "HH:mm"),
-                    isDoc: String(newMsg.senderId) !== String(user?.userId),
-                    read: true,
-                    type: newMsg.messageType || "text",
-                };
+                const mapped: Message = mapMessage(newMsg);
                 setMessages((prev) => {
                     // 1. Avoid duplicates immediately (real ID check)
                     if (prev.some(m => String(m.id) === String(mapped.id))) {

@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Prisma, OrderStatus, PaymentStatus, UserRole } from '@prisma/client';
+import { PaymentsService } from '../payments/payments.service';
 
 type OrderWithItems = Prisma.OrderGetPayload<{
   include: {
@@ -29,7 +30,10 @@ type OrderWithItems = Prisma.OrderGetPayload<{
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paymentsService: PaymentsService,
+  ) {}
 
   async create(dto: CreateOrderDto, userId: string) {
     const patient = await this.prisma.patient.findUnique({
@@ -40,7 +44,7 @@ export class OrdersService {
       throw new ForbiddenException('Only patients can create orders');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const createdOrder = await this.prisma.$transaction(async (tx) => {
       let totalAmount = 0;
       const orderItemsData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] =
         [];
@@ -107,8 +111,44 @@ export class OrdersService {
         },
       });
 
-      return this.mapOrder(order);
+      return order;
     });
+
+    // --- Omise QR Integration ---
+    try {
+      const orderData = await this.prisma.order.findUnique({
+        where: { orderId: createdOrder.orderId },
+        include: { patient: { select: { firstName: true, lastName: true } } },
+      });
+
+      if (!orderData) throw new NotFoundException('Order not found');
+
+      const { chargeId, qrCodeUrl } = await this.paymentsService.createPromptPayCharge(
+        Number(orderData.total),
+        {
+          orderId: orderData.orderId,
+          customerName: `${orderData.patient.firstName} ${orderData.patient.lastName}`,
+          type: 'FOOD_ORDER',
+        },
+      );
+
+      // Update order with Omise charge info
+      const finalOrder = await this.prisma.order.update({
+        where: { orderId: createdOrder.orderId },
+        data: { chargeId, qrCodeUrl },
+        include: {
+          patient: { select: { firstName: true, lastName: true } },
+          orderItems: { include: { menuItem: true } },
+        },
+      });
+
+      return this.mapOrder(finalOrder);
+    } catch (paymentError) {
+      this.logger.error(`Failed to create Omise charge for order ${createdOrder.orderId}:`, paymentError);
+      // We return the order anyway, but it won't have a qrCodeUrl
+      const existingOrder = await this.findOne(createdOrder.orderId, userId, UserRole.patient);
+      return existingOrder;
+    }
   }
 
   async findAll(userId: string, role: string) {
@@ -213,6 +253,53 @@ export class OrdersService {
     });
 
     return this.mapOrder(updated as unknown as OrderWithItems);
+  }
+
+  async checkAndUpdatePaymentStatus(orderId: string, userId: string) {
+    const patient = await this.prisma.patient.findUnique({
+      where: { userId },
+    });
+    if (!patient) throw new ForbiddenException('Only patients can check payment');
+
+    const order = await this.prisma.order.findUnique({
+      where: { orderId },
+    });
+
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.patientId !== patient.patientId)
+      throw new ForbiddenException('Not your order');
+
+    // Already paid
+    if (order.paymentStatus === 'PAID') {
+      return { paymentStatus: 'PAID', status: order.status };
+    }
+
+    // No charge to check
+    if (!order.chargeId) {
+      return { paymentStatus: order.paymentStatus, status: order.status };
+    }
+
+    // Check directly from Omise
+    try {
+      const charge = await this.paymentsService.retrieveCharge(order.chargeId);
+
+      if (charge.status === 'successful') {
+        const updated = await this.prisma.order.update({
+          where: { orderId },
+          data: {
+            paymentStatus: 'PAID',
+            status: 'accepted',
+          },
+        });
+        this.logger.log(`Order ${orderId} payment confirmed via direct check`);
+        return { paymentStatus: 'PAID', status: updated.status };
+      }
+
+      return { paymentStatus: order.paymentStatus, chargeStatus: charge.status };
+    } catch (error) {
+      this.logger.error(`Failed to check charge status for order ${orderId}:`, error);
+      return { paymentStatus: order.paymentStatus, status: order.status };
+    }
   }
 
   private mapOrder(order: OrderWithItems, partnerId?: number | null) {
