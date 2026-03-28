@@ -1,0 +1,368 @@
+﻿On branch dev
+Your branch is up to date with 'origin/dev'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    .vscode/settings.json
+	modified:   app/(auth)/login/page.tsx
+	modified:   app/(auth)/register/page.tsx
+	deleted:    app/admindashboard/layout.tsx
+	modified:   app/admindashboard/page.tsx
+	deleted:    app/admindashboard/partners/page.tsx
+	deleted:    app/admindashboard/users/page.tsx
+	deleted:    app/calendar/page.tsx
+	modified:   app/dashboard/appointments/page.tsx
+	modified:   app/dashboard/chat/page.tsx
+	modified:   app/dashboard/layout.tsx
+	modified:   app/dashboard/nutrition/page.tsx
+	modified:   app/dashboard/orders/page.tsx
+	modified:   app/dashboard/page.tsx
+	modified:   app/dashboard/setting/page.tsx
+	deleted:    app/fooddiary/layout.tsx
+	deleted:    app/fooddiary/page.tsx
+	modified:   app/globals.css
+	modified:   app/healthdata/page.tsx
+	deleted:    app/healthymenu/page.tsx
+	deleted:    app/mealplan/layout.tsx
+	deleted:    app/mealplan/page.tsx
+	deleted:    app/messages/page.tsx
+	modified:   app/progress/page.tsx
+	modified:   components/Footer.tsx
+	modified:   components/Navbar.tsx
+	modified:   components/NutritionistList.tsx
+	modified:   components/dashboard/BackgroundPattern.tsx
+	modified:   components/dashboard/NutritionistCard.tsx
+	modified:   components/dashboard/RightSidebar.tsx
+	modified:   components/dashboard/Sidebar.tsx
+	deleted:    components/ui/button.tsx
+	deleted:    components/ui/card.tsx
+	deleted:    components/ui/input.tsx
+	deleted:    components/ui/select.tsx
+	deleted:    docker-compose.yml
+	modified:   hooks/useAuth.ts
+	modified:   lib/api.ts
+	deleted:    nestjs-wellmate-backend/.dockerignore
+	deleted:    nestjs-wellmate-backend/.gitignore
+	deleted:    nestjs-wellmate-backend/.prettierrc
+	deleted:    nestjs-wellmate-backend/Dockerfile
+	deleted:    nestjs-wellmate-backend/README.md
+	deleted:    nestjs-wellmate-backend/eslint.config.mjs
+	deleted:    nestjs-wellmate-backend/nest-cli.json
+	deleted:    nestjs-wellmate-backend/package-lock.json
+	deleted:    nestjs-wellmate-backend/package.json
+	deleted:    nestjs-wellmate-backend/prisma.config.ts
+	deleted:    nestjs-wellmate-backend/prisma/migrations/20260304151612_add_food_partner_and_nutrition_modules/migration.sql
+	deleted:    nestjs-wellmate-backend/prisma/migrations/migration_lock.toml
+	deleted:    nestjs-wellmate-backend/prisma/schema.prisma
+	deleted:    nestjs-wellmate-backend/src/app.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/app.controller.ts
+	deleted:    nestjs-wellmate-backend/src/app.module.ts
+	deleted:    nestjs-wellmate-backend/src/app.service.ts
+	deleted:    nestjs-wellmate-backend/src/appointments/appointment-expiry.service.ts
+	deleted:    nestjs-wellmate-backend/src/appointments/appointments.controller.ts
+	deleted:    nestjs-wellmate-backend/src/appointments/appointments.module.ts
+	deleted:    nestjs-wellmate-backend/src/appointments/appointments.service.ts
+	deleted:    nestjs-wellmate-backend/src/appointments/dto/create-appointment.dto.ts
+	deleted:    nestjs-wellmate-backend/src/auth/auth.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/auth/auth.controller.ts
+	deleted:    nestjs-wellmate-backend/src/auth/auth.module.ts
+	deleted:    nestjs-wellmate-backend/src/auth/auth.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/auth/auth.service.ts
+	deleted:    nestjs-wellmate-backend/src/auth/decorators/auth.decorator.ts
+	deleted:    nestjs-wellmate-backend/src/auth/decorators/current-user.decorator.ts
+	deleted:    nestjs-wellmate-backend/src/auth/decorators/roles.decorator.ts
+	deleted:    nestjs-wellmate-backend/src/auth/dto/login.dto.ts
+	deleted:    nestjs-wellmate-backend/src/auth/dto/refresh-token.dto.ts
+	deleted:    nestjs-wellmate-backend/src/auth/dto/register.dto.ts
+	deleted:    nestjs-wellmate-backend/src/auth/guards/jwt-auth-guard.ts
+	deleted:    nestjs-wellmate-backend/src/auth/guards/roles.guard.ts
+	deleted:    nestjs-wellmate-backend/src/auth/interface/jwt-payload.interface.ts
+	deleted:    nestjs-wellmate-backend/src/auth/interface/user.ts
+	deleted:    nestjs-wellmate-backend/src/auth/password.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/auth/password.service.ts
+	deleted:    nestjs-wellmate-backend/src/auth/strategies/jwt.strategy.ts
+	deleted:    nestjs-wellmate-backend/src/auth/token.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/auth/token.service.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/calendar.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/calendar.controller.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/calendar.module.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/calendar.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/calendar.service.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/dto/create-calendar.dto.ts
+	deleted:    nestjs-wellmate-backend/src/calendar/dto/update-calendar.dto.ts
+	deleted:    nestjs-wellmate-backend/src/cart/cart.controller.ts
+	deleted:    nestjs-wellmate-backend/src/cart/cart.module.ts
+	deleted:    nestjs-wellmate-backend/src/cart/cart.service.ts
+	deleted:    nestjs-wellmate-backend/src/cart/dto/cart.dto.ts
+	deleted:    nestjs-wellmate-backend/src/chat/chat.controller.ts
+	deleted:    nestjs-wellmate-backend/src/chat/chat.gateway.ts
+	deleted:    nestjs-wellmate-backend/src/chat/chat.module.ts
+	deleted:    nestjs-wellmate-backend/src/chat/chat.service.ts
+	deleted:    nestjs-wellmate-backend/src/chat/dto/join-room.dto.ts
+	deleted:    nestjs-wellmate-backend/src/chat/dto/send-message.dto.ts
+	deleted:    nestjs-wellmate-backend/src/common/constants/response.constants.ts
+	deleted:    nestjs-wellmate-backend/src/common/constants/time.constants.ts
+	deleted:    nestjs-wellmate-backend/src/common/decorators/response-message.decorator.ts
+	deleted:    nestjs-wellmate-backend/src/common/filters/all-exceptions.filter.ts
+	deleted:    nestjs-wellmate-backend/src/common/filters/prisma-client-exception.filter.ts
+	deleted:    nestjs-wellmate-backend/src/common/interceptors/response.interceptor.ts
+	deleted:    nestjs-wellmate-backend/src/common/interfaces/error.interface.ts
+	deleted:    nestjs-wellmate-backend/src/common/utils/error-response.factory.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/dto/create-food-menu.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/dto/find-menu-items-query.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/dto/menu-item-request.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/dto/menu-item-response.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/dto/update-food-menu.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/food-menu.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/food-menu.controller.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/food-menu.module.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/food-menu.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/food-menu/food-menu.service.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/dto/create-food-partner.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/dto/update-food-partner.dto.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/food-partner.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/food-partner.controller.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/food-partner.module.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/food-partner.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/food-partner/food-partner.service.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/dto/create-health-metric.dto.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/dto/update-health-metric.dto.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/health-metrics.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/health-metrics.controller.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/health-metrics.module.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/health-metrics.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/health-metrics/health-metrics.service.ts
+	deleted:    nestjs-wellmate-backend/src/health/custom-prisma.health.ts
+	deleted:    nestjs-wellmate-backend/src/health/health.controller.ts
+	deleted:    nestjs-wellmate-backend/src/health/health.module.ts
+	deleted:    nestjs-wellmate-backend/src/main.ts
+	deleted:    nestjs-wellmate-backend/src/my-logger/my-logger.module.ts
+	deleted:    nestjs-wellmate-backend/src/my-logger/my-logger.service.ts
+	deleted:    nestjs-wellmate-backend/src/notifications/dto/notification.dto.ts
+	deleted:    nestjs-wellmate-backend/src/notifications/notifications.controller.ts
+	deleted:    nestjs-wellmate-backend/src/notifications/notifications.gateway.ts
+	deleted:    nestjs-wellmate-backend/src/notifications/notifications.module.ts
+	deleted:    nestjs-wellmate-backend/src/notifications/notifications.service.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/dto/create-nutritionist.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/dto/update-nutritionist.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/nutritionist.controller.spec.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/nutritionist.controller.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/nutritionist.module.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/nutritionist.service.spec.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionist/nutritionist.service.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/dto/create-leave.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/dto/create-nutritionist.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/dto/create-schedule.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/dto/find-nutritionists-query.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/dto/get-availability.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/dto/update-nutritionist.dto.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/nutritionist-leaves.service.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/nutritionist-schedules.service.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/nutritionists.controller.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/nutritionists.module.ts
+	deleted:    nestjs-wellmate-backend/src/nutritionists/nutritionists.service.ts
+	deleted:    nestjs-wellmate-backend/src/orders/dto/create-order.dto.ts
+	deleted:    nestjs-wellmate-backend/src/orders/dto/order-response.dto.ts
+	deleted:    nestjs-wellmate-backend/src/orders/orders.controller.ts
+	deleted:    nestjs-wellmate-backend/src/orders/orders.module.ts
+	deleted:    nestjs-wellmate-backend/src/orders/orders.service.ts
+	deleted:    nestjs-wellmate-backend/src/patients/dto/complete-profile.dto.ts
+	deleted:    nestjs-wellmate-backend/src/patients/patients.controller.ts
+	deleted:    nestjs-wellmate-backend/src/patients/patients.module.ts
+	deleted:    nestjs-wellmate-backend/src/patients/patients.service.ts
+	deleted:    nestjs-wellmate-backend/src/payments/payments.module.ts
+	deleted:    nestjs-wellmate-backend/src/payments/payments.service.ts
+	deleted:    nestjs-wellmate-backend/src/payments/types/omise.type.ts
+	deleted:    nestjs-wellmate-backend/src/prisma/prisma.module.ts
+	deleted:    nestjs-wellmate-backend/src/prisma/prisma.service.ts
+	deleted:    nestjs-wellmate-backend/src/schedulers/schedulers.module.ts
+	deleted:    nestjs-wellmate-backend/src/schedulers/schedulers.service.ts
+	deleted:    nestjs-wellmate-backend/src/tracking/tracking.gateway.ts
+	deleted:    nestjs-wellmate-backend/src/tracking/tracking.module.ts
+	deleted:    nestjs-wellmate-backend/src/webhooks/dto/omise-webhook.dto.ts
+	deleted:    nestjs-wellmate-backend/src/webhooks/omise-webhook.controller.ts
+	deleted:    nestjs-wellmate-backend/src/webhooks/webhooks.module.ts
+	deleted:    nestjs-wellmate-backend/src/webhooks/webhooks.service.ts
+	deleted:    nestjs-wellmate-backend/test/app.e2e-spec.ts
+	deleted:    nestjs-wellmate-backend/test/jest-e2e.json
+	deleted:    nestjs-wellmate-backend/tsconfig.build.json
+	deleted:    nestjs-wellmate-backend/tsconfig.json
+	modified:   next.config.ts
+	deleted:    nextjs-wellmate-frontend/.dockerignore
+	deleted:    nextjs-wellmate-frontend/.gitignore
+	deleted:    nextjs-wellmate-frontend/Dockerfile
+	deleted:    nextjs-wellmate-frontend/README.md
+	deleted:    nextjs-wellmate-frontend/app/(auth)/layout.tsx
+	deleted:    nextjs-wellmate-frontend/app/(auth)/login/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/(auth)/register/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/Appointment/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/Monitoring/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/NutritionistApproval/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/approval/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/calendar/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/checkout/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/appointments/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/chat/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/layout.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/nutrition/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/orders/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/dashboard/setting/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/favicon.ico
+	deleted:    nextjs-wellmate-frontend/app/globals.css
+	deleted:    nextjs-wellmate-frontend/app/healthdata/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/healthymenu/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/layout.tsx
+	deleted:    nextjs-wellmate-frontend/app/messages/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/nutritionist-profile/[id]/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/nutritionist/[id]/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/nutritionist/layout.tsx
+	deleted:    nextjs-wellmate-frontend/app/nutritionist/medical-record/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/nutritionist/nutrition-plan/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/nutritionist/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/progress/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/progressinput/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/restaurantmenu/greenbowlcafe/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/restaurantmenu/page.tsx
+	deleted:    nextjs-wellmate-frontend/app/tracking/MapView.tsx
+	deleted:    nextjs-wellmate-frontend/app/tracking/page.tsx
+	deleted:    nextjs-wellmate-frontend/component/AppPreview.tsx
+	deleted:    nextjs-wellmate-frontend/component/AppointmentDetailModal.tsx
+	deleted:    nextjs-wellmate-frontend/component/Button.tsx
+	deleted:    nextjs-wellmate-frontend/component/CalendarModal.tsx
+	deleted:    nextjs-wellmate-frontend/component/CallToAction.tsx
+	deleted:    nextjs-wellmate-frontend/component/FAQ.tsx
+	deleted:    nextjs-wellmate-frontend/component/Footer.tsx
+	deleted:    nextjs-wellmate-frontend/component/Hero.tsx
+	deleted:    nextjs-wellmate-frontend/component/HowItWorks.tsx
+	deleted:    nextjs-wellmate-frontend/component/HowToUse.tsx
+	deleted:    nextjs-wellmate-frontend/component/KeyFeatures.tsx
+	deleted:    nextjs-wellmate-frontend/component/Navbar.tsx
+	deleted:    nextjs-wellmate-frontend/component/NutritionistList.tsx
+	deleted:    nextjs-wellmate-frontend/component/OrderDetailModal.tsx
+	deleted:    nextjs-wellmate-frontend/component/Testimonials.tsx
+	deleted:    nextjs-wellmate-frontend/component/UserReviews.tsx
+	deleted:    nextjs-wellmate-frontend/components/AppPreview.tsx
+	deleted:    nextjs-wellmate-frontend/components/Button.tsx
+	deleted:    nextjs-wellmate-frontend/components/CallToAction.tsx
+	deleted:    nextjs-wellmate-frontend/components/FAQ.tsx
+	deleted:    nextjs-wellmate-frontend/components/Footer.tsx
+	deleted:    nextjs-wellmate-frontend/components/Hero.tsx
+	deleted:    nextjs-wellmate-frontend/components/HowItWorks.tsx
+	deleted:    nextjs-wellmate-frontend/components/HowToUse.tsx
+	deleted:    nextjs-wellmate-frontend/components/KeyFeatures.tsx
+	deleted:    nextjs-wellmate-frontend/components/Navbar.tsx
+	deleted:    nextjs-wellmate-frontend/components/NutritionistList.tsx
+	deleted:    nextjs-wellmate-frontend/components/Testimonials.tsx
+	deleted:    nextjs-wellmate-frontend/components/UserReviews.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/BackgroundPattern.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/MenuCard.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/NutritionistCard.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/RightPanel.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/RightSidebar.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/Sidebar.tsx
+	deleted:    nextjs-wellmate-frontend/components/dashboard/StatCard.tsx
+	deleted:    nextjs-wellmate-frontend/components/notifications/NotificationDropdown.tsx
+	deleted:    nextjs-wellmate-frontend/components/nutritionist/NutritionistSidebar.tsx
+	deleted:    nextjs-wellmate-frontend/components/restaurant/MenuCard.tsx
+	deleted:    nextjs-wellmate-frontend/data/nutritionistData.ts
+	deleted:    nextjs-wellmate-frontend/diff.txt
+	deleted:    nextjs-wellmate-frontend/eslint.config.mjs
+	deleted:    nextjs-wellmate-frontend/hooks/useAuth.ts
+	deleted:    nextjs-wellmate-frontend/lib/api.ts
+	deleted:    nextjs-wellmate-frontend/next.config.ts
+	deleted:    nextjs-wellmate-frontend/package-lock.json
+	deleted:    nextjs-wellmate-frontend/package.json
+	deleted:    nextjs-wellmate-frontend/postcss.config.mjs
+	deleted:    nextjs-wellmate-frontend/public/dashboard-mockup.png
+	deleted:    nextjs-wellmate-frontend/public/file.svg
+	deleted:    nextjs-wellmate-frontend/public/globe.svg
+	deleted:    nextjs-wellmate-frontend/public/hero-food.png
+	deleted:    nextjs-wellmate-frontend/public/hero-image.png
+	deleted:    nextjs-wellmate-frontend/public/images/login-bg5.jpg
+	deleted:    nextjs-wellmate-frontend/public/logo.png
+	deleted:    nextjs-wellmate-frontend/public/next.svg
+	deleted:    nextjs-wellmate-frontend/public/vercel.svg
+	deleted:    nextjs-wellmate-frontend/public/window.svg
+	deleted:    nextjs-wellmate-frontend/services/appointments.ts
+	deleted:    nextjs-wellmate-frontend/services/menu-items.ts
+	deleted:    nextjs-wellmate-frontend/services/nutritionists.ts
+	deleted:    nextjs-wellmate-frontend/store/auth-store.ts
+	deleted:    nextjs-wellmate-frontend/store/cart-store.ts
+	deleted:    nextjs-wellmate-frontend/tsconfig.json
+	modified:   package-lock.json
+	modified:   package.json
+	modified:   services/appointments.ts
+	modified:   services/mealTracking.ts
+	modified:   services/nutritionists.ts
+	modified:   store/auth-store.ts
+	modified:   store/cart-store.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.dockerignore
+	Dockerfile
+	README.md
+	app/Appointment/
+	app/Monitoring/
+	app/NutritionistApproval/
+	app/approval/
+	app/checkout/
+	app/dashboard/admin-tracking/
+	app/dashboard/calendar/
+	app/dashboard/checkout/
+	app/dashboard/healthymenu/
+	app/dashboard/history/
+	app/dashboard/menu/
+	app/dashboard/nutrition/[id]/
+	app/dashboard/nutritionists/
+	app/dashboard/payment/
+	app/dashboard/profile/
+	app/dashboard/restaurantmenu/
+	app/favicon.ico
+	app/layout.tsx
+	app/loading.tsx
+	app/nutritionist/[id]/
+	app/page.tsx
+	app/progressinput/
+	app/tracking/
+	build.log
+	components/common/
+	components/dashboard/AppointmentDetailModal.tsx
+	components/dashboard/CalendarModal.tsx
+	components/dashboard/DashboardSkeletons.tsx
+	components/dashboard/FoodPartnerDashboard.tsx
+	components/dashboard/FoodPartnerOrders.tsx
+	components/dashboard/NutritionistCardSkeleton.tsx
+	components/dashboard/NutritionistDashboard.tsx
+	components/dashboard/OrderDetailModal.tsx
+	components/healthymenu/
+	components/providers/
+	components/ui/Skeleton.tsx
+	data/
+	diff.txt
+	eslint.config.mjs
+	git_status_frontend.txt
+	hooks/useChatWebSocket.ts
+	hooks/useNutritionists.ts
+	lib/appointments.ts
+	lib/types.ts
+	middleware.ts
+	postcss.config.mjs
+	public/assets/
+	public/dashboard-mockup.png
+	public/file.svg
+	public/globe.svg
+	public/hero-food.png
+	public/hero-image.png
+	public/images/banners/
+	public/images/default-avatar.png
+	public/images/nutritionist-86.jpg
+	public/next.svg
+	public/vercel.svg
+	public/window.svg
+	tsc.log
+
+no changes added to commit (use "git add" and/or "git commit -a")

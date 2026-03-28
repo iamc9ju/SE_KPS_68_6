@@ -191,8 +191,8 @@ export class AppointmentsService {
         nutritionist: {
           select: {
             nutritionistId: true,
-            first_name: true, // แก้ตรงนี้
-            last_name: true,  // แก้ตรงนี้
+            firstName: true, // แก้ตรงนี้
+            lastName: true,  // แก้ตรงนี้
             user: {
               select: {
                 email: true,
@@ -213,8 +213,8 @@ export class AppointmentsService {
           select: {
             nutritionistId: true,
             // แก้ไข: เปลี่ยนจาก name เป็น firstName และ lastName
-            first_name: true, // แก้ตรงนี้
-            last_name: true,  // แก้ตรงนี้
+            firstName: true, // แก้ตรงนี้
+            lastName: true,  // แก้ตรงนี้
           },
         },
         patient: {
@@ -270,8 +270,8 @@ export class AppointmentsService {
         patient: {
           select: {
             // แก้ไข: เปลี่ยนจาก name เป็น firstName และ lastName
-            first_name: true, // แก้ตรงนี้
-            last_name: true,  // แก้ตรงนี้
+            firstName: true, // แก้ตรงนี้
+            lastName: true,  // แก้ตรงนี้
             user: {
               select: {
                 email: true,

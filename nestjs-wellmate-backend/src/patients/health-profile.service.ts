@@ -75,7 +75,7 @@ export class HealthProfileService {
             },
             goals: {
                 goal: patient.healthMetrics?.[0]?.goal || null, // <--- เติมลูกน้ำตรงนี้
-                activityLevel: patient.healthMetrics?.[0]?.activity_level || null, // <--- เติมลูกน้ำตรงนี้
+                activityLevel: patient.healthMetrics?.[0]?.activityLevel || null, // <--- เติมลูกน้ำตรงนี้
                 healthMetrics: patient.healthMetrics?.[0] || null
             } // ลบเซมิโคลอน ; ตรงนี้ออก
         };

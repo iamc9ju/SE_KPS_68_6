@@ -30,7 +30,7 @@ export class NutritionistsService {
 
     if (search) {
       where.OR = [
-        { first_name: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
         { user: { email: { contains: search, mode: 'insensitive' } } },
       ];
     }
@@ -140,7 +140,7 @@ export class NutritionistsService {
             createdAt: true,
             patient: {
               select: {
-                first_name: true, // ตรวจสอบว่าใน Schema เปลี่ยนจาก first_name เป็น name หรือยัง
+                firstName: true, // ตรวจสอบว่าใน Schema เปลี่ยนจาก first_name เป็น name หรือยัง
               },
             },
           },

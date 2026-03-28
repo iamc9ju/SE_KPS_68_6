@@ -65,8 +65,8 @@ export class PatientsService {
       chronicDiseases: patient.chronicDiseases,
       // ... โค้ดด้านบน ...
       goal: patient.healthMetrics?.[0]?.goal || null,
-      goalDetail: patient.healthMetrics?.[0]?.goal_detail || null,
-      activityLevel: patient.healthMetrics?.[0]?.activity_level || null,
+      goalDetail: patient.healthMetrics?.[0]?.goalDetail || null,
+      activityLevel: patient.healthMetrics?.[0]?.activityLevel || null,
       isProfileComplete: patient.isProfileComplete,
       healthMetrics: patient.healthMetrics?.[0] || null,
       // ... โค้ดด้านล่าง ...

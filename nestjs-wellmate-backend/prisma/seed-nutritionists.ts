@@ -45,8 +45,8 @@ async function main() {
         data: {
           userId: user.userId,
           // ใส่เฉพาะฟิลด์ที่มีใน Schema จริงๆ
-          first_name: firstNames[i],
-          last_name: lastNames[i],
+          firstName: firstNames[i],
+          lastName: lastNames[i],
           consultationFee: 500 + i * 50,
           verificationStatus: VerificationStatus.approved,
         },

@@ -565,7 +565,7 @@ model CourseItem {
 model MealPlan {
   mealPlanId     Int      @id @default(autoincrement()) @map("meal_plan_id")
   patientId      String   @map("user_id") @db.Uuid // Mapped to user_id in SQL but likely links to Patient
-  nutritionistId String   @map("nutritionist_id") @db.Uuid
+  nutritionistId String?  @map("nutritionist_id") @db.Uuid
   startDate      DateTime @map("start_date") @db.Date
   endDate        DateTime @map("end_date") @db.Date
   note           String?  @db.Text
@@ -573,7 +573,7 @@ model MealPlan {
 
   // Relations
   patient       Patient        @relation(fields: [patientId], references: [patientId])
-  nutritionist  Nutritionist   @relation(fields: [nutritionistId], references: [nutritionistId])
+  nutritionist  Nutritionist?  @relation(fields: [nutritionistId], references: [nutritionistId])
   mealPlanItems MealPlanItem[]
 
   @@map("meal_plans")

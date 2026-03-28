@@ -12,15 +12,15 @@ export class NutritionAppointmentsService {
         ...(status && status !== 'all' ? { status: status as any } : {}),
         OR: search ? [
           // ลบการค้นหาด้วย appointmentId ออก เอาไว้แค่ค้นหาด้วยชื่อและนามสกุลคนไข้
-          { patient: { first_name: { contains: search, mode: 'insensitive' } } },
-          { patient: { last_name: { contains: search, mode: 'insensitive' } } }
+          { patient: { firstName: { contains: search, mode: 'insensitive' } } },
+          { patient: { lastName: { contains: search, mode: 'insensitive' } } }
         ] : undefined,
       },
       include: {
         patient: {
           select: {
-            first_name: true,
-            last_name: true
+            firstName: true,
+            lastName: true
           }
         },
       },

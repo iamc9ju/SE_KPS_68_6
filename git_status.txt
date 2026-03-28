@@ -1,0 +1,33 @@
+﻿On branch pp/admin+etc
+Your branch is up to date with 'origin/pp/admin+etc'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   nestjs-wellmate-backend/package-lock.json
+	modified:   nestjs-wellmate-backend/package.json
+	modified:   nestjs-wellmate-backend/prisma/schema.prisma
+	modified:   nestjs-wellmate-backend/prisma/seed-nutritionists.ts
+	modified:   nestjs-wellmate-backend/src/app.module.ts
+	modified:   nestjs-wellmate-backend/src/appointments/appointments.service.ts
+	modified:   nestjs-wellmate-backend/src/auth/auth.service.ts
+	modified:   nestjs-wellmate-backend/src/calendar/calendar.service.ts
+	modified:   nestjs-wellmate-backend/src/nutrition-appointments/nutrition-appointments.service.ts
+	modified:   nestjs-wellmate-backend/src/nutritionist/nutritionist.service.ts
+	modified:   nestjs-wellmate-backend/src/nutritionists/nutritionists.service.ts
+	modified:   nestjs-wellmate-backend/src/patients/health-profile.service.ts
+	modified:   nestjs-wellmate-backend/src/patients/patients.service.ts
+	modified:   nestjs-wellmate-backend/src/schedulers/schedulers.service.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	SE_KPS_68_6/
+	git_status.txt
+	nestjs-wellmate-backend/fix.js
+	nestjs-wellmate-backend/src/meal-plans/
+	nextjs-wellmate-frontend/app/admindashboard/
+	nextjs-wellmate-frontend/build.log
+	nextjs-wellmate-frontend/services/mealTracking.ts
+	nextjs-wellmate-frontend/tsc.log
+
+no changes added to commit (use "git add" and/or "git commit -a")

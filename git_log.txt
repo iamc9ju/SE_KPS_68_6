@@ -1,0 +1,19 @@
+﻿commit 65b4625bfc76998235b14e339468b75b0877e1a5
+Author: PhingThanarada <thatchanon348@gmail.com>
+Date:   Mon Mar 23 01:46:54 2026 +0700
+
+    feat: add admin dashboard with sidebar, users, partners pages
+
+M	.gitignore
+A	app/admindashboard/layout.tsx
+A	app/admindashboard/page.tsx
+A	app/admindashboard/partners/page.tsx
+A	app/admindashboard/users/page.tsx
+A	components/ui/button.tsx
+A	components/ui/card.tsx
+A	components/ui/input.tsx
+A	components/ui/select.tsx
+A	package-lock.json
+A	package.json
+A	services/mealTracking.ts
+M	tsconfig.json

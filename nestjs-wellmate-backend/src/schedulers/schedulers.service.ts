@@ -52,7 +52,7 @@ export class SchedulersService {
           userId: appt.patient.userId,
           type: NotificationType.appointment_reminder,
           title: 'Consultation Starting Soon',
-          body: `Your appointment with ${appt.nutritionist.first_name} starts in 30 minutes.`,
+          body: `Your appointment with ${appt.nutritionist.firstName} starts in 30 minutes.`,
         });
 
         // ✅ แก้ไข: เปลี่ยน appt.patient.firstName เป็น name (และใช้ as any เพื่อกัน Type บ่น)
