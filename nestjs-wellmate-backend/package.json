@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "prestart:dev": "lsof -ti :4000 | xargs kill -9 2>/dev/null || true",
+    "prestart:dev": "node -e \"const { execSync } = require('child_process'); const port = 4000; try { if (process.platform === 'win32') { const out = execSync('netstat -ano').toString(); const lines = out.split(/\\r?\\n/).filter(l => l.includes(':' + port + ' ') && l.toUpperCase().includes('LISTENING')); const pids = [...new Set(lines.map(l => l.trim().split(/\\s+/).pop()))]; pids.forEach(pid => { try { execSync('taskkill /F /PID ' + pid); } catch (_) {} }); } else { try { execSync('lsof -ti :' + port + ' | xargs kill -9'); } catch (_) {} } } catch (_) {}\"",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

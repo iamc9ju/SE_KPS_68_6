@@ -8,6 +8,7 @@ import {
   Min,
   Max,
   IsBoolean,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -60,6 +61,17 @@ export class CreateMenuItemDto {
   @IsNumber()
   @Min(0)
   fatG?: number;
+
+  @ApiPropertyOptional({ example: ['nuts', 'dairy'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allergens?: string[];
+
+  @ApiPropertyOptional({ example: 'Contains nuts and dairy.' })
+  @IsOptional()
+  @IsString()
+  allergenAlert?: string;
 
   @ApiPropertyOptional({ default: 100 })
   @IsOptional()

@@ -351,14 +351,37 @@ model Appointment {
 }
 
 model FoodPartner {
-  foodPartnerId  Int      @id @default(autoincrement()) @map("food_partner_id")
-  userId         String   @unique @map("user_id") @db.Uuid
-  partnerName    String   @map("name") @db.VarChar(100)
-  description    String?  @db.Text
-  address        String?  @db.Text
-  commissionRate Decimal  @default(15.00) @map("commission_rate") @db.Decimal(4, 2)
-  isActive       Boolean  @default(true) @map("is_active")
-  joinedAt       DateTime @default(now()) @map("joined_at")
+  foodPartnerId   Int      @id @default(autoincrement()) @map("food_partner_id")
+  userId          String   @unique @map("user_id") @db.Uuid
+  partnerName     String   @map("name") @db.VarChar(100)
+  description     String?  @db.Text
+  address         String?  @db.Text
+  addressLine1    String?  @map("address_line1") @db.VarChar(255)
+  addressLine2    String?  @map("address_line2") @db.VarChar(255)
+  subdistrict     String?  @map("subdistrict") @db.VarChar(100)
+  district        String?  @map("district") @db.VarChar(100)
+  province        String?  @map("province") @db.VarChar(100)
+  postalCode      String?  @map("postal_code") @db.VarChar(20)
+  latitude        Decimal? @map("latitude") @db.Decimal(10, 8)
+  longitude       Decimal? @map("longitude") @db.Decimal(11, 8)
+  contactPhone    String?  @map("contact_phone") @db.VarChar(20)
+  contactEmail    String?  @map("contact_email") @db.VarChar(100)
+  lineId          String?  @map("line_id") @db.VarChar(100)
+  socialLink      String?  @map("social_link") @db.VarChar(255)
+  logoUrl         String?  @map("logo_url") @db.VarChar(500)
+  coverImageUrl   String?  @map("cover_image_url") @db.VarChar(500)
+  categories      String[] @map("categories")
+  storeOnline     Boolean  @default(true) @map("store_online")
+  pauseUntil      DateTime? @map("pause_until")
+  holidayClosures Json?    @map("holiday_closures")
+  bankName        String?  @map("bank_name") @db.VarChar(100)
+  bankAccountNo   String?  @map("bank_account_no") @db.VarChar(50)
+  bankAccountName String?  @map("bank_account_name") @db.VarChar(100)
+  bankDocumentUrl String?  @map("bank_document_url") @db.VarChar(500)
+  businessDocumentUrl String? @map("business_document_url") @db.VarChar(500)
+  commissionRate  Decimal  @default(15.00) @map("commission_rate") @db.Decimal(4, 2)
+  isActive        Boolean  @default(true) @map("is_active")
+  joinedAt        DateTime @default(now()) @map("joined_at")
 
   // Relations
   user               User                @relation(fields: [userId], references: [userId], onDelete: Cascade)
@@ -367,8 +390,38 @@ model FoodPartner {
   partnerOrders      PartnerOrder[]
   courses            Course[]
   ingredientRequests IngredientRequest[]
+  openingHours       FoodPartnerOpeningHour[]
 
   @@map("food_partners")
+}
+
+model FoodPartnerOpeningHour {
+  foodPartnerOpeningHourId Int     @id @default(autoincrement()) @map("food_partner_opening_hour_id")
+  foodPartnerId            Int     @map("food_partner_id")
+  dayOfWeek                Int     @map("day_of_week") // 0=Sun ... 6=Sat
+  isOpen                   Boolean @default(true) @map("is_open")
+
+  // Relations
+  foodPartner FoodPartner             @relation(fields: [foodPartnerId], references: [foodPartnerId], onDelete: Cascade)
+  slots       FoodPartnerOpeningSlot[]
+
+  @@unique([foodPartnerId, dayOfWeek])
+  @@index([foodPartnerId])
+  @@map("food_partner_opening_hours")
+}
+
+model FoodPartnerOpeningSlot {
+  foodPartnerOpeningSlotId Int    @id @default(autoincrement()) @map("food_partner_opening_slot_id")
+  openingHourId            Int    @map("opening_hour_id")
+  startTime                String @map("start_time") @db.VarChar(5) // HH:MM
+  endTime                  String @map("end_time") @db.VarChar(5) // HH:MM
+  sequence                 Int?   @map("sequence")
+
+  // Relations
+  openingHour FoodPartnerOpeningHour @relation(fields: [openingHourId], references: [foodPartnerOpeningHourId], onDelete: Cascade)
+
+  @@index([openingHourId])
+  @@map("food_partner_opening_slots")
 }
 
 model MenuItem {
@@ -383,6 +436,8 @@ model MenuItem {
   proteinG      Decimal? @map("protein_g") @db.Decimal(5, 2)
   carbsG        Decimal? @map("carbs_g") @db.Decimal(5, 2)
   fatG          Decimal? @map("fat_g") @db.Decimal(5, 2)
+  allergens     String[] @default([]) @map("allergens")
+  allergenAlert String?  @map("allergen_alert") @db.Text
   stockQuantity Int      @default(100) @map("stock_quantity")
   isOutOfStock  Boolean  @default(false) @map("is_out_of_stock")
   isAvailable   Boolean  @default(true) @map("is_available")

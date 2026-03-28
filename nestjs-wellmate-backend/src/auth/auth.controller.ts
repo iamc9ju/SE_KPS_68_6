@@ -22,7 +22,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth-guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import type { Response, Request } from 'express';
+import type { Response, Request, Express } from 'express';
 import {
   ApiTags,
   ApiOperation,

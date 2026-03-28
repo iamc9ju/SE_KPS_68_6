@@ -24,6 +24,7 @@ type UserRole = "patient" | "nutritionist" | "food_partner" | "admin";
 export default function Sidebar() {
     const pathname = usePathname();
     const { logoutUser } = useAuth();
+    const user = useAuthStore((state) => state.user);
 
     const menuItems = [
         { icon: LayoutGrid, label: "\u0e41\u0e14\u0e0a\u0e1a\u0e2d\u0e23\u0e4c\u0e14", href: "/dashboard" },
@@ -43,32 +44,80 @@ export default function Sidebar() {
     ];
 
     const userRole = useAuthStore((state) => state.user?.role);
-    const filteredMenuItems = menuItems.filter((item) => {
-        if (!item.roles) return true;
-        if (!userRole) return false;
-        return item.roles.includes(userRole as UserRole);
-    });
+    const isFoodPartner = userRole === "food_partner";
+    const filteredMenuItems = isFoodPartner
+        ? [
+              { icon: LayoutGrid, label: "แดชบอร์ด", href: "/Foodpartner/dashboard" },
+              { icon: Utensils, label: "จัดการเมนู", href: "/Foodpartner/menu" },
+              { icon: Package, label: "รายการสั่งซื้อ", href: "/Foodpartner/orders" },
+              { icon: BookOpen, label: "ประวัติ", href: "/Foodpartner/history" },
+              { icon: UserCog, label: "ตั้งค่า", href: "/Foodpartner/profile" },
+          ]
+        : menuItems.filter((item) => {
+              if (!item.roles) return true;
+              if (!userRole) return false;
+              return item.roles.includes(userRole as UserRole);
+          });
+
+    const userInitial =
+        user?.firstName?.charAt(0) ||
+        user?.lastName?.charAt(0) ||
+        user?.email?.charAt(0) ||
+        "U";
 
     return (
-        <aside className="w-64 bg-white h-screen fixed left-0 top-0 border-r border-gray-100 flex flex-col p-6 z-20 shadow-sm">
-            <Link href="/" className="flex items-center justify-center mb-10 px-2 group">
-                <img src="/logo.png" alt="WellMate Logo" className="h-20 w-auto group-hover:scale-110 transition-transform" />
+        <aside
+            className={`w-64 bg-white h-screen fixed left-0 top-0 border-r border-gray-100 flex flex-col z-20 ${
+                isFoodPartner ? "px-6 py-8 shadow-none" : "p-6 shadow-sm"
+            }`}
+        >
+            <Link
+                href="/"
+                className={`flex items-center justify-center px-2 group ${
+                    isFoodPartner ? "mb-12" : "mb-10"
+                }`}
+            >
+                <img
+                    src="/logo.png"
+                    alt="WellMate Logo"
+                    className={`${isFoodPartner ? "h-12" : "h-20"} w-auto group-hover:scale-110 transition-transform`}
+                />
             </Link>
 
-            <nav className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+            <nav
+                className={`flex-1 overflow-y-auto custom-scrollbar ${
+                    isFoodPartner ? "space-y-4 pr-1" : "space-y-2 pr-2"
+                }`}
+            >
                 {filteredMenuItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive =
+                        pathname === item.href || pathname.startsWith(`${item.href}/`);
                     return (
                         <Link
                             key={`${item.href}-${item.label}`}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 ${isActive
-                                ? "bg-[#C6E065] text-[#3d3522] font-bold shadow-md"
-                                : "text-gray-500 hover:bg-gray-50 hover:text-[#3d3522]"
-                                }`}
+                            className={
+                                isFoodPartner
+                                    ? `flex items-center gap-4 px-2 py-2 text-sm transition-colors ${
+                                          isActive
+                                              ? "text-[#2f2a1d] font-semibold"
+                                              : "text-[#8f96a3] hover:text-[#2f2a1d]"
+                                      }`
+                                    : `flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 ${
+                                          isActive
+                                              ? "bg-[#C6E065] text-[#3d3522] font-bold shadow-md"
+                                              : "text-gray-500 hover:bg-gray-50 hover:text-[#3d3522]"
+                                      }`
+                            }
                         >
                             <item.icon
-                                className={`w-5 h-5 ${isActive ? "text-[#3d3522]" : "text-gray-400"}`}
+                                className={
+                                    isFoodPartner
+                                        ? `w-5 h-5 ${
+                                              isActive ? "text-[#6b7382]" : "text-[#b3bac5]"
+                                          }`
+                                        : `w-5 h-5 ${isActive ? "text-[#3d3522]" : "text-gray-400"}`
+                                }
                             />
                             <span className="text-sm">{item.label}</span>
                         </Link>
@@ -77,13 +126,27 @@ export default function Sidebar() {
 
             </nav>
 
-            <button
-                onClick={logoutUser}
-                className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all mt-auto"
-            >
-                <LogOut className="w-5 h-5" />
-                <span className="text-sm font-medium">{"\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e30\u0e1a\u0e1a"}</span>
-            </button>
+            {isFoodPartner ? (
+                <button
+                    onClick={logoutUser}
+                    className="mt-10 flex items-center gap-3 px-2 py-3 text-sm text-[#8f96a3] hover:text-[#2f2a1d] transition-colors"
+                >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2f2a1d] text-white font-bold">
+                        {userInitial.toUpperCase()}
+                    </span>
+                    <span className="font-medium">{"\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e30\u0e1a\u0e1a"}</span>
+                </button>
+            ) : (
+                <button
+                    onClick={logoutUser}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all mt-auto"
+                >
+                    <LogOut className="w-5 h-5" />
+                    <span className="text-sm font-medium">
+                        {"\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e23\u0e30\u0e1a\u0e1a"}
+                    </span>
+                </button>
+            )}
         </aside>
     );
 }

@@ -37,6 +37,11 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
+  const routeByRole = (role: AuthUser["role"] | undefined) => {
+    if (role === "food_partner") return "/Foodpartner/profile";
+    if (role === "patient") return "/healthdata";
+    return "/dashboard";
+  };
 
   const handleAxiosError = (err: unknown, defaultMessage: string) => {
     let message = defaultMessage;
@@ -82,7 +87,7 @@ export const useAuth = () => {
         localStorage.removeItem("savedEmail");
       }
 
-      router.push("/dashboard");
+      router.push(routeByRole(res.data.data?.role));
     } catch (err) {
       const message = handleAxiosError(
         err,
@@ -122,7 +127,7 @@ export const useAuth = () => {
       // Auto-login
       if (res.data?.data) {
         login(res.data.data);
-        router.push("/healthdata");
+        router.push(routeByRole(res.data.data?.role));
       } else {
         router.push("/login?registered=true");
       }

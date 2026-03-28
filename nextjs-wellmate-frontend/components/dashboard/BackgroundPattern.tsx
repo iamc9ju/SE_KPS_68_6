@@ -12,7 +12,7 @@ import {
 
 export default function BackgroundPattern() {
     return (
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-[0.1]">
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-[0.1]">
             <div className="flex flex-wrap gap-32 p-12 -ml-12 -mt-12 w-[150%] h-[150%] transform -rotate-12">
                 {Array.from({ length: 60 }).map((_, i) => (
                     <div key={i} className="flex gap-32 items-center">
