@@ -113,6 +113,9 @@ export class ChatService {
         sender: {
           select: {
             email: true,
+            profileImageUrl: true,
+            patient: { select: { firstName: true, lastName: true } },
+            nutritionist: { select: { firstName: true, lastName: true } },
           },
         },
       },
@@ -133,16 +136,20 @@ export class ChatService {
             appointmentId: true,
             startTime: true,
             endTime: true,
+            summary: true,
+            nutritionistNotes: true,
             patient: {
               select: {
                 firstName: true,
                 lastName: true,
+                user: { select: { profileImageUrl: true } },
               },
             },
             nutritionist: {
               select: {
                 firstName: true,
                 lastName: true,
+                user: { select: { profileImageUrl: true } },
               },
             },
           },
@@ -151,6 +158,19 @@ export class ChatService {
           orderBy: { createdAt: 'desc' },
           take: 20,
         },
+      },
+    });
+  }
+
+  async markAsRead(chatRoomId: string, userId: string) {
+    return this.prisma.chatMessage.updateMany({
+      where: {
+        chatRoomId,
+        senderId: { not: userId },
+        isRead: false,
+      },
+      data: {
+        isRead: true,
       },
     });
   }

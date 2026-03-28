@@ -20,8 +20,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // If error is 401 Auto Logout immediately without trying to refresh
+    // But skip if we are already on the login page or trying to login to avoid reload loop
     if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
+      const isLoginRequest = error.config?.url?.includes("/auth/login");
+      if (typeof window !== "undefined" && !isLoginRequest) {
         // Clear zustand persisted auth store from localStorage
         localStorage.removeItem("auth-storage");
         // Redirect to login page

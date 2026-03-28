@@ -644,7 +644,7 @@ export default function ProgressPage() {
                         <NavItem icon={<LayoutDashboard size={20} />} label="หน้าหลัก" href="/dashboard" />
                         <NavItem icon={<HeartPulse size={20} />} label="ปรึกษานักโภชนาการ" href="/approval" />
                         <NavItem icon={<Calendar size={20} />} label="ปฏิทิน" href="/calendar" />
-                        <NavItem icon={<MessageSquare size={20} />} label="ข้อความ" href="/messages" />
+                        <NavItem icon={<MessageSquare size={20} />} label="ข้อความ" href="/dashboard/chat" />
                         <NavItem icon={<Salad size={20} />} label="เมนูสุขภาพ" onClick={() => alert("เมนูสุขภาพ Feature Coนาทีg Soon!")} />
                         <NavItem icon={<Utensils size={20} />} label="แผนการกิน" onClick={() => alert("แผนการกิน Feature Coนาทีg Soon!")} />
                         <NavItem icon={<BookOpen size={20} />} label="บันทึกอาหาร" href="/tracking" />

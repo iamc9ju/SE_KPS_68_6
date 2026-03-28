@@ -4,9 +4,211 @@ import { useEffect, useState } from "react";
 import { User, Calendar, Ruler, Scale, Activity, Target, FileText, CheckCircle2, ChevronRight, ChevronLeft, Droplets, AlertCircle, LogOut, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays, getYear, setYear, setMonth } from "date-fns";
+import { th } from "date-fns/locale";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { useAuth } from "@/hooks/useAuth";
+
+// --- Custom Date Picker Component ---
+interface CustomDatePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function CustomDatePicker({ value, onChange }: CustomDatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(value ? new Date(value) : new Date());
+  const [view, setView] = useState<"days" | "months" | "years">("days");
+
+  const onDateClick = (day: Date) => {
+    onChange(format(day, "yyyy-MM-dd"));
+    setIsOpen(false);
+  };
+
+  const renderHeader = () => {
+    return (
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <button
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 text-[#8a7550]" />
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setView(view === "months" ? "days" : "months")}
+            className="text-sm font-black text-[#3d3522] hover:text-[#C6E065] transition-colors"
+          >
+            {format(currentMonth, "MMMM", { locale: th })}
+          </button>
+          <button
+            onClick={() => setView(view === "years" ? "days" : "years")}
+            className="text-sm font-black text-[#3d3522] hover:text-[#C6E065] transition-colors"
+          >
+            {getYear(currentMonth) + 543}
+          </button>
+        </div>
+        <button
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ChevronRight className="w-5 h-5 text-[#8a7550]" />
+        </button>
+      </div>
+    );
+  };
+
+  const renderDays = () => {
+    const days = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+    return (
+      <div className="grid grid-cols-7 mb-2">
+        {days.map((day, i) => (
+          <div key={i} className="text-[10px] font-bold text-gray-400 text-center uppercase tracking-tighter">
+            {day}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderCells = () => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+
+    const rows = [];
+    let days = [];
+    let day = startDate;
+    let formattedDate = "";
+
+    while (day <= endDate) {
+      for (let i = 0; i < 7; i++) {
+        formattedDate = format(day, "d");
+        const cloneDay = day;
+        days.push(
+          <button
+            key={day.toString()}
+            className={`h-10 w-full flex items-center justify-center rounded-xl text-sm font-bold transition-all ${!isSameMonth(day, monthStart)
+                ? "text-gray-200"
+                : isSameDay(day, value ? new Date(value) : new Date(0))
+                  ? "bg-[#C6E065] text-[#3d3522] shadow-sm scale-110"
+                  : isSameDay(day, new Date())
+                    ? "text-[#C6E065] border border-[#C6E065]/30"
+                    : "text-[#3d3522] hover:bg-[#C6E065]/10"
+              }`}
+            onClick={() => onDateClick(cloneDay)}
+          >
+            <span>{formattedDate}</span>
+          </button>
+        );
+        day = addDays(day, 1);
+      }
+      rows.push(
+        <div className="grid grid-cols-7 gap-1" key={day.toString()}>
+          {days}
+        </div>
+      );
+      days = [];
+    }
+    return <div className="px-2 pb-3">{rows}</div>;
+  };
+
+  const renderMonths = () => {
+    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    return (
+      <div className="grid grid-cols-3 gap-2 p-4 flex-1 items-center">
+        {months.map((month, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              setCurrentMonth(setMonth(currentMonth, i));
+              setView("days");
+            }}
+            className="py-3 rounded-xl text-sm font-bold text-[#3d3522] hover:bg-[#C6E065]/10 transition-all"
+          >
+            {month}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const renderYears = () => {
+    const currentYear = getYear(new Date());
+    const years = [];
+    for (let i = currentYear; i >= currentYear - 100; i--) {
+      years.push(i);
+    }
+    return (
+      <div className="grid grid-cols-3 gap-2 p-4 flex-1 overflow-y-auto custom-scrollbar">
+        {years.map((year) => (
+          <button
+            key={year}
+            onClick={() => {
+              setCurrentMonth(setYear(currentMonth, year));
+              setView("days");
+            }}
+            className="py-3 rounded-xl text-sm font-bold text-[#3d3522] hover:bg-[#C6E065]/10 transition-all"
+          >
+            {year + 543}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="relative">
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full py-5 px-8 rounded-[28px] bg-gray-50/50 border-2 border-gray-50 focus-within:border-[#C6E065] focus-within:bg-white focus-within:ring-8 focus-within:ring-[#C6E065]/5 text-[#3d3522] font-black transition-all outline-none cursor-pointer flex justify-between items-center shadow-sm hover:shadow-md"
+      >
+        <span className={value ? "text-[#3d3522]" : "text-gray-400"}>
+          {value ? format(new Date(value), "dd/MM/yyyy") : "เลือกวันเกิด"}
+        </span>
+        <Calendar className="w-5 h-5 text-[#8a7550]/40" />
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
+          <div className="absolute bottom-full mb-4 left-0 right-0 md:left-auto md:w-[320px] h-[380px] bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 z-[70] overflow-hidden animate-in fade-in zoom-in duration-200 origin-bottom flex flex-col">
+            {renderHeader()}
+            {view === "days" && (
+              <div className="p-2 flex-1 flex flex-col">
+                {renderDays()}
+                {renderCells()}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-50 bg-gray-50/30">
+                  <button
+                    onClick={() => {
+                        onChange("");
+                        setIsOpen(false);
+                    }}
+                    className="text-xs font-bold text-[#8a7550] hover:text-[#3d3522]"
+                  >
+                    ล้างค่า
+                  </button>
+                  <button
+                    onClick={() => {
+                        onDateClick(new Date());
+                    }}
+                    className="text-xs font-bold text-[#C6E065] hover:text-[#3d3522]"
+                  >
+                    วันนี้
+                  </button>
+                </div>
+              </div>
+            )}
+            {view === "months" && renderMonths()}
+            {view === "years" && renderYears()}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 
@@ -240,67 +442,83 @@ export default function HealthProfilePage() {
                 </div>
 
                 <div className="mt-16 animate-fadeIn transition-all duration-300 min-h-[300px]">
-                    {/* Step 1: Gender & Age */}
+                    {/* Step 1: Gender, DOB, Blood Type */}
                     {currentStep === 1 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animation-slideInRight">
+                        <div className="flex flex-col gap-10 animation-slideInRight max-w-md mx-auto">
+                            {/* Gender Selection */}
                             <div className="space-y-4">
-                                <label className="flex items-center gap-2 font-bold text-[#3d3522] ml-2">
-                                    <User className="w-5 h-5 text-[#3d3522]" />
+                                <label className="flex items-center gap-3 font-black text-[#3d3522] ml-1">
+                                    <div className="p-2 bg-blue-50 rounded-xl">
+                                        <User className="w-5 h-5 text-blue-500" />
+                                    </div>
                                     เพศสภาพ
                                 </label>
                                 <div className="grid grid-cols-2 gap-4">
                                     <button
-                                        className={`py-4 px-4 rounded-3xl font-bold border-2 transition-all flex items-center justify-center gap-2 ${form.gender === "male"
-                                            ? "border-[#C6E065] bg-[#C6E065]/10 text-[#3d3522] shadow-[0_4px_16px_rgba(198,224,101,0.2)]"
-                                            : "border-gray-100 bg-gray-50 text-gray-400 hover:border-[#C6E065]/50 hover:bg-white"
+                                        className={`py-5 px-4 rounded-[28px] font-black border-2 transition-all flex items-center justify-center gap-3 ${form.gender === "male"
+                                            ? "border-[#C6E065] bg-[#C6E065]/10 text-[#3d3522] shadow-[0_8px_20px_rgba(198,224,101,0.15)]"
+                                            : "border-gray-50 bg-gray-50/50 text-gray-400 hover:border-[#C6E065]/30 hover:bg-white"
                                             }`}
                                         onClick={() => handleChange("gender", "male")}
                                     >
-                                        {form.gender === "male" && <CheckCircle2 className="w-5 h-5 text-[#3d3522]" />}
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${form.gender === "male" ? "border-[#C6E065] bg-[#C6E065]" : "border-gray-200"}`}>
+                                            {form.gender === "male" && <CheckCircle2 className="w-3.5 h-3.5 text-[#3d3522]" />}
+                                        </div>
                                         ชาย
                                     </button>
                                     <button
-                                        className={`py-4 px-4 rounded-3xl font-bold border-2 transition-all flex items-center justify-center gap-2 ${form.gender === "female"
-                                            ? "border-[#C6E065] bg-[#C6E065]/10 text-[#3d3522] shadow-[0_4px_16px_rgba(198,224,101,0.2)]"
-                                            : "border-gray-100 bg-gray-50 text-gray-400 hover:border-[#C6E065]/50 hover:bg-white"
+                                        className={`py-5 px-4 rounded-[28px] font-black border-2 transition-all flex items-center justify-center gap-3 ${form.gender === "female"
+                                            ? "border-[#C6E065] bg-[#C6E065]/10 text-[#3d3522] shadow-[0_8px_20px_rgba(198,224,101,0.15)]"
+                                            : "border-gray-50 bg-gray-50/50 text-gray-400 hover:border-[#C6E065]/30 hover:bg-white"
                                             }`}
                                         onClick={() => handleChange("gender", "female")}
                                     >
-                                        {form.gender === "female" && <CheckCircle2 className="w-5 h-5 text-[#3d3522]" />}
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${form.gender === "female" ? "border-[#C6E065] bg-[#C6E065]" : "border-gray-200"}`}>
+                                            {form.gender === "female" && <CheckCircle2 className="w-3.5 h-3.5 text-[#3d3522]" />}
+                                        </div>
                                         หญิง
                                     </button>
                                 </div>
                             </div>
 
+                            {/* Custom Date Picker */}
                             <div className="space-y-4">
-                                <label className="flex items-center gap-2 font-bold text-[#3d3522] ml-2">
-                                    <Calendar className="w-5 h-5 text-[#3d3522]" />
+                                <label className="flex items-center gap-3 font-black text-[#3d3522] ml-1">
+                                    <div className="p-2 bg-orange-50 rounded-xl">
+                                        <Calendar className="w-5 h-5 text-orange-500" />
+                                    </div>
                                     วันเกิด
                                 </label>
-                                <input
-                                    type="date"
+                                <CustomDatePicker
                                     value={form.dateOfBirth}
-                                    onChange={(e) => handleChange("dateOfBirth", e.target.value)}
-                                    className="w-full py-4 px-6 rounded-3xl bg-gray-50 border-2 border-transparent focus:border-[#C6E065] focus:bg-white focus:ring-4 focus:ring-[#C6E065]/10 text-[#3d3522] font-semibold transition-all outline-none"
+                                    onChange={(val) => handleChange("dateOfBirth", val)}
                                 />
                             </div>
 
+                            {/* Blood Type Selection */}
                             <div className="space-y-4">
-                                <label className="flex items-center gap-2 font-bold text-[#3d3522] ml-2">
-                                    <Droplets className="w-5 h-5 text-red-500" />
+                                <label className="flex items-center gap-3 font-black text-[#3d3522] ml-1">
+                                    <div className="p-2 bg-red-50 rounded-xl">
+                                        <Droplets className="w-5 h-5 text-red-500" />
+                                    </div>
                                     หมู่เลือด
                                 </label>
-                                <select
-                                    value={form.bloodType}
-                                    onChange={(e) => handleChange("bloodType", e.target.value)}
-                                    className="w-full py-4 px-6 rounded-3xl bg-gray-50 border-2 border-transparent focus:border-[#C6E065] focus:bg-white focus:ring-4 focus:ring-[#C6E065]/10 text-[#3d3522] font-semibold transition-all outline-none appearance-none cursor-pointer"
-                                >
-                                    <option value="">เลือกหมู่เลือด</option>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="AB">AB</option>
-                                    <option value="O">O</option>
-                                </select>
+                                <div className="relative group">
+                                    <select
+                                        value={form.bloodType}
+                                        onChange={(e) => handleChange("bloodType", e.target.value)}
+                                        className="w-full py-5 px-8 rounded-[28px] bg-gray-50/50 border-2 border-gray-50 focus:border-[#C6E065] focus:bg-white focus:ring-8 focus:ring-[#C6E065]/5 text-[#3d3522] font-black transition-all outline-none appearance-none cursor-pointer shadow-sm hover:shadow-md"
+                                    >
+                                        <option value="">เลือกหมู่เลือด</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="AB">AB</option>
+                                        <option value="O">O</option>
+                                    </select>
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#8a7550] group-focus-within:rotate-180 transition-transform duration-300">
+                                        <ChevronRight className="w-5 h-5 rotate-90" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

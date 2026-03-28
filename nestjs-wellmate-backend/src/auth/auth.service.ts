@@ -27,7 +27,7 @@ export class AuthService {
       this.logger.warn(
         `Registration attempt with existing email: ${dto.email}`,
       );
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('อีเมลนี้ถูกใช้งานไปแล้ว');
     }
 
     const passwordHash = await this.passwordService.hash(dto.password);
@@ -87,7 +87,7 @@ export class AuthService {
     );
 
     if (!fullUser) {
-      throw new UnauthorizedException('Registration failed');
+      throw new UnauthorizedException('การลงทะเบียนไม่สำเร็จ');
     }
 
     return {
@@ -112,7 +112,7 @@ export class AuthService {
     });
 
     if (!userBase) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('ไม่พบผู้ใช้ในระบบ');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -125,7 +125,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('ไม่พบข้อมูลผู้ใช้');
     }
 
     return this.flattenUser(user);

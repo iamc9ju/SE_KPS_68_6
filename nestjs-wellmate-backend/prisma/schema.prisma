@@ -340,6 +340,8 @@ model Appointment {
   amount         Decimal?          @map("amount") @db.Decimal(10, 2)
   qrCodeUrl      String?           @map("qr_code_url") @db.VarChar(500)
   createdAt      DateTime          @default(now()) @map("created_at")
+  summary        String?           @db.Text
+  nutritionistNotes String?         @map("nutritionist_notes") @db.Text
   deletedAt      DateTime?         @map("deleted_at")
 
   chatRoom ChatRoom?
@@ -708,6 +710,7 @@ model ChatMessage {
   senderId      String      @map("sender_id") @db.Uuid
   content       String      @db.Text
   messageType   MessageType @default(text) @map("message_type")
+  isRead        Boolean     @default(false) @map("is_read")
   createdAt     DateTime    @default(now()) @map("created_at")
 
   chatRoom ChatRoom @relation(fields: [chatRoomId], references: [chatRoomId], onDelete: Cascade)

@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,9 +62,11 @@ export default function LoginPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-sm mb-6 border border-red-100 flex items-center gap-2">
-          <span>??</span>
-          <span>{error}</span>
+        <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm mb-6 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-red-100 p-1.5 rounded-full">
+            <AlertCircle className="w-4 h-4" />
+          </div>
+          <span className="font-medium">{error}</span>
         </div>
       )}
 

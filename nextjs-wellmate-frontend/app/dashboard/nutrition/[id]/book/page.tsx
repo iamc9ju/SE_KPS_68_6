@@ -513,14 +513,30 @@ export default function BookAppointmentPage({ params }: { params: Promise<{ id: 
                                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                                     {timeSlots.map((slot) => {
                                         const isSelected = selectedSlot === slot.time;
+                                        
+                                        // Logic to disable past time slots for today
+                                        let isPastTime = false;
+                                        if (selectedDate === todayStr) {
+                                            const [slotHour, slotMinute] = slot.time.split(":").map(Number);
+                                            const nowBangkok = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+                                            const currentHour = nowBangkok.getHours();
+                                            const currentMinute = nowBangkok.getMinutes();
+                                            
+                                            if (slotHour < currentHour || (slotHour === currentHour && slotMinute <= currentMinute)) {
+                                                isPastTime = true;
+                                            }
+                                        }
+
+                                        const isDisabled = !slot.available || isPastTime;
+
                                         return (
                                             <button
                                                 key={slot.time}
-                                                disabled={!slot.available}
+                                                disabled={isDisabled}
                                                 onClick={() => setSelectedSlot(slot.time)}
                                                 className={`relative py-3 px-2 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer
-                            ${!slot.available ? "bg-gray-50 text-gray-300 cursor-not-allowed line-through border border-gray-100" : ""}
-                            ${slot.available && !isSelected ? "bg-[#faf8f2] text-[#3d3522] border border-[#f0e6cc] hover:border-[#C6E065] hover:bg-[#C6E065]/10" : ""}
+                            ${isDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed line-through border border-gray-100" : ""}
+                            ${!isDisabled && !isSelected ? "bg-[#faf8f2] text-[#3d3522] border border-[#f0e6cc] hover:border-[#C6E065] hover:bg-[#C6E065]/10" : ""}
                             ${isSelected ? "bg-[#C6E065] text-[#3d3522] shadow-md ring-2 ring-[#C6E065]/50" : ""}
                         `}
                                             >

@@ -46,7 +46,12 @@ export const useAuth = () => {
   const handleAxiosError = (err: unknown, defaultMessage: string) => {
     let message = defaultMessage;
     if (axios.isAxiosError<ApiErrorResponse>(err)) {
-      message = err.response?.data?.message || err.message || message;
+      const data = err.response?.data;
+      if (data?.message) {
+        message = Array.isArray(data.message) ? data.message[0] : data.message;
+      } else if (err.message) {
+        message = err.message;
+      }
     } else if (err instanceof Error) {
       message = err.message;
     }
@@ -75,7 +80,12 @@ export const useAuth = () => {
           timer: 1500,
           showConfirmButton: false,
           color: "#3d3522",
+          background: "#fffbf5",
           confirmButtonColor: "#C6E065",
+          customClass: {
+            popup: "rounded-3xl shadow-xl border-none",
+            title: "text-2xl font-black text-[#3d3522]",
+          },
         });
       }
 
@@ -97,9 +107,15 @@ export const useAuth = () => {
         icon: "error",
         title: "เข้าสู่ระบบไม่สำเร็จ",
         text: message,
-        confirmButtonText: "ลองใหม่",
+        confirmButtonText: "ลองใหม่อีกครั้ง",
         color: "#3d3522",
+        background: "#fffbf5",
         confirmButtonColor: "#3d3522",
+        customClass: {
+          popup: "rounded-3xl shadow-xl",
+          confirmButton: "rounded-2xl px-8 py-3 font-bold",
+          title: "text-2xl font-black text-red-600",
+        },
       });
     } finally {
       setIsLoading(false);

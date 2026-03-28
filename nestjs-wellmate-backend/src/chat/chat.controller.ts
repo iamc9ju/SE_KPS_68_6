@@ -1,12 +1,16 @@
 import {
   Controller,
   Get,
+  Post,
   Param,
   Query,
   UseGuards,
   ForbiddenException,
+  UploadedFile,
+  UseInterceptors,
   ParseIntPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -17,13 +21,18 @@ import {
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth-guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import type { Express } from 'express';
 
 @ApiTags('Chat')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get('rooms')
   @ApiOperation({ summary: 'รายการห้องแชททั้งหมดของผู้ใช้' })
@@ -57,5 +66,24 @@ export class ChatController {
     }
 
     return this.chatService.getMessages(chatRoomId, limit || 50, offset || 0);
+  }
+
+  @Post('upload')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'อัปโหลดรูปภาพที่ใช้ในแชท' })
+  async uploadChatImage(
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new Error('No image file provided');
+    }
+    const result = await this.cloudinaryService.uploadImage(file);
+    return {
+      message: 'Upload successful',
+      data: {
+        imageUrl: (result as any).secure_url,
+      },
+    };
   }
 }

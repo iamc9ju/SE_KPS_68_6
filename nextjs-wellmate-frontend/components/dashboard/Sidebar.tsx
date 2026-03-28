@@ -90,8 +90,8 @@ export default function Sidebar() {
                 }`}
             >
                 {filteredMenuItems.map((item) => {
-                    const isActive =
-                        pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const isRoot = item.href === "/dashboard" || item.href === "/Foodpartner/dashboard";
+                    const isActive = isRoot ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
                     return (
                         <Link
                             key={`${item.href}-${item.label}`}
