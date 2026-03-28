@@ -46,6 +46,7 @@ type HistoryOrder = {
     allergy?: string;
     items: OrderItem[];
     timeline: TimelineStep[];
+    createdAt?: string;
 };
 type ApiOrderItem = {
     orderItemId: number;
@@ -157,7 +158,7 @@ export default function FoodPartnerHistoryPage() {
         const subtotal = order.items.reduce((sum, i) => sum + Number(i.totalPrice || 0), 0);
         const status: OrderStatus = order.status === "delivered" ? "completed" : "cancelled";
         const statusLabel = order.status === "delivered" ? "Delivered" : "Cancelled";
-        const createdTime = formatTime(order.createdAt);
+        const createdTime = formatTime(order.createdAt ?? new Date().toISOString());
         return {
             id: order.orderId,
             time: createdTime,
