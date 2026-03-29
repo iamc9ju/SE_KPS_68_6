@@ -34,6 +34,8 @@ import { NutritionistApprovalModule } from './nutritionist-approval/nutritionist
 import { NutritionAppointmentsModule } from './nutrition-appointments/nutrition-appointments.module';
 import { ProgressModule } from './progress/progress.module';
 import { MealPlanModule } from './meal-plan/meal-plan.module';
+import { MealPlansModule } from './meal-plans/meal-plans.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -82,6 +84,8 @@ import { MealPlanModule } from './meal-plan/meal-plan.module';
     NutritionAppointmentsModule,
     ProgressModule,
     MealPlanModule,
+    MealPlansModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
