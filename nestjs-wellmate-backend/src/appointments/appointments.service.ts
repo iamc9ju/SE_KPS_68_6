@@ -205,6 +205,22 @@ export class AppointmentsService {
     });
   }
 
+  async findAllByPatientId(patientId: string) {
+    return this.prisma.appointment.findMany({
+      where: { patientId },
+      include: {
+        nutritionist: {
+          select: {
+            nutritionistId: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { startTime: 'desc' },
+    });
+  }
+
   async findOne(appointmentId: string, userId: string) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { appointmentId },

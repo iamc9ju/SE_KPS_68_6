@@ -1,6 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
+import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
 
 @Injectable()
 export class PatientsService {
@@ -85,5 +86,99 @@ export class PatientsService {
       },
     });
     return { data: patients };
+  }
+
+  // --- Address Management ---
+
+  async getAddresses(userId: string) {
+    const patientContext = await this.prisma.patient.findUnique({
+      where: { userId },
+      select: { patientId: true },
+    });
+
+    if (!patientContext) throw new NotFoundException('Patient not found');
+
+    return this.prisma.patientAddress.findMany({
+      where: { patientId: patientContext.patientId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async addAddress(userId: string, dto: CreateAddressDto) {
+    const patientContext = await this.prisma.patient.findUnique({
+      where: { userId },
+      select: { patientId: true },
+    });
+
+    if (!patientContext) throw new NotFoundException('Patient not found');
+
+    const addressCount = await this.prisma.patientAddress.count({
+      where: { patientId: patientContext.patientId },
+    });
+
+    if (addressCount >= 3) {
+      throw new BadRequestException('สามารถบันทึกที่อยู่ได้สูงสุด 3 ที่');
+    }
+
+    // If setting as default, unset others
+    if (dto.isDefault) {
+      await this.prisma.patientAddress.updateMany({
+        where: { patientId: patientContext.patientId },
+        data: { isDefault: false },
+      });
+    }
+
+    return this.prisma.patientAddress.create({
+      data: {
+        ...dto,
+        patientId: patientContext.patientId,
+      },
+    });
+  }
+
+  async updateAddress(userId: string, addressId: number, dto: UpdateAddressDto) {
+    const patientContext = await this.prisma.patient.findUnique({
+      where: { userId },
+      select: { patientId: true },
+    });
+
+    if (!patientContext) throw new NotFoundException('Patient not found');
+
+    const address = await this.prisma.patientAddress.findFirst({
+      where: { id: addressId, patientId: patientContext.patientId },
+    });
+
+    if (!address) throw new NotFoundException('Address not found');
+
+    if (dto.isDefault) {
+      await this.prisma.patientAddress.updateMany({
+        where: { patientId: patientContext.patientId },
+        data: { isDefault: false },
+      });
+    }
+
+    return this.prisma.patientAddress.update({
+      where: { id: addressId },
+      data: dto,
+    });
+  }
+
+  async deleteAddress(userId: string, addressId: number) {
+    const patientContext = await this.prisma.patient.findUnique({
+      where: { userId },
+      select: { patientId: true },
+    });
+
+    if (!patientContext) throw new NotFoundException('Patient not found');
+
+    const address = await this.prisma.patientAddress.findFirst({
+      where: { id: addressId, patientId: patientContext.patientId },
+    });
+
+    if (!address) throw new NotFoundException('Address not found');
+
+    return this.prisma.patientAddress.delete({
+      where: { id: addressId },
+    });
   }
 }

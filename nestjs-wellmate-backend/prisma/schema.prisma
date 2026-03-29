@@ -151,6 +151,7 @@ model User {
   patient       Patient?
   nutritionist  Nutritionist?
   foodPartner   FoodPartner?
+  admin         Admin?
   refreshTokens RefreshToken[]
   userDiseases  UserDisease[]
   notifications Notification[]
@@ -191,8 +192,25 @@ model Patient {
   physicalActivities PhysicalActivity[]
   bodyMeasurementLogs BodyMeasurementLog[]
   progressPhotos     ProgressPhoto[]
+  addresses          PatientAddress[]
 
   @@map("patients")
+}
+
+model PatientAddress {
+  id        Int      @id @default(autoincrement()) @map("address_id")
+  patientId String   @map("patient_id") @db.Uuid
+  address   String   @db.Text
+  phone     String   @db.VarChar(20)
+  label     String   @db.VarChar(50) // e.g. "Home", "Work", "Other"
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_addresses")
 }
 
 model Nutritionist {
@@ -219,6 +237,18 @@ model Nutritionist {
   mealPlans               MealPlan[]
 
   @@map("nutritionists")
+}
+
+model Admin {
+  adminId   String   @id @default(uuid()) @map("admin_id") @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  firstName String   @map("first_name") @db.VarChar(100)
+  lastName  String   @map("last_name") @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admins")
 }
 
 model PatientAllergy {
@@ -355,6 +385,7 @@ model Appointment {
   deletedAt      DateTime?         @map("deleted_at")
 
   chatRoom ChatRoom?
+  mealPlan MealPlan[]
 
   @@index([startTime])
   @@index([patientId])
@@ -569,6 +600,7 @@ model MealPlan {
   mealPlanId     Int      @id @default(autoincrement()) @map("meal_plan_id")
   patientId      String   @map("user_id") @db.Uuid // Mapped to user_id in SQL but likely links to Patient
   nutritionistId String?  @map("nutritionist_id") @db.Uuid
+  appointmentId  String?  @map("appointment_id") @db.Uuid
   startDate      DateTime @map("start_date") @db.Date
   endDate        DateTime @map("end_date") @db.Date
   note           String?  @db.Text
@@ -577,6 +609,7 @@ model MealPlan {
   // Relations
   patient       Patient        @relation(fields: [patientId], references: [patientId])
   nutritionist  Nutritionist?  @relation(fields: [nutritionistId], references: [nutritionistId])
+  appointment   Appointment?   @relation(fields: [appointmentId], references: [appointmentId])
   mealPlanItems MealPlanItem[]
 
   @@map("meal_plans")

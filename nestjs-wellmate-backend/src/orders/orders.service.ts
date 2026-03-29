@@ -376,7 +376,7 @@ export class OrdersService {
           where: { orderId },
           data: {
             paymentStatus: 'PAID',
-            status: 'accepted',
+            status: 'pending',
           },
         });
         this.logger.log(`Order ${orderId} payment confirmed via direct check`);

@@ -179,7 +179,7 @@ export default function WorkSchedulePage() {
     }
 
     return (
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-[#fffbf5]">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-[#fffbf5] ml-64">
             <div className="max-w-6xl mx-auto">
                 <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>

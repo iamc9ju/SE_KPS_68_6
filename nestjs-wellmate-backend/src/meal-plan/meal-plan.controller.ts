@@ -11,6 +11,7 @@ export class MealPlanController {
     nutritionistId: string;
     startDate: string;
     endDate: string;
+    appointmentId?: string;
     note?: string;
     items: {
       planDate: string;
@@ -37,6 +38,7 @@ export class MealPlanController {
     planDate: string;
     menuItemId?: number;
     courseId?: number;
+    appointmentId?: string;
     mealType: string;
   }) {
     return this.mealPlanService.addPlanItem({

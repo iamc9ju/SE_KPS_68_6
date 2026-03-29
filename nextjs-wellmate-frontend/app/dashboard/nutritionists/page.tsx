@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo, useEffect } from "react";
 import { adminService } from "@/services/admin";
+import { NutritionistCardSkeleton, NutritionistDetailSkeleton } from "@/components/dashboard/DashboardSkeletons";
 
 type Status = "pending" | "approved" | "rejected";
 
@@ -460,12 +461,19 @@ export default function NutritionistApproval() {
     };
 
     return (
-        <div className="min-h-full flex flex-col" style={{ backgroundColor: theme.bg, fontFamily: "Inter, system-ui, sans-serif" }}>
+        <div
+            className="flex-1 h-screen overflow-y-auto ml-64 bg-[#fffbf5] flex flex-col"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+        >
             <Toast toast={toast} />
 
             <header
                 className="sticky top-0 z-30 border-b px-8 py-0"
-                style={{ backgroundColor: "rgba(244,240,230,0.85)", borderColor: theme.border, backdropFilter: "blur(12px)" }}
+                style={{
+                    backgroundColor: "rgba(255, 251, 245, 0.85)",
+                    borderColor: theme.border,
+                    backdropFilter: "blur(12px)",
+                }}
             >
                 <div className="w-full flex items-center justify-between h-14">
                     <div className="flex items-center gap-2 text-sm" style={{ color: theme.textMuted }}>
@@ -503,7 +511,10 @@ export default function NutritionistApproval() {
                     </div>
 
                     <div className="sm:ml-auto relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style={{ color: theme.textLight }}>
+                        <span
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                            style={{ color: theme.textLight }}
+                        >
                             🔍
                         </span>
                         <input
@@ -519,63 +530,106 @@ export default function NutritionistApproval() {
                     </div>
                 </div>
 
-                {loading && <p className="text-xs" style={{ color: theme.textMuted }}>
-                    Loading...
-                </p>}
-                {error && <p className="text-xs" style={{ color: "#dc2626" }}>
-                    {error}
-                </p>}
+                {error && (
+                    <p className="text-xs" style={{ color: "#dc2626" }}>
+                        {error}
+                    </p>
+                )}
 
                 <div className="flex flex-wrap gap-2">
-                    <StatChip label="ทั้งหมด" count={counts.all} active={filterStatus === "all"} onClick={() => setFilterStatus("all")} dotColor={theme.gold} />
-                    <StatChip label="รอพิจารณา" count={counts.pending} active={filterStatus === "pending"} onClick={() => setFilterStatus("pending")} dotColor="#f59e0b" />
-                    <StatChip label="อนุมัติแล้ว" count={counts.approved} active={filterStatus === "approved"} onClick={() => setFilterStatus("approved")} dotColor="#22c55e" />
-                    <StatChip label="ปฏิเสธแล้ว" count={counts.rejected} active={filterStatus === "rejected"} onClick={() => setFilterStatus("rejected")} dotColor="#f43f5e" />
+                    <StatChip
+                        label="ทั้งหมด"
+                        count={counts.all}
+                        active={filterStatus === "all"}
+                        onClick={() => setFilterStatus("all")}
+                        dotColor={theme.gold}
+                    />
+                    <StatChip
+                        label="รอพิจารณา"
+                        count={counts.pending}
+                        active={filterStatus === "pending"}
+                        onClick={() => setFilterStatus("pending")}
+                        dotColor="#f59e0b"
+                    />
+                    <StatChip
+                        label="อนุมัติแล้ว"
+                        count={counts.approved}
+                        active={filterStatus === "approved"}
+                        onClick={() => setFilterStatus("approved")}
+                        dotColor="#22c55e"
+                    />
+                    <StatChip
+                        label="ปฏิเสธแล้ว"
+                        count={counts.rejected}
+                        active={filterStatus === "rejected"}
+                        onClick={() => setFilterStatus("rejected")}
+                        dotColor="#f43f5e"
+                    />
                 </div>
 
-                <div className="flex flex-col xl:flex-row gap-6 items-start">
-                    <div className="w-full xl:flex-1 min-w-0 flex flex-col gap-4">
-                        {filtered.length === 0 ? (
-                            <div className="flex flex-col items-center gap-3 py-16 rounded-3xl border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
-                                <span className="text-4xl">🔍</span>
-                                <p className="text-sm" style={{ color: theme.textLight }}>
-                                    ไม่พบข้อมูลที่ค้นหา
-                                </p>
-                                {filterStatus !== "all" && (
-                                    <button onClick={() => setFilterStatus("all")} className="text-xs underline" style={{ color: theme.gold }}>
-                                        ล้างตัวกรอง
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            filtered.map((item) => (
-                                <NutritionistCard
-                                    key={item.id}
-                                    item={item}
-                                    isActive={selectedId === item.id}
-                                    onClick={() => setSelectedId(item.id)}
-                                    onApprove={(id) => updateStatus(id, "approved")}
-                                    onReject={(id) => updateStatus(id, "rejected")}
-                                />
-                            ))
-                        )}
-                        <p className="text-xs text-center pt-1" style={{ color: theme.textLight }}>
-                            แสดง {filtered.length} จาก {nutritionists.length} รายการ
-                        </p>
+                {loading ? (
+                    <div className="flex flex-col xl:flex-row gap-6 items-start">
+                        <div className="w-full xl:flex-1 min-w-0 flex flex-col gap-4">
+                            {[...Array(5)].map((_, i) => (
+                                <NutritionistCardSkeleton key={i} />
+                            ))}
+                        </div>
+                        <div className="w-full xl:w-[420px] shrink-0 sticky top-[72px]">
+                            <NutritionistDetailSkeleton />
+                        </div>
                     </div>
+                ) : (
+                    <div className="flex flex-col xl:flex-row gap-6 items-start">
+                        <div className="w-full xl:flex-1 min-w-0 flex flex-col gap-4">
+                            {filtered.length === 0 ? (
+                                <div
+                                    className="flex flex-col items-center gap-3 py-16 rounded-3xl border"
+                                    style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+                                >
+                                    <span className="text-4xl">🔍</span>
+                                    <p className="text-sm" style={{ color: theme.textLight }}>
+                                        ไม่พบข้อมูลที่ค้นหา
+                                    </p>
+                                    {filterStatus !== "all" && (
+                                        <button
+                                            onClick={() => setFilterStatus("all")}
+                                            className="text-xs underline"
+                                            style={{ color: theme.gold }}
+                                        >
+                                            ล้างตัวกรอง
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                filtered.map((item) => (
+                                    <NutritionistCard
+                                        key={item.id}
+                                        item={item}
+                                        isActive={selectedId === item.id}
+                                        onClick={() => setSelectedId(item.id)}
+                                        onApprove={(id) => updateStatus(id, "approved")}
+                                        onReject={(id) => updateStatus(id, "rejected")}
+                                    />
+                                ))
+                            )}
+                            <p className="text-xs text-center pt-1" style={{ color: theme.textLight }}>
+                                แสดง {filtered.length} จาก {nutritionists.length} รายการ
+                            </p>
+                        </div>
 
-                    <div className="w-full xl:w-[420px] shrink-0 sticky top-[72px]" style={{ minHeight: 520 }}>
-                        <DetailPanel
-                            item={selectedItem}
-                            onApprove={(id) => {
-                                updateStatus(id, "approved");
-                            }}
-                            onReject={(id) => {
-                                updateStatus(id, "rejected");
-                            }}
-                        />
+                        <div className="w-full xl:w-[420px] shrink-0 sticky top-[72px]" style={{ minHeight: 520 }}>
+                            <DetailPanel
+                                item={selectedItem}
+                                onApprove={(id) => {
+                                    updateStatus(id, "approved");
+                                }}
+                                onReject={(id) => {
+                                    updateStatus(id, "rejected");
+                                }}
+                            />
+                        </div>
                     </div>
-                </div>
+                )}
             </main>
         </div>
     );

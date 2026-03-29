@@ -17,6 +17,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import { useAuthStore } from "@/store/auth-store";
 import FoodPartnerDashboard from "@/components/dashboard/FoodPartnerDashboard";
 import NutritionistDashboard from "@/components/dashboard/NutritionistDashboard";
+import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { StatCardSkeleton, MenuCardSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import api from "@/lib/api";
 
@@ -381,6 +382,10 @@ export default function DashboardPage() {
 
     if (user?.role === "nutritionist") {
         return <NutritionistDashboard />;
+    }
+
+    if (user?.role === "admin") {
+        return <AdminDashboard />;
     }
 
     const latestMeasurement = overview?.latestMeasurement ?? null;

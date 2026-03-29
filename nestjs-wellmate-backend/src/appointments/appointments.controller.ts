@@ -59,6 +59,22 @@ export class AppointmentsController {
     return this.appointmentsService.findAllForPatient(userId);
   }
 
+  @Get('patient/:id')
+  @Auth('patient', 'nutritionist')
+  @ApiOperation({ summary: 'ดึงข้อมูลการนัดหมายทั้งหมดของคนไข้ตาม ID' })
+  @ApiResponse({ status: 200, description: 'ดึงข้อมูลการนัดหมายสำเร็จ' })
+  async findByPatient(@Param('id') id: string) {
+    return this.appointmentsService.findAllByPatientId(id);
+  }
+
+  @Get('me/nutritionist')
+  @Auth('nutritionist')
+  @ApiOperation({ summary: 'ดึงข้อมูลการนัดหมายทั้งหมดของนักโภชนาการ' })
+  @ApiResponse({ status: 200, description: 'ดึงข้อมูลการนัดหมายสำเร็จ' })
+  async findAllForNutritionist(@CurrentUser('sub') userId: string) {
+    return this.appointmentsService.findAllForNutritionist(userId);
+  }
+
   @Get(':id')
   @Auth('patient', 'nutritionist')
   @ApiOperation({ summary: 'ดึงข้อมูลการนัดหมายตาม ID' })

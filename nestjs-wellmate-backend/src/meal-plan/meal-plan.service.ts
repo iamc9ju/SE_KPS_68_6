@@ -10,6 +10,7 @@ export class MealPlanService {
     nutritionistId: string;
     startDate: Date;
     endDate: Date;
+    appointmentId?: string;
     note?: string;
     items: {
       planDate: Date;
@@ -22,6 +23,7 @@ export class MealPlanService {
       data: {
         patientId: data.patientId,
         nutritionistId: data.nutritionistId,
+        appointmentId: data.appointmentId,
         startDate: data.startDate,
         endDate: data.endDate,
         note: data.note,
@@ -51,6 +53,7 @@ export class MealPlanService {
     planDate: Date;
     menuItemId?: number;
     courseId?: number;
+    appointmentId?: string;
     mealType: string;
   }) {
     // Normalize date to UTC midnight to avoid time-of-day/timezone mismatch
@@ -64,6 +67,7 @@ export class MealPlanService {
     let plan = await this.prisma.mealPlan.findFirst({
       where: {
         patientId: data.patientId,
+        appointmentId: data.appointmentId || null,
         startDate: { lte: utcDate },
         endDate: { gte: utcDate },
       },
@@ -85,6 +89,7 @@ export class MealPlanService {
         data: {
           patientId: data.patientId,
           nutritionistId: data.nutritionistId,
+          appointmentId: data.appointmentId,
           startDate: monday,
           endDate: sunday,
         },
@@ -135,6 +140,12 @@ export class MealPlanService {
           orderBy: { planDate: 'asc' },
         },
         nutritionist: true,
+        appointment: {
+          select: {
+            summary: true,
+            appointmentId: true,
+          }
+        }
       },
     });
   }

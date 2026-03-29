@@ -46,6 +46,14 @@ export class NutritionistsController {
     return this.nutritionistsService.getProfile(userId);
   }
 
+  @Get('me/dashboard-stats')
+  @ApiBearerAuth()
+  @Auth(UserRole.nutritionist)
+  @ApiOperation({ summary: 'ดึงข้อมูลสถิติสำหรับแดชบอร์ดของนักโภชนาการ' })
+  async getDashboardStats(@CurrentUser('sub') userId: string) {
+    return this.nutritionistsService.getDashboardStats(userId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'ค้นหานักโภชนาการ (สามารถกรอง กรองเรียงลำดับ ได้)' })
   @ApiResponse({

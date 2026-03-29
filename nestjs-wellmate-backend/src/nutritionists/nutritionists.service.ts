@@ -299,4 +299,55 @@ export class NutritionistsService {
       phone: nutritionist.user.phone,
     };
   }
+
+  async getDashboardStats(userId: string) {
+    const nutritionist = await this.prisma.nutritionist.findUnique({
+      where: { userId },
+      include: {
+        appointments: {
+          include: {
+            patient: true,
+          },
+        },
+        reviews: true,
+      },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('ไม่พบข้อมูลนักโภชนาการ');
+    }
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    const appointmentsToday = nutritionist.appointments.filter(appt => 
+      appt.startTime >= startOfToday && appt.startTime <= endOfToday && appt.status !== 'cancelled'
+    ).length;
+
+    const uniquePatients = new Set(nutritionist.appointments.map(appt => appt.patientId)).size;
+
+    const totalReviews = nutritionist.reviews.length;
+    const avgRating = totalReviews > 0
+      ? nutritionist.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      : 0;
+
+    const appointmentsWithNoMealPlan = await this.prisma.appointment.count({
+      where: {
+        nutritionistId: nutritionist.nutritionistId,
+        status: 'confirmed',
+        mealPlan: {
+          none: {}
+        }
+      }
+    });
+
+    return {
+      totalPatients: uniquePatients,
+      appointmentsToday,
+      pendingMealPlans: appointmentsWithNoMealPlan,
+      averageRating: parseFloat(avgRating.toFixed(1)),
+      totalReviews,
+    };
+  }
 }

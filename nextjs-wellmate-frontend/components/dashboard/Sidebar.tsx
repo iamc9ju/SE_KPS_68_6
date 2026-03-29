@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     LayoutGrid,
+    Users,
     Heart,
     Calendar,
     MessageSquare,
@@ -15,6 +16,12 @@ import {
     UserCog,
     Clock,
     Package,
+    Store,
+    UserCheck,
+    ShoppingBag,
+    CalendarCheck,
+    Banknote,
+    RefreshCcw,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,8 +50,9 @@ export default function Sidebar() {
 
     const userRole = useAuthStore((state) => state.user?.role);
     const isFoodPartner = userRole === "food_partner";
+    const isAdmin = userRole === "admin";
 
-    // Define specific items for food partner to maintain their previous navigation structure
+    // Define specific items for food partner and admin to maintain their previous navigation structure
     const filteredMenuItems = isFoodPartner
         ? [
             { icon: LayoutGrid, label: "แดชบอร์ด", href: "/dashboard" },
@@ -53,11 +61,24 @@ export default function Sidebar() {
             { icon: BookOpen, label: "ประวัติ", href: "/dashboard/history" },
             { icon: UserCog, label: "ตั้งค่า", href: "/dashboard/profile" },
         ]
-        : menuItems.filter((item) => {
-            if (!item.roles) return true;
-            if (!userRole) return false;
-            return item.roles.includes(userRole as UserRole);
-        });
+        : isAdmin
+            ? [
+                { icon: LayoutGrid, label: "แดชบอร์ด", href: "/dashboard" },
+                { icon: Users, label: "จัดการผู้ใช้", href: "/dashboard/patient" },
+                { icon: Store, label: "จัดการร้านค้าพาร์ทเนอร์", href: "/dashboard/partners" },
+                { icon: UserCheck, label: "อนุมัติโปรไฟล์นักโภชนาการ", href: "/dashboard/nutritionists" },
+                { icon: ShoppingBag, label: "ติดตามออเดอร์", href: "/dashboard/admindashboard/orders" },
+                { icon: CalendarCheck, label: "ติดตามการจอง", href: "/dashboard/admindashboard/bookings" },
+                { icon: Banknote, label: "จ่ายเงินให้ร้านค้า", href: "/dashboard/admindashboard/payments" },
+                { icon: RefreshCcw, label: "จัดการการคืนเงิน", href: "/dashboard/admindashboard/refunds" },
+                { icon: BarChart2, label: "ข้อมูลเชิงวิเคราะห์", href: "/dashboard/admindashboard/analytics" },
+                { icon: UserCog, label: "ตั้งค่า", href: "/dashboard/setting" },
+            ]
+            : menuItems.filter((item) => {
+                if (!item.roles) return true;
+                if (!userRole) return false;
+                return item.roles.includes(userRole as UserRole);
+            });
 
     return (
         <aside
@@ -83,19 +104,26 @@ export default function Sidebar() {
                     const isActive = isRoot
                         ? pathname === item.href
                         : isOrdersSection
-                          ? pathname === item.href || pathname.startsWith(`${item.href}/`) || pathname.startsWith("/dashboard/tracking")
-                          : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                            ? pathname === item.href || pathname.startsWith(`${item.href}/`) || pathname.startsWith("/dashboard/tracking")
+                            : pathname === item.href || pathname.startsWith(`${item.href}/`);
                     return (
                         <Link
                             key={`${item.href}-${item.label}`}
                             href={item.href}
                             className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 ${isActive
-                                ? "bg-[#C6E065] text-[#3d3522] font-bold shadow-md"
-                                : "text-gray-500 hover:bg-gray-50 hover:text-[#3d3522]"
+                                ? isAdmin
+                                    ? "bg-[#ffd980] text-[#7a5c00] font-bold shadow-md"
+                                    : "bg-[#C6E065] text-[#3d3522] font-bold shadow-md"
+                                : isAdmin
+                                    ? "text-gray-500 hover:bg-[#fff8e1] hover:text-[#7a5c00]"
+                                    : "text-gray-500 hover:bg-gray-50 hover:text-[#3d3522]"
                                 }`}
                         >
                             <item.icon
-                                className={`w-5 h-5 ${isActive ? "text-[#3d3522]" : "text-gray-400"}`}
+                                className={`w-5 h-5 ${isActive
+                                    ? isAdmin ? "text-[#7a5c00]" : "text-[#3d3522]"
+                                    : "text-gray-400"
+                                    }`}
                             />
                             <span className="text-sm">{item.label}</span>
                         </Link>

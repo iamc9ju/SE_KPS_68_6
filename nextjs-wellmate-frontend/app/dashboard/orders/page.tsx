@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { 
-    Package, 
-    Clock, 
-    CheckCircle2, 
-    ChevronRight, 
-    CreditCard, 
-    Wallet, 
-    AlertCircle, 
+import {
+    Package,
+    Clock,
+    CheckCircle2,
+    ChevronRight,
+    CreditCard,
+    Wallet,
+    AlertCircle,
     Loader2,
     LayoutGrid,
     ChevronLeft,
@@ -36,6 +36,7 @@ type FilterOption = {
 
 const statusConfig = {
     pending: { label: 'รอการยืนยัน', color: 'bg-amber-100 text-[#3d3522]', icon: Clock },
+    pending_paid: { label: 'รอร้านค้ากดยืนยัน', color: 'bg-blue-50 text-[#3d3522]', icon: Clock },
     accepted: { label: 'รับออเดอร์แล้ว', color: 'bg-blue-100 text-[#3d3522]', icon: CheckCircle2 },
     preparing: { label: 'กำลังเตรียมอาหาร', color: 'bg-orange-100 text-[#3d3522]', icon: Package },
     ready: { label: 'เตรียมอาหารเสร็จแล้ว รอการจัดส่ง', color: 'bg-emerald-100 text-[#3d3522]', icon: CheckCircle2 },
@@ -57,7 +58,7 @@ export default function OrdersPage() {
     const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
     const [qrModalOrder, setQrModalOrder] = useState<Order | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const ordersPerPage = 6;
@@ -105,6 +106,9 @@ export default function OrdersPage() {
     const filteredOrders = orders.filter(order => {
         if (filter === 'all') return true;
         if (filter === 'unpaid') return order.paymentStatus === 'UNPAID';
+        if (filter === 'accepted') {
+            return order.status === 'accepted' || (order.status === 'pending' && order.paymentStatus === 'PAID');
+        }
         return order.status === filter;
     });
 
@@ -164,7 +168,7 @@ export default function OrdersPage() {
                     <p className="text-[#3d3522] font-bold mb-10 text-lg leading-relaxed">
                         ขออภัย หน้านี้สำหรับผู้ใช้งานในกลุ่ม "คนไข้" หรือ "ร้านค้าอาหาร" เท่านั้น
                     </p>
-                    <button 
+                    <button
                         onClick={() => router.push('/dashboard')}
                         className="bg-[#3d3522] text-white px-12 py-5 rounded-[24px] font-black hover:bg-[#2d2618] transition-all shadow-xl active:scale-95 text-lg"
                     >
@@ -187,7 +191,7 @@ export default function OrdersPage() {
     }
 
     return (
-        <div 
+        <div
             ref={scrollContainerRef}
             className="flex-1 h-screen overflow-y-auto bg-[#fffbf5] lg:pl-64 scroll-smooth"
         >
@@ -201,7 +205,7 @@ export default function OrdersPage() {
                         <h1 className="text-4xl font-black text-[#3d3522]">ประวัติการสั่งซื้อ</h1>
                     </div>
                     <p className="text-[#3d3522] font-medium text-lg">ติดตามสถานะและตรวจสอบรายการอาหารสุขภาพที่คุณสั่ง</p>
-                    
+
                     {/* Stats Section */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                         <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-shadow group flex items-center gap-6">
@@ -232,7 +236,7 @@ export default function OrdersPage() {
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Filters - Modern Chips */}
                     <div className="flex gap-3 mt-10 overflow-x-auto pb-4 no-scrollbar">
                         {([
@@ -245,11 +249,10 @@ export default function OrdersPage() {
                             <button
                                 key={btn.id}
                                 onClick={() => setFilter(btn.id)}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black whitespace-nowrap transition-all border-2 ${
-                                    filter === btn.id 
-                                    ? 'bg-[#3d3522] text-white border-[#3d3522] shadow-xl scale-105' 
-                                    : 'bg-white text-[#3d3522] border-gray-100 hover:border-[#C6E065]'
-                                }`}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black whitespace-nowrap transition-all border-2 ${filter === btn.id
+                                        ? 'bg-[#3d3522] text-white border-[#3d3522] shadow-xl scale-105'
+                                        : 'bg-white text-[#3d3522] border-gray-100 hover:border-[#C6E065]'
+                                    }`}
                             >
                                 <btn.icon size={16} />
                                 {btn.label}
@@ -273,7 +276,7 @@ export default function OrdersPage() {
                         <p className="text-[#3d3522] font-bold max-w-sm mx-auto mb-10 text-lg leading-relaxed">
                             ดูเหมือนว่าคุณจะยังไม่มีรายการสั่งซื้อในหมวดนี้ ลองดูเมนูแนะนำของเราสิ!
                         </p>
-                        <button 
+                        <button
                             onClick={() => router.push('/dashboard/healthymenu')}
                             className="bg-[#C6E065] text-[#3d3522] px-12 py-5 rounded-[24px] font-black hover:bg-[#b0cc5a] transition-all shadow-xl hover:shadow-[#C6E065]/20 active:scale-95 text-lg"
                         >
@@ -297,14 +300,16 @@ export default function OrdersPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {paginatedOrders.map((order) => {
-                                        const status = statusConfig[order.status] || statusConfig.pending;
+                                        const status = order.status === 'pending' && order.paymentStatus === 'PAID'
+                                            ? statusConfig.pending_paid
+                                            : (statusConfig[order.status] || statusConfig.pending);
                                         const mainItem = order.items[0];
                                         const othersCount = order.items.length - 1;
                                         const trackingHref = `/dashboard/tracking?orderId=${encodeURIComponent(order.orderId)}`;
-                                        
+
                                         return (
                                             <React.Fragment key={order.orderId}>
-                                                <tr 
+                                                <tr
                                                     onClick={() => setSelectedOrder(selectedOrder === order.orderId ? null : order.orderId)}
                                                     className="group cursor-pointer hover:bg-gray-50/30 transition-colors"
                                                 >
@@ -349,7 +354,7 @@ export default function OrdersPage() {
                                                     <td className="px-8 py-6 text-right">
                                                         <div className="flex items-center justify-end">
                                                             {order.paymentStatus === 'UNPAID' ? (
-                                                                <button 
+                                                                <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setQrModalOrder(order);
@@ -433,7 +438,7 @@ export default function OrdersPage() {
                                                                                     </Link>
                                                                                 )}
                                                                             </div>
-                                                                            
+
                                                                             <div className="px-8 py-6 bg-[#3d3522] rounded-[32px] text-white flex justify-between items-center shadow-2xl shadow-[#3d3522]/20">
                                                                                 <div>
                                                                                     <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">ราคารวมทั้งหมด</p>
@@ -461,11 +466,13 @@ export default function OrdersPage() {
                         {/* Mobile Card View (Fallback) */}
                         <div className="lg:hidden grid gap-6">
                             {paginatedOrders.map((order) => {
-                                const status = statusConfig[order.status] || statusConfig.pending;
+                                const status = order.status === 'pending' && order.paymentStatus === 'PAID'
+                                    ? statusConfig.pending_paid
+                                    : (statusConfig[order.status] || statusConfig.pending);
                                 const mainItem = order.items[0];
-                                
+
                                 return (
-                                    <div 
+                                    <div
                                         key={`mobile-${order.orderId}`}
                                         className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
                                         onClick={() => setSelectedOrder(selectedOrder === order.orderId ? null : order.orderId)}
@@ -541,17 +548,16 @@ export default function OrdersPage() {
                                 >
                                     <ChevronLeft size={24} />
                                 </button>
-                                
+
                                 <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-[28px] border border-gray-100 shadow-sm">
                                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
                                         <button
                                             key={num}
                                             onClick={(e) => { e.stopPropagation(); setCurrentPage(num); }}
-                                            className={`w-12 h-12 rounded-2xl text-sm font-black transition-all ${
-                                                currentPage === num 
-                                                ? 'bg-[#3d3522] text-white shadow-xl shadow-[#3d3522]/30 scale-110' 
-                                                : 'text-[#3d3522] hover:bg-[#fffbf5] hover:text-[#3d3522]'
-                                            }`}
+                                            className={`w-12 h-12 rounded-2xl text-sm font-black transition-all ${currentPage === num
+                                                    ? 'bg-[#3d3522] text-white shadow-xl shadow-[#3d3522]/30 scale-110'
+                                                    : 'text-[#3d3522] hover:bg-[#fffbf5] hover:text-[#3d3522]'
+                                                }`}
                                         >
                                             {num}
                                         </button>
@@ -600,9 +606,9 @@ export default function OrdersPage() {
                                 </div>
 
                                 <div className="bg-white p-6 rounded-[40px] mb-10 shadow-2xl shadow-[#3d3522]/5 border-2 border-[#3d3522]/5 group">
-                                    <img 
-                                        src={qrModalOrder.qrCodeUrl} 
-                                        alt="Order QR" 
+                                    <img
+                                        src={qrModalOrder.qrCodeUrl}
+                                        alt="Order QR"
                                         className="w-56 h-56 object-contain group-hover:scale-105 transition-transform duration-500"
                                     />
                                 </div>

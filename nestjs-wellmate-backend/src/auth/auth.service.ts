@@ -75,6 +75,14 @@ export class AuthService {
               `${dto.firstName || ''} ${dto.lastName || ''}`.trim(),
           },
         });
+      } else if (dto.role === 'admin') {
+        await tx.admin.create({
+          data: {
+            userId: user.userId,
+            firstName: dto.firstName || '',
+            lastName: dto.lastName || '',
+          },
+        });
       }
 
       return user;
@@ -87,6 +95,7 @@ export class AuthService {
         patient: true,
         nutritionist: true,
         foodPartner: true,
+        admin: true,
       },
     });
 
@@ -130,6 +139,7 @@ export class AuthService {
         patient: userBase.role === 'patient',
         nutritionist: userBase.role === 'nutritionist',
         foodPartner: userBase.role === 'food_partner',
+        admin: userBase.role === 'admin',
       },
     });
 
@@ -143,7 +153,12 @@ export class AuthService {
   private async validateUser(email: string, pass: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { patient: true, nutritionist: true, foodPartner: true },
+      include: {
+        patient: true,
+        nutritionist: true,
+        foodPartner: true,
+        admin: true,
+      },
     });
 
     if (
@@ -169,6 +184,7 @@ export class AuthService {
       patient,
       nutritionist,
       foodPartner,
+      admin,
     } = user;
 
     // แก้ไข: ประกาศตัวแปรสำหรับชื่อเพื่อใช้ด้านล่าง
@@ -224,6 +240,23 @@ export class AuthService {
         is2faEnabled,
         profileImageUrl,
         createdAt,
+        isProfileComplete: true,
+      };
+    } else if (role === 'admin' && admin) {
+      firstName = admin.firstName || '';
+      lastName = admin.lastName || '';
+      return {
+        userId,
+        phone,
+        email,
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        role,
+        is2faEnabled,
+        profileImageUrl,
+        createdAt,
+        adminId: admin.adminId,
         isProfileComplete: true,
       };
     }
