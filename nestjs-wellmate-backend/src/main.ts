@@ -34,7 +34,13 @@ async function bootstrap() {
     'https://nextjs-wellmate-frontend-git-main-ittipol-botmoons-projects.vercel.app/';
 
   app.enableCors({
-    origin: frontendUrl,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   });
   app.setGlobalPrefix('api');
