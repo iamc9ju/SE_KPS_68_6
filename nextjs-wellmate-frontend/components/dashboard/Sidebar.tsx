@@ -24,7 +24,6 @@ type UserRole = "patient" | "nutritionist" | "food_partner" | "admin";
 export default function Sidebar() {
     const pathname = usePathname();
     const { logoutUser } = useAuth();
-    const user = useAuthStore((state) => state.user);
 
     const menuItems = [
         { icon: LayoutGrid, label: "แดชบอร์ด", href: "/dashboard" },
@@ -60,12 +59,6 @@ export default function Sidebar() {
             return item.roles.includes(userRole as UserRole);
         });
 
-    const userInitial =
-        user?.firstName?.charAt(0) ||
-        user?.lastName?.charAt(0) ||
-        user?.email?.charAt(0) ||
-        "U";
-
     return (
         <aside
             className="w-64 bg-white h-screen fixed left-0 top-0 border-r border-gray-100 flex flex-col z-20 p-6 shadow-sm"
@@ -86,7 +79,12 @@ export default function Sidebar() {
             >
                 {filteredMenuItems.map((item) => {
                     const isRoot = item.href === "/dashboard";
-                    const isActive = isRoot ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const isOrdersSection = item.href === "/dashboard/orders";
+                    const isActive = isRoot
+                        ? pathname === item.href
+                        : isOrdersSection
+                          ? pathname === item.href || pathname.startsWith(`${item.href}/`) || pathname.startsWith("/dashboard/tracking")
+                          : pathname === item.href || pathname.startsWith(`${item.href}/`);
                     return (
                         <Link
                             key={`${item.href}-${item.label}`}

@@ -3,7 +3,7 @@
 import React from "react";
 import { Bike, ChefHat, House, Store } from "lucide-react";
 
-type MapViewProps = {
+type OrderTrackingMapViewProps = {
     orderId: string;
     stage: 1 | 2 | 3 | 4;
     restaurantName?: string;
@@ -17,7 +17,12 @@ const DRIVER_POSITIONS: Record<1 | 2 | 3 | 4, { x: number; y: number } | null> =
     4: { x: 76, y: 26 },
 };
 
-export default function MapView({ orderId, stage, restaurantName, customerAddress }: MapViewProps) {
+export default function OrderTrackingMapView({
+    orderId,
+    stage,
+    restaurantName,
+    customerAddress,
+}: OrderTrackingMapViewProps) {
     const driver = DRIVER_POSITIONS[stage];
     const routePath = "M 18 74 Q 34 44 62 34 T 78 24";
     const activePath =
@@ -56,13 +61,7 @@ export default function MapView({ orderId, stage, restaurantName, customerAddres
                     strokeLinecap="round"
                 />
                 {driver && (
-                    <path
-                        d={activePath}
-                        fill="none"
-                        stroke="#a3cf2f"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                    />
+                    <path d={activePath} fill="none" stroke="#a3cf2f" strokeWidth="2" strokeLinecap="round" />
                 )}
             </svg>
 

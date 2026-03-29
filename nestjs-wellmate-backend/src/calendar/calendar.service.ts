@@ -10,35 +10,34 @@ import { UserRole } from '@prisma/client';
 
 interface UpdateActivityDto {
   title?: string;
+  description?: string;
   startTime?: string;
+  endTime?: string | null;
   calories?: number;
 }
 
 @Injectable()
 export class CalendarService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   private async getPatient(userId: string) {
-    const patient = await this.prisma.patient.findUnique({
+    return this.prisma.patient.findUnique({
       where: { userId },
     });
-    return patient;
   }
 
   private async getNutritionist(userId: string) {
-    const nutritionist = await this.prisma.nutritionist.findUnique({
+    return this.prisma.nutritionist.findUnique({
       where: { userId },
     });
-    return nutritionist;
   }
 
-  // helper หา activity
   private async findActivity(activityId: string, patientId: string) {
     const activity = await this.prisma.physicalActivity.findFirst({
       where: {
         activityId,
         patientId,
-        // ลบ deletedAt ออกแล้ว
+        deletedAt: null,
       },
     });
 
@@ -49,7 +48,6 @@ export class CalendarService {
     return activity;
   }
 
-  // Create (Only for Patients)
   async create(dto: CreateCalendarDto, userId: string) {
     const patient = await this.getPatient(userId);
     if (!patient) {
@@ -58,19 +56,32 @@ export class CalendarService {
       );
     }
 
+    const startTime = new Date(dto.startTime);
+    if (isNaN(startTime.getTime())) {
+      throw new BadRequestException('Invalid startTime format');
+    }
+
+    let endTime: Date | null | undefined = undefined;
+    if (dto.endTime !== undefined) {
+      endTime = dto.endTime ? new Date(dto.endTime) : null;
+      if (endTime && isNaN(endTime.getTime())) {
+        throw new BadRequestException('Invalid endTime format');
+      }
+    }
+
     return this.prisma.physicalActivity.create({
       data: {
         title: dto.title,
-        startTime: dto.startTime,
+        description: dto.description,
+        startTime,
+        endTime,
         calories: dto.calories,
         patientId: patient.patientId,
         updatedAt: new Date(),
-        // ลบ description และ endTime ออกแล้ว
       },
     });
   }
 
-  // Get events
   async getEvents(userId: string, start?: string, end?: string) {
     const user = await this.prisma.user.findUnique({
       where: { userId },
@@ -93,8 +104,6 @@ export class CalendarService {
     }
 
     const events: any[] = [];
-
-    // Pre-fetch profiles to avoid redundant calls
     let patient: any = null;
     let nutritionist: any = null;
 
@@ -106,50 +115,50 @@ export class CalendarService {
 
     const promises: Promise<any>[] = [];
 
-    // 1. Fetch Physical Activities (Only for Patients)
     if (user.role === UserRole.patient && patient) {
       const activitiesPromise = this.prisma.physicalActivity
         .findMany({
           where: {
             patientId: patient.patientId,
-            // ลบ deletedAt ออกแล้ว
+            deletedAt: null,
             ...(startDate && endDate
               ? {
-                startTime: { gte: startDate, lte: endDate },
-              }
+                  startTime: { gte: startDate, lte: endDate },
+                }
               : {}),
           },
           select: {
             activityId: true,
             title: true,
+            description: true,
             startTime: true,
-            // ลบ endTime ออกแล้ว
+            endTime: true,
+            calories: true,
           },
           orderBy: { startTime: 'asc' },
         })
         .then((activities) =>
-          activities.map((a) => ({
-            id: a.activityId,
-            title: a.title,
-            startTime: a.startTime,
+          activities.map((activity) => ({
+            id: activity.activityId,
+            title: activity.title,
+            description: activity.description,
+            startTime: activity.startTime,
+            endTime: activity.endTime,
+            calories: activity.calories,
             type: 'physical',
-            // ลบ endTime ออกแล้ว
           })),
         );
 
       promises.push(activitiesPromise);
     }
 
-    // 2. Fetch Appointments
-    // ลบ deletedAt ออกจาก Where condition เริ่มต้น
-    let appointmentWhere: any = {};
+    const appointmentWhere: any = {};
     if (user.role === UserRole.patient && patient) {
       appointmentWhere.patientId = patient.patientId;
     } else if (user.role === UserRole.nutritionist && nutritionist) {
       appointmentWhere.nutritionistId = nutritionist.nutritionistId;
     }
 
-    // Only fetch if we have a profile-based filter (or if admin, maybe don't filter)
     if (
       appointmentWhere.patientId ||
       appointmentWhere.nutritionistId ||
@@ -168,32 +177,32 @@ export class CalendarService {
             endTime: true,
             nutritionist:
               user.role === UserRole.patient
-                // แก้ไข: เปลี่ยนไปดึง first_name และ last_name แทน
                 ? { select: { firstName: true, lastName: true } }
                 : false,
             patient:
               user.role === UserRole.nutritionist
-                // แก้ไข: เปลี่ยนไปดึง first_name และ last_name แทน
                 ? { select: { firstName: true, lastName: true } }
                 : false,
           },
         })
         .then((appointments) =>
-          appointments.map((a: any) => {
+          appointments.map((appointment: any) => {
             let title = 'Appointment';
 
-            // แก้ไข: เอา first_name กับ last_name มาต่อกัน
-            if (user.role === UserRole.patient && a.nutritionist) {
-              title = `Consultation with ${a.nutritionist.firstName} ${a.nutritionist.lastName}`;
-            } else if (user.role === UserRole.nutritionist && a.patient) {
-              title = `Patient: ${a.patient.firstName} ${a.patient.lastName}`;
+            if (user.role === UserRole.patient && appointment.nutritionist) {
+              title = `Consultation with ${appointment.nutritionist.firstName} ${appointment.nutritionist.lastName}`;
+            } else if (
+              user.role === UserRole.nutritionist &&
+              appointment.patient
+            ) {
+              title = `Patient: ${appointment.patient.firstName} ${appointment.patient.lastName}`;
             }
 
             return {
-              id: a.appointmentId,
-              title: title.trim(), // ใส่ trim() เผื่อกรณีค่าว่าง
-              startTime: a.startTime,
-              endTime: a.endTime,
+              id: appointment.appointmentId,
+              title: title.trim(),
+              startTime: appointment.startTime,
+              endTime: appointment.endTime,
               type: 'appointment',
             };
           }),
@@ -202,42 +211,55 @@ export class CalendarService {
       promises.push(appointmentsPromise);
     }
 
-    // Execute concurrently
     const results = await Promise.all(promises);
     results.forEach((result) => events.push(...result));
 
     return { data: events };
   }
 
-  // Get detail
   async getDetail(userId: string, activityId: string) {
     const patient = await this.getPatient(userId);
-    if (!patient) throw new NotFoundException('Activity not found');
+    if (!patient) {
+      throw new NotFoundException('Activity not found');
+    }
+
     return this.findActivity(activityId, patient.patientId);
   }
 
-  // Update
   async update(userId: string, activityId: string, data: UpdateActivityDto) {
     const patient = await this.getPatient(userId);
-    if (!patient)
+    if (!patient) {
       throw new ForbiddenException(
         'Only patients can update physical activities',
       );
+    }
 
     await this.findActivity(activityId, patient.patientId);
 
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
+    if (data.description !== undefined) updateData.description = data.description;
     if (data.calories !== undefined) updateData.calories = data.calories;
 
     if (data.startTime) {
       const start = new Date(data.startTime);
-      if (isNaN(start.getTime()))
+      if (isNaN(start.getTime())) {
         throw new BadRequestException('Invalid startTime format');
+      }
       updateData.startTime = start;
     }
 
-    // ลบเช็ก description กับ endTime ออก
+    if (data.endTime !== undefined) {
+      if (data.endTime === null) {
+        updateData.endTime = null;
+      } else {
+        const end = new Date(data.endTime);
+        if (isNaN(end.getTime())) {
+          throw new BadRequestException('Invalid endTime format');
+        }
+        updateData.endTime = end;
+      }
+    }
 
     return this.prisma.physicalActivity.update({
       where: { activityId },
@@ -245,13 +267,13 @@ export class CalendarService {
     });
   }
 
-  // เปลี่ยนมาเป็นลบข้อมูลจริงๆ (Hard Delete) แทน
   async remove(userId: string, activityId: string) {
     const patient = await this.getPatient(userId);
-    if (!patient)
+    if (!patient) {
       throw new ForbiddenException(
         'Only patients can remove physical activities',
       );
+    }
 
     await this.findActivity(activityId, patient.patientId);
 

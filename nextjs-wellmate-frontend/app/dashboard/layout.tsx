@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import { useCartStore } from "@/store/cart-store";
@@ -12,14 +13,20 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [mounted, setMounted] = React.useState(false);
+    const pathname = usePathname();
     const isOpen = useCartStore((state) => state.isOpen);
     const setIsOpen = useCartStore((state) => state.setIsOpen);
+    const useStandaloneLayout = pathname === "/dashboard/progress";
 
     React.useEffect(() => {
         setMounted(true);
     }, []);
 
     if (!mounted) return null;
+
+    if (useStandaloneLayout) {
+        return <>{children}</>;
+    }
 
     return (
         <div className="flex h-screen bg-[#fffbf5] font-sans text-[#3d3522] overflow-hidden relative">

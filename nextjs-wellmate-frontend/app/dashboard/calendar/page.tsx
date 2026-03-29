@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Search, Bell, ChevronDown, ChevronLeft, ChevronRight,
+    Search, ChevronDown, ChevronLeft, ChevronRight,
     Calendar as CalendarIcon,
     Clock, MapPin, X
 } from 'lucide-react';
 import axios from "axios";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -20,9 +19,21 @@ type EventType = "physical" | "appointment";
 interface CalendarEvent {
     id: string;
     title: string;
+    description?: string | null;
     startTime: string;
     endTime?: string | null;
+    calories?: number | null;
     type: EventType;
+}
+
+interface RawCalendarEvent {
+    id?: string | number;
+    title?: string | null;
+    description?: string | null;
+    startTime?: string;
+    endTime?: string | null;
+    calories?: number | string | null;
+    type?: string | null;
 }
 
 interface CalendarCell {
@@ -32,9 +43,11 @@ interface CalendarCell {
     events: Array<{
         id: string;
         title: string;
+        description?: string | null;
         time: string;
         startTime: string;
         endTime?: string | null;
+        calories?: number | null;
         type: EventType;
     }>;
 }
@@ -94,6 +107,8 @@ export default function Calendar() {
     const [isAddMode, setIsAddMode] = useState(false);
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editCalories, setEditCalories] = useState("");
     const [editStartTime, setEditStartTime] = useState("");
     const [editEndTime, setEditEndTime] = useState("");
     const [newTitle, setNewTitle] = useState("");
@@ -125,11 +140,13 @@ export default function Calendar() {
                 throw new Error("Unexpected calendar response format.");
             }
 
-            return payload.map((item: any) => ({
+            return payload.map((item: RawCalendarEvent) => ({
                 id: String(item.id),
                 title: String(item.title ?? ""),
+                description: item.description ?? null,
                 startTime: String(item.startTime),
                 endTime: item.endTime ?? null,
+                calories: typeof item.calories === "number" ? item.calories : item.calories ? Number(item.calories) : null,
                 type: item.type === "appointment" ? "appointment" : "physical",
             })) as CalendarEvent[];
         }
@@ -214,9 +231,11 @@ export default function Calendar() {
             list.push({
                 id: event.id,
                 title: event.title,
+                description: event.description ?? null,
                 time: formatEventTime(event.startTime),
                 startTime: event.startTime,
                 endTime: event.endTime ?? null,
+                calories: event.calories ?? null,
                 type: event.type,
             });
             eventMap.set(key, list);
@@ -282,6 +301,8 @@ export default function Calendar() {
         setIsAddMode(false);
         setEditingEventId(event.id);
         setEditTitle(event.title);
+        setEditDescription(event.description ?? "");
+        setEditCalories(event.calories !== null && event.calories !== undefined ? String(event.calories) : "");
         setEditStartTime(toDatetimeLocalValue(event.startTime));
         setEditEndTime(event.endTime ? toDatetimeLocalValue(event.endTime) : "");
     };
@@ -289,6 +310,8 @@ export default function Calendar() {
     const handleCancelEdit = () => {
         setEditingEventId(null);
         setEditTitle("");
+        setEditDescription("");
+        setEditCalories("");
         setEditStartTime("");
         setEditEndTime("");
     };
@@ -342,8 +365,10 @@ export default function Calendar() {
             setIsSaving(true);
             await api.patch(`/calendar/${eventId}`, {
                 title: editTitle,
+                description: editDescription.trim() || undefined,
                 startTime: new Date(editStartTime).toISOString(),
                 endTime: editEndTime ? new Date(editEndTime).toISOString() : null,
+                calories: editCalories.trim() ? Number(editCalories) : null,
             });
             await queryClient.invalidateQueries({ queryKey: ["calendar"] });
             handleCancelEdit();
@@ -378,8 +403,6 @@ export default function Calendar() {
         admin: "ผู้ดูแลระบบ",
     };
     const roleLabel = user?.role ? roleLabelMap[user.role] ?? "สมาชิก" : "สมาชิก";
-    const avatarName = encodeURIComponent(displayName);
-
     return (
         <>
             <main className="flex-1 overflow-y-auto px-8 py-10 z-10 custom-scrollbar ml-64">
@@ -776,13 +799,45 @@ export default function Calendar() {
                                         </div>
                                     </div>
 
-                                    {editingEventId === event.id ? (
+                                    {event.type === "physical" && (
+                                        <div className="rounded-xl bg-[#fffdf5] p-3 border border-[#e9ddb9] mb-3 space-y-2">
+                                            <div>
+                                                <div className="text-[10px] text-[#8a7950] font-semibold mb-1">Description</div>
+                                                <div className="text-[10px] text-[#8a7950]">
+                                                    {event.description?.trim() || "No additional description"}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] text-[#8a7950] font-semibold mb-1">Calories</div>
+                                                <div className="text-[10px] text-[#8a7950]">
+                                                    {event.calories !== null && event.calories !== undefined ? `${event.calories} kcal` : "Not specified"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {editingEventId === event.id && event.type === "physical" ? (
                                         <div className="space-y-2">
                                             <input
                                                 value={editTitle}
                                                 onChange={(e) => setEditTitle(e.target.value)}
                                                 className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
                                                 placeholder="Title"
+                                            />
+                                            <textarea
+                                                value={editDescription}
+                                                onChange={(e) => setEditDescription(e.target.value)}
+                                                rows={3}
+                                                className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs resize-none"
+                                                placeholder="Description"
+                                            />
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                value={editCalories}
+                                                onChange={(e) => setEditCalories(e.target.value)}
+                                                className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
+                                                placeholder="Calories (kcal)"
                                             />
                                             <input
                                                 type="datetime-local"
@@ -812,7 +867,7 @@ export default function Calendar() {
                                                 </button>
                                             </div>
                                         </div>
-                                    ) : (
+                                    ) : event.type === "physical" ? (
                                         <div className="flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleStartEdit(event)}
@@ -827,7 +882,7 @@ export default function Calendar() {
                                                 ลบ
                                             </button>
                                         </div>
-                                    )}
+                                    ) : null}
                                 </div>
                             ))
                         )}

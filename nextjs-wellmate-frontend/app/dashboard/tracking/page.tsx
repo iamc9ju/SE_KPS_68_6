@@ -1,5 +1,5 @@
 import OrderTrackingPageContent from "@/components/dashboard/OrderTrackingPageContent";
 
-export default function TrackingPage() {
+export default function DashboardTrackingPage() {
     return <OrderTrackingPageContent />;
 }

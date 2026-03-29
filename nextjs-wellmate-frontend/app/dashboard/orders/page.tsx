@@ -1,22 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { 
     Package, 
     Clock, 
     CheckCircle2, 
     ChevronRight, 
-    Search, 
-    Filter, 
     CreditCard, 
     Wallet, 
-    ExternalLink, 
     AlertCircle, 
     Loader2,
     LayoutGrid,
     ChevronLeft,
     TrendingUp,
-    CircleDollarSign,
     Activity,
     CreditCard as PaymentIcon,
     Calendar,
@@ -27,31 +24,15 @@ import {
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/lib/api';
+import { Order, OrderStatus, canTrackOrder, unwrapOrderList } from '@/lib/orders';
+import { useAuthStore } from '@/store/auth-store';
+import FoodPartnerOrders from '@/components/dashboard/FoodPartnerOrders';
 
-type OrderStatus = 'pending' | 'accepted' | 'shipping' | 'delivered' | 'cancelled';
-type PaymentStatus = 'UNPAID' | 'PAID';
-
-interface OrderItem {
-    orderItemId: string;
-    menuItemId: number;
-    name: string;
-    imageUrl: string;
-    quantity: number;
-    priceAtOrder: number;
-    totalPrice: number;
-}
-
-interface Order {
-    orderId: string;
-    totalAmount: number;
-    status: OrderStatus;
-    paymentStatus: PaymentStatus;
-    deliveryAddress: string;
-    contactPhone: string;
-    qrCodeUrl?: string;
-    createdAt: string;
-    items: OrderItem[];
-}
+type FilterOption = {
+    id: 'all' | OrderStatus | 'unpaid';
+    label: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+};
 
 const statusConfig = {
     pending: { label: 'รอการยืนยัน', color: 'bg-amber-100 text-[#3d3522]', icon: Clock },
@@ -61,19 +42,14 @@ const statusConfig = {
     cancelled: { label: 'ยกเลิกแล้ว', color: 'bg-slate-100 text-[#3d3522]', icon: AlertCircle },
 };
 
-import { useAuthStore } from '@/store/auth-store';
-import FoodPartnerOrders from '@/components/dashboard/FoodPartnerOrders';
-
 export default function OrdersPage() {
     const { user } = useAuthStore();
     const router = useRouter();
-
-    if (user?.role === "food_partner") {
-        return <FoodPartnerOrders />;
-    }
+    const isFoodPartner = user?.role === "food_partner";
 
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | OrderStatus | 'unpaid'>('all');
     const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
     const [qrModalOrder, setQrModalOrder] = useState<Order | null>(null);
@@ -84,8 +60,9 @@ export default function OrdersPage() {
     const ordersPerPage = 6;
 
     useEffect(() => {
+        if (isFoodPartner) return;
         fetchOrders();
-    }, []);
+    }, [isFoodPartner]);
 
     // Polling logic for QR Modal if open
     useEffect(() => {
@@ -99,8 +76,8 @@ export default function OrdersPage() {
                         setQrModalOrder(null);
                         fetchOrders();
                     }
-                } catch (err) {
-                    console.error('Polling error:', err);
+                } catch {
+                    setErrorMessage('ยังตรวจสอบสถานะการชำระเงินไม่ได้ในขณะนี้');
                 }
             }, 3000);
         }
@@ -111,11 +88,11 @@ export default function OrdersPage() {
         try {
             setLoading(true);
             const res = await api.get('/orders');
-            // Backend wraps in { success: true, data: [] }
-            const data = res.data?.data || res.data || [];
-            setOrders(data);
-        } catch (err) {
-            console.error('Failed to fetch orders:', err);
+            setOrders(unwrapOrderList(res.data));
+            setErrorMessage(null);
+        } catch {
+            setOrders([]);
+            setErrorMessage('ยังโหลดรายการสั่งซื้อไม่ได้ กรุณาตรวจสอบว่า backend กำลังรันอยู่ แล้วลองรีเฟรชอีกครั้ง');
         } finally {
             setLoading(false);
         }
@@ -167,6 +144,10 @@ export default function OrdersPage() {
             minute: '2-digit'
         });
     };
+
+    if (isFoodPartner) {
+        return <FoodPartnerOrders />;
+    }
 
     if (loading) {
         return (
@@ -234,10 +215,10 @@ export default function OrdersPage() {
                             { id: 'accepted', label: 'กำลังเตรียม', icon: Clock },
                             { id: 'shipping', label: 'กำลังส่ง', icon: MapPin },
                             { id: 'delivered', label: 'สำเร็จแล้ว', icon: CheckCircle2 },
-                        ].map((btn: any) => (
+                        ].map((btn: FilterOption) => (
                             <button
                                 key={btn.id}
-                                onClick={() => setFilter(btn.id as any)}
+                                onClick={() => setFilter(btn.id)}
                                 className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black whitespace-nowrap transition-all border-2 ${
                                     filter === btn.id 
                                     ? 'bg-[#3d3522] text-white border-[#3d3522] shadow-xl scale-105' 
@@ -250,6 +231,12 @@ export default function OrdersPage() {
                         ))}
                     </div>
                 </header>
+
+                {errorMessage && (
+                    <div className="mb-8 rounded-[28px] border border-[#ffd7cf] bg-[#fff1ed] px-6 py-5 text-sm font-bold text-[#b55239] shadow-sm">
+                        {errorMessage}
+                    </div>
+                )}
 
                 {filteredOrders.length === 0 ? (
                     <div className="bg-white rounded-[48px] p-20 text-center shadow-sm border border-gray-100 mt-8">
@@ -287,6 +274,7 @@ export default function OrdersPage() {
                                         const status = statusConfig[order.status] || statusConfig.pending;
                                         const mainItem = order.items[0];
                                         const othersCount = order.items.length - 1;
+                                        const trackingHref = `/dashboard/tracking?orderId=${encodeURIComponent(order.orderId)}`;
                                         
                                         return (
                                             <React.Fragment key={order.orderId}>
@@ -304,7 +292,13 @@ export default function OrdersPage() {
                                                     <td className="px-8 py-6">
                                                         <div className="flex items-center gap-4">
                                                             <div className="relative">
-                                                                <img src={mainItem.imageUrl} className="w-12 h-12 rounded-2xl object-cover bg-gray-50 shadow-inner" alt="" />
+                                                                {mainItem?.imageUrl ? (
+                                                                    <img src={mainItem.imageUrl} className="w-12 h-12 rounded-2xl object-cover bg-gray-50 shadow-inner" alt={mainItem.name} />
+                                                                ) : (
+                                                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50 shadow-inner">
+                                                                        <Package size={18} className="text-[#3d3522]/30" />
+                                                                    </div>
+                                                                )}
                                                                 {order.paymentStatus === 'UNPAID' && (
                                                                     <div className="absolute -top-1.5 -right-1.5 bg-amber-400 text-white p-1 rounded-lg shadow-lg">
                                                                         <Wallet size={10} />
@@ -312,7 +306,7 @@ export default function OrdersPage() {
                                                                 )}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-black text-[#3d3522] line-clamp-1">{mainItem.name}</p>
+                                                                <p className="text-sm font-black text-[#3d3522] line-clamp-1">{mainItem?.name || 'ไม่มีรายการอาหาร'}</p>
                                                                 {othersCount > 0 && <p className="text-[10px] font-bold text-[#3d3522]/40 mt-0.5">และอีก {othersCount} รายการ</p>}
                                                             </div>
                                                         </div>
@@ -338,6 +332,14 @@ export default function OrdersPage() {
                                                                 >
                                                                     ชำระเงิน <ArrowRight size={14} />
                                                                 </button>
+                                                            ) : canTrackOrder(order) ? (
+                                                                <Link
+                                                                    href={trackingHref}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="bg-[#3d3522] hover:bg-[#2d2618] text-white px-5 py-2.5 rounded-xl font-black transition-all flex items-center gap-2 text-[11px] shadow-lg shadow-[#3d3522]/15 active:scale-95"
+                                                                >
+                                                                    ติดตามออเดอร์ <MapPin size={14} />
+                                                                </Link>
                                                             ) : (
                                                                 <div className="flex items-center gap-2 text-[#3d3522] text-[11px] font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform opacity-40 group-hover:opacity-100">
                                                                     ดูรายละเอียด <ChevronRight size={16} />
@@ -395,6 +397,15 @@ export default function OrdersPage() {
                                                                                         <p className="text-lg font-black text-[#3d3522]">{order.contactPhone}</p>
                                                                                     </div>
                                                                                 </div>
+                                                                                {canTrackOrder(order) && (
+                                                                                    <Link
+                                                                                        href={`/dashboard/tracking?orderId=${encodeURIComponent(order.orderId)}`}
+                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                        className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-[#f4f8df] px-5 py-3 text-sm font-black text-[#3d3522] transition hover:bg-[#e8f1c2]"
+                                                                                    >
+                                                                                        ติดตามออเดอร์นี้ <MapPin size={16} />
+                                                                                    </Link>
+                                                                                )}
                                                                             </div>
                                                                             
                                                                             <div className="px-8 py-6 bg-[#3d3522] rounded-[32px] text-white flex justify-between items-center shadow-2xl shadow-[#3d3522]/20">
@@ -441,7 +452,13 @@ export default function OrdersPage() {
                                         </div>
                                         <div className="flex gap-6 mb-8">
                                             <div className="relative">
-                                                <img src={mainItem.imageUrl} className="w-20 h-20 rounded-3xl object-cover shadow-inner bg-gray-50" alt="" />
+                                                {mainItem?.imageUrl ? (
+                                                    <img src={mainItem.imageUrl} className="w-20 h-20 rounded-3xl object-cover shadow-inner bg-gray-50" alt={mainItem.name} />
+                                                ) : (
+                                                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-50 shadow-inner">
+                                                        <Package size={24} className="text-[#3d3522]/30" />
+                                                    </div>
+                                                )}
                                                 {order.paymentStatus === 'UNPAID' && (
                                                     <div className="absolute -top-2 -right-2 bg-amber-400 text-white p-2 rounded-xl shadow-lg">
                                                         <Wallet size={12} />
@@ -449,9 +466,30 @@ export default function OrdersPage() {
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-xl font-black text-[#3d3522] line-clamp-2 leading-tight mb-2">{mainItem.name}</h3>
+                                                <h3 className="text-xl font-black text-[#3d3522] line-clamp-2 leading-tight mb-2">{mainItem?.name || 'ไม่มีรายการอาหาร'}</h3>
                                                 <p className="text-2xl font-black text-[#3d3522]">฿{order.totalAmount.toLocaleString()}</p>
                                             </div>
+                                        </div>
+                                        <div className="mb-6 flex items-center justify-end">
+                                            {order.paymentStatus === 'UNPAID' ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setQrModalOrder(order);
+                                                    }}
+                                                    className="bg-amber-400 hover:bg-amber-500 text-[#3d3522] px-5 py-2.5 rounded-xl font-black transition-all flex items-center gap-2 text-[11px] shadow-lg shadow-amber-400/20 active:scale-95"
+                                                >
+                                                    ชำระเงิน <ArrowRight size={14} />
+                                                </button>
+                                            ) : canTrackOrder(order) ? (
+                                                <Link
+                                                    href={`/dashboard/tracking?orderId=${encodeURIComponent(order.orderId)}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="bg-[#3d3522] hover:bg-[#2d2618] text-white px-5 py-2.5 rounded-xl font-black transition-all flex items-center gap-2 text-[11px] shadow-lg shadow-[#3d3522]/15 active:scale-95"
+                                                >
+                                                    ติดตามออเดอร์ <MapPin size={14} />
+                                                </Link>
+                                            ) : null}
                                         </div>
                                         <div className="flex items-center justify-between pt-6 border-t border-gray-50">
                                             <div className="flex items-center gap-2 text-[#3d3522]/40">

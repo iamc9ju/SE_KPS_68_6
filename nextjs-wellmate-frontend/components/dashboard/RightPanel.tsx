@@ -2,21 +2,56 @@
 
 import React, { useMemo, useState } from "react";
 import {
-    ChevronRight,
-    User,
     Bell,
+    CalendarDays,
     ChevronLeft,
-    Flame,
-    Utensils,
-    Droplets,
-    ChevronDown,
-    ChevronUp,
+    ChevronRight,
     Clock,
-    Activity,
+    User,
+    Utensils,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 
+type Appointment = {
+    appointmentId: string;
+    startTime: string;
+    status: "pending" | "confirmed" | "completed" | "cancelled";
+    nutritionist?: {
+        firstName: string;
+        lastName: string;
+    };
+};
+
+type NotificationItem = {
+    notificationId: string;
+    title: string;
+    body: string;
+    isRead: boolean;
+    createdAt: string;
+};
+
+type MenuItem = {
+    menuItemId: number;
+    name: string;
+    imageUrl?: string | null;
+    category?: string | null;
+    caloriesKcal?: number | null;
+    foodPartner?: {
+        partnerName: string;
+    };
+};
+
+type RightPanelProps = {
+    loading?: boolean;
+    notifications: NotificationItem[];
+    unreadNotifications: number;
+    appointments: Appointment[];
+    recommendedMenus: MenuItem[];
+};
+
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const FALLBACK_FOOD_IMAGE =
+    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400";
 
 const addDays = (date: Date, days: number) => {
     const next = new Date(date);
@@ -38,19 +73,24 @@ const isSameDay = (a: Date, b: Date) =>
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate();
 
-export default function RightPanel() {
+export default function RightPanel({
+    loading = false,
+    notifications,
+    unreadNotifications,
+    appointments,
+    recommendedMenus,
+}: RightPanelProps) {
     const { user } = useAuthStore();
-    const [expandedMeal, setExpandedMeal] = useState<string | null>("lunch");
     const [selectedDate, setSelectedDate] = useState(() => new Date());
 
     const weekStart = useMemo(() => startOfWeekMonday(selectedDate), [selectedDate]);
     const days = useMemo(
         () =>
-            Array.from({ length: 7 }, (_, i) => {
-                const date = addDays(weekStart, i);
+            Array.from({ length: 7 }, (_, index) => {
+                const date = addDays(weekStart, index);
                 return {
                     key: date.toISOString(),
-                    day: WEEKDAYS[i],
+                    day: WEEKDAYS[index],
                     date,
                     isActive: isSameDay(date, selectedDate),
                 };
@@ -58,76 +98,39 @@ export default function RightPanel() {
         [selectedDate, weekStart],
     );
 
+    const upcomingAppointments = appointments
+        .filter((appointment) => appointment.status === "pending" || appointment.status === "confirmed")
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+        .slice(0, 3);
+
+    const recentNotifications = notifications.slice(0, 3);
     const monthLabel = selectedDate.toLocaleDateString("en-US", { month: "long" });
     const yearLabel = selectedDate.getFullYear();
-    const profileName = user ? `${user.firstName} ${user.lastName}` : "Brook Thana";
-    const profileRole = user?.role ?? "patient";
-
-    const meals = [
-        {
-            id: "breakfast",
-            type: "Breakfast",
-            calories: 380,
-            title: "Protein pancakes with fresh berries",
-            macros: { c: 42, p: 22, f: 10 },
-            img: "https://images.unsplash.com/photo-1528207776546-322186407074?auto=format&fit=crop&q=80&w=300",
-            color: "bg-[#C6E065]",
-        },
-        {
-            id: "lunch",
-            type: "Lunch",
-            calories: 420,
-            title: "Grilled chicken salad with avocado",
-            macros: { c: 15, p: 40, f: 22 },
-            img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=300",
-            color: "bg-[#D8F36C]",
-        },
-        {
-            id: "snack",
-            type: "Snack",
-            calories: 420,
-            title: "Greek yogurt with granola and berries",
-            macros: { c: 28, p: 15, f: 8 },
-            img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300",
-            color: "bg-[#ffd980]",
-        },
-        {
-            id: "dinner",
-            type: "Dinner",
-            calories: 450,
-            title: "Grilled salmon with steamed asparagus",
-            macros: { c: 10, p: 35, f: 28 },
-            img: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=300",
-            color: "bg-[#fb923c]",
-        },
-    ];
+    const profileName = user ? `${user.firstName} ${user.lastName}`.trim() : "Member";
 
     return (
         <aside className="w-80 bg-white h-screen fixed right-0 top-0 border-l border-gray-100 p-6 overflow-y-auto hidden xl:block custom-scrollbar font-sans">
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-400 rounded-2xl flex items-center justify-center text-white shadow-sm overflow-hidden">
-                        <User className="w-7 h-7" />
+                    <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm">
+                        {user?.profileImageUrl ? (
+                            <img src={user.profileImageUrl} alt={profileName} className="w-full h-full object-cover" />
+                        ) : (
+                            <User className="w-6 h-6 text-gray-500" />
+                        )}
                     </div>
                     <div>
-                        <h4 className="text-base font-black text-gray-900 leading-tight">
-                            {profileName}
-                        </h4>
-                        <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">
-                            {profileRole === "patient"
-                                ? "Member"
-                                : profileRole === "nutritionist"
-                                  ? "Nutritionist"
-                                  : profileRole === "food_partner"
-                                    ? "Food Partner"
-                                    : profileRole === "admin"
-                                      ? "Administrator"
-                                      : "Member"}
-                        </p>
+                        <h4 className="text-base font-black text-gray-900 leading-tight">{profileName}</h4>
+                        <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Member</p>
                     </div>
                 </div>
-                <div className="w-10 h-10 bg-[#fff5e6] rounded-xl flex items-center justify-center text-[#fb923c] cursor-pointer hover:scale-105 transition-transform">
+                <div className="relative w-10 h-10 bg-[#fff5e6] rounded-xl flex items-center justify-center text-[#fb923c]">
                     <Bell className="w-5 h-5 fill-[#fb923c]/20" />
+                    {unreadNotifications > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-5 h-5 rounded-full bg-red-500 px-1 text-[10px] font-black text-white flex items-center justify-center">
+                            {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -173,129 +176,128 @@ export default function RightPanel() {
                 </div>
             </div>
 
-            <div className="space-y-3 mb-8">
-                {meals.map((meal) => {
-                    const isExpanded = expandedMeal === meal.id;
-                    return (
-                        <div
-                            key={meal.id}
-                            className={`border rounded-3xl overflow-hidden transition-all duration-300 ${
-                                isExpanded
-                                    ? "bg-white shadow-[0_12px_24px_rgba(0,0,0,0.06)] border-[#C6E065]"
-                                    : "bg-white border-gray-200"
-                            }`}
-                        >
-                            <button
-                                onClick={() => setExpandedMeal(isExpanded ? null : meal.id)}
-                                className="w-full px-4 py-4 flex items-center justify-between group text-left"
-                            >
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                    <div className={`w-2 h-5 rounded-full ${meal.color}`}></div>
-                                    <span className="text-[11px] font-black text-gray-800 bg-gray-100 px-3 py-1.5 rounded-xl">
-                                        {meal.type}
-                                    </span>
-                                    <span className="text-[11px] font-bold text-gray-400 flex items-center gap-1">
-                                        <Flame className="w-3.5 h-3.5 text-orange-400" /> {meal.calories} kcal
-                                    </span>
+            <section className="mb-8">
+                <h3 className="text-lg font-black text-gray-900 mb-4">นัดหมายถัดไป</h3>
+                <div className="space-y-3">
+                    {loading ? (
+                        <div className="rounded-3xl border border-gray-100 bg-gray-50 px-4 py-5 text-sm text-gray-400">
+                            กำลังโหลดข้อมูล...
+                        </div>
+                    ) : upcomingAppointments.length === 0 ? (
+                        <div className="rounded-3xl border border-gray-100 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                            ยังไม่มีนัดหมายที่กำลังจะมาถึง
+                        </div>
+                    ) : (
+                        upcomingAppointments.map((appointment) => (
+                            <div key={appointment.appointmentId} className="rounded-3xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-[11px] font-black text-[#85B22E] uppercase tracking-widest">
+                                            {appointment.status}
+                                        </p>
+                                        <h4 className="text-sm font-black text-gray-900 mt-1">
+                                            {appointment.nutritionist
+                                                ? `${appointment.nutritionist.firstName} ${appointment.nutritionist.lastName}`
+                                                : "นักโภชนาการ"}
+                                        </h4>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            {new Date(appointment.startTime).toLocaleString("th-TH", {
+                                                day: "numeric",
+                                                month: "short",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </p>
+                                    </div>
+                                    <CalendarDays className="w-5 h-5 text-gray-300" />
                                 </div>
-                                {isExpanded ? (
-                                    <ChevronUp className="w-4 h-4 text-gray-400" />
-                                ) : (
-                                    <ChevronDown className="w-4 h-4 text-gray-300 group-hover:text-gray-400" />
-                                )}
-                            </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
 
-                            {isExpanded && (
-                                <div className="px-4 pb-5 animate-fadeIn">
-                                    <div className="flex gap-4 items-start">
-                                        <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
-                                            <img src={meal.img} alt={meal.title} className="w-full h-full object-cover" />
+            <section className="mb-8">
+                <h3 className="text-lg font-black text-gray-900 mb-4">เมนูจากฐานข้อมูล</h3>
+                <div className="space-y-3">
+                    {loading ? (
+                        <div className="rounded-3xl border border-gray-100 bg-gray-50 px-4 py-5 text-sm text-gray-400">
+                            กำลังโหลดเมนู...
+                        </div>
+                    ) : recommendedMenus.length === 0 ? (
+                        <div className="rounded-3xl border border-gray-100 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                            ยังไม่มีเมนูให้แสดง
+                        </div>
+                    ) : (
+                        recommendedMenus.map((menu) => (
+                            <div key={menu.menuItemId} className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
+                                <div className="flex gap-3">
+                                    <img
+                                        src={menu.imageUrl || FALLBACK_FOOD_IMAGE}
+                                        alt={menu.name}
+                                        className="w-16 h-16 rounded-2xl object-cover border border-gray-100"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-[10px] font-black text-gray-500 bg-gray-100 px-2 py-1 rounded-xl">
+                                                {menu.category || "เมนูอาหาร"}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-orange-500">
+                                                {menu.caloriesKcal ? `${menu.caloriesKcal} kcal` : "ไม่ระบุ kcal"}
+                                            </span>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h5 className="text-[13px] font-black text-gray-900 leading-snug mb-2 line-clamp-2">
-                                                {meal.title}
-                                            </h5>
-                                            <div className="h-[1px] bg-gray-100 w-full mb-3"></div>
-                                            <div className="flex flex-wrap justify-between items-center text-[10px] font-black text-gray-400/80 gap-y-1">
-                                                <div className="flex items-center gap-1">
-                                                    <Utensils className="w-3 h-3 text-[#d0d0d0]" /> <span>C: {meal.macros.c} g</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Activity className="w-3 h-3 text-[#d0d0d0]" /> <span>P: {meal.macros.p} g</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Droplets className="w-3 h-3 text-[#d0d0d0]" /> <span>F: {meal.macros.f} g</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <h4 className="text-[13px] font-black text-gray-900 mt-2 line-clamp-2">{menu.name}</h4>
+                                        <p className="text-[11px] text-[#85B22E] font-bold mt-1">
+                                            {menu.foodPartner?.partnerName || "ร้านค้าในระบบ"}
+                                        </p>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div>
-                <h3 className="text-lg font-black text-gray-900 mb-6 underline decoration-[#C6E065] decoration-4 underline-offset-4">Recent Activities</h3>
-                <div className="space-y-0 relative">
-                    <div className="absolute left-6 top-2 bottom-8 w-[1px] bg-gray-100"></div>
-
-                    <TimelineItem
-                        time="18:00"
-                        title="Notification"
-                        desc="Great job! You have completed 75% of your cardio goal."
-                        icon={<Bell className="w-4 h-4" />}
-                        iconBg="bg-[#C6E065]"
-                    />
-
-                    <TimelineItem
-                        time="16:30"
-                        title="Lunch logged successfully"
-                        desc="Added 500 kcal. You reached 60% of your daily target."
-                        icon={<Clock className="w-4 h-4" />}
-                        iconBg="bg-[#ffd980]"
-                    />
-
-                    <TimelineItem
-                        time="16:30"
-                        title="Nutrition summary updated"
-                        desc="Total intake 1,200 kcal. Remaining 300 kcal to hit today's target."
-                        icon={<Activity className="w-4 h-4" />}
-                        iconBg="bg-[#ffd980]"
-                        isLast
-                    />
+                            </div>
+                        ))
+                    )}
                 </div>
-            </div>
-        </aside>
-    );
-}
+            </section>
 
-function TimelineItem({
-    time,
-    title,
-    desc,
-    icon,
-    iconBg,
-    isLast,
-}: {
-    time: string;
-    title: string;
-    desc: string;
-    icon: React.ReactNode;
-    iconBg: string;
-    isLast?: boolean;
-}) {
-    return (
-        <div className={`relative pl-14 pb-8 ${isLast ? "" : ""}`}>
-            <div className={`absolute left-3 w-7 h-7 rounded-full flex items-center justify-center ${iconBg} shadow-sm z-10 border-2 border-white`}>
-                <div className="text-gray-900 scale-75">{icon}</div>
-            </div>
-            <div>
-                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{time}</span>
-                <h5 className="text-[13px] font-black text-gray-800 mt-1">{title}</h5>
-                <p className="text-[11px] text-gray-400 font-bold leading-relaxed mt-1 opacity-80">{desc}</p>
-            </div>
-        </div>
+            <section>
+                <h3 className="text-lg font-black text-gray-900 mb-4">การแจ้งเตือนล่าสุด</h3>
+                <div className="space-y-3">
+                    {loading ? (
+                        <div className="rounded-3xl border border-gray-100 bg-gray-50 px-4 py-5 text-sm text-gray-400">
+                            กำลังโหลดการแจ้งเตือน...
+                        </div>
+                    ) : recentNotifications.length === 0 ? (
+                        <div className="rounded-3xl border border-gray-100 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                            ยังไม่มีการแจ้งเตือนในระบบ
+                        </div>
+                    ) : (
+                        recentNotifications.map((notification) => (
+                            <div key={notification.notificationId} className="rounded-3xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+                                <div className="flex items-start gap-3">
+                                    <div className={`mt-1 w-8 h-8 rounded-xl flex items-center justify-center ${notification.isRead ? "bg-gray-100 text-gray-400" : "bg-[#f0f4d8] text-[#85B22E]"}`}>
+                                        {notification.title.toLowerCase().includes("menu") ? (
+                                            <Utensils className="w-4 h-4" />
+                                        ) : (
+                                            <Clock className="w-4 h-4" />
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="text-[13px] font-black text-gray-900">{notification.title}</h4>
+                                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">{notification.body}</p>
+                                        <p className="text-[10px] text-gray-300 font-bold mt-2">
+                                            {new Date(notification.createdAt).toLocaleString("th-TH", {
+                                                day: "numeric",
+                                                month: "short",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
+        </aside>
     );
 }

@@ -20,7 +20,21 @@ type OrderWithItems = Prisma.OrderGetPayload<{
     };
     orderItems: {
       include: {
-        menuItem: true;
+        menuItem: {
+          include: {
+            foodPartner: {
+              select: {
+                partnerName: true;
+                address: true;
+                addressLine1: true;
+                district: true;
+                province: true;
+                latitude: true;
+                longitude: true;
+              };
+            };
+          };
+        };
       };
     };
   };
@@ -105,7 +119,21 @@ export class OrdersService {
           patient: { select: { firstName: true, lastName: true } },
           orderItems: {
             include: {
-              menuItem: true,
+              menuItem: {
+                include: {
+                  foodPartner: {
+                    select: {
+                      partnerName: true,
+                      address: true,
+                      addressLine1: true,
+                      district: true,
+                      province: true,
+                      latitude: true,
+                      longitude: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -138,7 +166,25 @@ export class OrdersService {
         data: { chargeId, qrCodeUrl },
         include: {
           patient: { select: { firstName: true, lastName: true } },
-          orderItems: { include: { menuItem: true } },
+          orderItems: {
+            include: {
+              menuItem: {
+                include: {
+                  foodPartner: {
+                    select: {
+                      partnerName: true,
+                      address: true,
+                      addressLine1: true,
+                      district: true,
+                      province: true,
+                      latitude: true,
+                      longitude: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
 
@@ -183,7 +229,21 @@ export class OrdersService {
         patient: { select: { firstName: true, lastName: true } },
         orderItems: {
           include: {
-            menuItem: true,
+            menuItem: {
+              include: {
+                foodPartner: {
+                  select: {
+                    partnerName: true,
+                    address: true,
+                    addressLine1: true,
+                    district: true,
+                    province: true,
+                    latitude: true,
+                    longitude: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -200,7 +260,21 @@ export class OrdersService {
         patient: { select: { firstName: true, lastName: true } },
         orderItems: {
           include: {
-            menuItem: true,
+            menuItem: {
+              include: {
+                foodPartner: {
+                  select: {
+                    partnerName: true,
+                    address: true,
+                    addressLine1: true,
+                    district: true,
+                    province: true,
+                    latitude: true,
+                    longitude: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -246,7 +320,21 @@ export class OrdersService {
         patient: { select: { firstName: true, lastName: true } },
         orderItems: {
           include: {
-            menuItem: true,
+            menuItem: {
+              include: {
+                foodPartner: {
+                  select: {
+                    partnerName: true,
+                    address: true,
+                    addressLine1: true,
+                    district: true,
+                    province: true,
+                    latitude: true,
+                    longitude: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -309,6 +397,7 @@ export class OrdersService {
             (i) => i.menuItem.foodPartnerId === partnerId,
           )
         : order.orderItems;
+    const primaryPartner = items[0]?.menuItem?.foodPartner;
     const subtotal = items.reduce(
       (sum, i) => sum + Number(i.totalPrice || Number(i.unitPrice) * i.quantity),
       0,
@@ -324,9 +413,30 @@ export class OrdersService {
       status: order.status,
       paymentStatus: order.paymentStatus,
       deliveryAddress: order.deliveryAddress,
+      deliveryLatitude: order.deliveryLatitude
+        ? Number(order.deliveryLatitude)
+        : undefined,
+      deliveryLongitude: order.deliveryLongitude
+        ? Number(order.deliveryLongitude)
+        : undefined,
       contactPhone: order.contactPhone,
       qrCodeUrl: order.qrCodeUrl,
       createdAt: order.createdAt,
+      partner: primaryPartner
+        ? {
+            partnerName: primaryPartner.partnerName,
+            address: primaryPartner.address || undefined,
+            addressLine1: primaryPartner.addressLine1 || undefined,
+            district: primaryPartner.district || undefined,
+            province: primaryPartner.province || undefined,
+            latitude: primaryPartner.latitude
+              ? Number(primaryPartner.latitude)
+              : undefined,
+            longitude: primaryPartner.longitude
+              ? Number(primaryPartner.longitude)
+              : undefined,
+          }
+        : undefined,
       items: items.map((i) => ({
         orderItemId: i.orderItemId,
         menuItemId: i.menuItemId,

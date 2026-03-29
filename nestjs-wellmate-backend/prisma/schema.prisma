@@ -175,6 +175,7 @@ model Patient {
   chronicDiseases   String[]       @map("chronic_diseases")
   goal              String?        @db.VarChar(100)
   goalDetail        String?        @map("goal_detail") @db.Text
+  targetWeightKg    Decimal?       @map("target_weight_kg") @db.Decimal(5, 2)
   activityLevel     ActivityLevel? @map("activity_level")
   isProfileComplete Boolean        @default(false) @map("is_profile_complete")
   deletedAt         DateTime?      @map("deleted_at")
@@ -188,6 +189,8 @@ model Patient {
   mealPlans          MealPlan[]
   dietaryPlans       DietaryPlan[]
   physicalActivities PhysicalActivity[]
+  bodyMeasurementLogs BodyMeasurementLog[]
+  progressPhotos     ProgressPhoto[]
 
   @@map("patients")
 }
@@ -747,6 +750,47 @@ model PhysicalActivity {
   @@index([patientId])
   @@index([startTime])
   @@map("physical_activities")
+}
+
+model BodyMeasurementLog {
+  bodyMeasurementLogId String    @id @default(uuid()) @map("body_measurement_log_id") @db.Uuid
+  patientId            String    @map("patient_id") @db.Uuid
+  patient              Patient   @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+  weightKg             Decimal?  @map("weight_kg") @db.Decimal(5, 2)
+  bodyFatPercent       Decimal?  @map("body_fat_percent") @db.Decimal(5, 2)
+  chestCm              Decimal?  @map("chest_cm") @db.Decimal(5, 2)
+  armCm                Decimal?  @map("arm_cm") @db.Decimal(5, 2)
+  waistCm              Decimal?  @map("waist_cm") @db.Decimal(5, 2)
+  hipsCm               Decimal?  @map("hips_cm") @db.Decimal(5, 2)
+  thighCm              Decimal?  @map("thigh_cm") @db.Decimal(5, 2)
+  caloriesKcal         Int?      @map("calories_kcal")
+  waterMl              Int?      @map("water_ml")
+  stepsCount           Int?      @map("steps_count")
+  sleepHours           Decimal?  @map("sleep_hours") @db.Decimal(4, 2)
+  note                 String?   @db.Text
+  recordedAt           DateTime  @default(now()) @map("recorded_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  progressPhotos ProgressPhoto[]
+
+  @@index([patientId, recordedAt])
+  @@map("body_measurement_logs")
+}
+
+model ProgressPhoto {
+  progressPhotoId      String              @id @default(uuid()) @map("progress_photo_id") @db.Uuid
+  patientId            String              @map("patient_id") @db.Uuid
+  bodyMeasurementLogId String?             @map("body_measurement_log_id") @db.Uuid
+  patient              Patient             @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+  bodyMeasurementLog   BodyMeasurementLog? @relation(fields: [bodyMeasurementLogId], references: [bodyMeasurementLogId], onDelete: SetNull)
+  imageUrl             String              @map("image_url") @db.VarChar(500)
+  caption              String?             @db.Text
+  takenAt              DateTime?           @map("taken_at")
+  createdAt            DateTime            @default(now()) @map("created_at")
+
+  @@index([patientId, createdAt])
+  @@index([bodyMeasurementLogId])
+  @@map("progress_photos")
 }
 
 model DeviceToken {

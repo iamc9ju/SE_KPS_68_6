@@ -8,6 +8,8 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "prisma:generate": "prisma generate",
+    "postinstall": "prisma generate",
     "start": "nest start",
     "prestart:dev": "node -e \"const { execSync } = require('child_process'); const port = 4000; try { if (process.platform === 'win32') { const out = execSync('netstat -ano').toString(); const lines = out.split(/\\r?\\n/).filter(l => l.includes(':' + port + ' ') && l.toUpperCase().includes('LISTENING')); const pids = [...new Set(lines.map(l => l.trim().split(/\\s+/).pop()))]; pids.forEach(pid => { try { execSync('taskkill /F /PID ' + pid); } catch (_) {} }); } else { try { execSync('lsof -ti :' + port + ' | xargs kill -9'); } catch (_) {} } } catch (_) {}\"",
     "start:dev": "nest start --watch",
@@ -56,7 +58,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
-    "streamifier": "^0.1.1"
+    "streamifier": "^0.1.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

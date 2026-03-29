@@ -60,7 +60,7 @@ export default function Navbar() {
                                 เมนูเพื่อสุขภาพ
                                 <ChevronDown className="w-4 h-4 text-gray-600" strokeWidth={2.5} />
                             </button>
-                            <Link href="/progress" className="hover:text-black transition-colors">
+                            <Link href="/dashboard/progress" className="hover:text-black transition-colors">
                                 ความคืบหน้า
                             </Link>
                         </>
