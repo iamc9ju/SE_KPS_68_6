@@ -161,10 +161,16 @@ export class AuthService {
       },
     });
 
-    if (
-      !user ||
-      !(await this.passwordService.compare(pass, user.passwordHash))
-    ) {
+    if (!user) {
+      this.logger.warn(`Failed login attempt: ${email}`);
+      throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    }
+
+    if (user.deletedAt) {
+      throw new UnauthorizedException('บัญชีของคุณถูกระงับ');
+    }
+
+    if (!(await this.passwordService.compare(pass, user.passwordHash))) {
       this.logger.warn(`Failed login attempt: ${email}`);
       throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
     }

@@ -67,11 +67,6 @@ export default function Sidebar() {
                 { icon: Users, label: "จัดการผู้ใช้", href: "/dashboard/patient" },
                 { icon: Store, label: "จัดการร้านค้าพาร์ทเนอร์", href: "/dashboard/partners" },
                 { icon: UserCheck, label: "อนุมัติโปรไฟล์นักโภชนาการ", href: "/dashboard/nutritionists" },
-                { icon: ShoppingBag, label: "ติดตามออเดอร์", href: "/dashboard/admindashboard/orders" },
-                { icon: CalendarCheck, label: "ติดตามการจอง", href: "/dashboard/admindashboard/bookings" },
-                { icon: Banknote, label: "จ่ายเงินให้ร้านค้า", href: "/dashboard/admindashboard/payments" },
-                { icon: RefreshCcw, label: "จัดการการคืนเงิน", href: "/dashboard/admindashboard/refunds" },
-                { icon: BarChart2, label: "ข้อมูลเชิงวิเคราะห์", href: "/dashboard/admindashboard/analytics" },
                 { icon: UserCog, label: "ตั้งค่า", href: "/dashboard/setting" },
             ]
             : menuItems.filter((item) => {

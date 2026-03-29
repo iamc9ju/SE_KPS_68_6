@@ -33,7 +33,7 @@ export class AdminService {
     };
   }
 
-    private mapPartner(p: any) {
+  private mapPartner(p: any) {
     return {
       id: p.foodPartnerId,
       name: p.partnerName,
@@ -104,6 +104,9 @@ async getDashboard() {
 
   async getPartners() {
     const partners = await (this.prisma as any).foodPartner.findMany({
+      where: {
+        user: { deletedAt: null },
+      },
       include: {
         _count: { select: { menuItems: true, partnerOrders: true } },
       },
@@ -113,6 +116,7 @@ async getDashboard() {
 
   async getUsers() {
     const users = await (this.prisma as any).user.findMany({
+      where: { deletedAt: null },
       include: {
         patient: {
           include: { _count: { select: { appointments: true } } },
@@ -166,8 +170,16 @@ async getDashboard() {
     const partner = await (this.prisma as any).foodPartner.update({
       where: { foodPartnerId },
       data: { isActive: false },
-      include: { _count: { select: { menuItems: true, partnerOrders: true } } }
+      include: { user: { select: { userId: true } } },
     });
+
+    if (partner?.user?.userId) {
+      await (this.prisma as any).user.update({
+        where: { userId: partner.user.userId },
+        data: { deletedAt: new Date() },
+      });
+    }
+
     return this.mapPartner(partner);
   }
 

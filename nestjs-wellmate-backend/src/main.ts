@@ -29,9 +29,24 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor(reflector));
 
   const configService = app.get(ConfigService);
-  const frontendUrl =
+  const rawFrontendUrl =
     configService.get<string>('FRONTEND_URL') ||
     'https://nextjs-wellmate-frontend-git-main-ittipol-botmoons-projects.vercel.app/';
+  const frontendOrigin = rawFrontendUrl.replace(/\/$/, '');
+  const allowedOrigins = [
+    ...new Set(
+      (
+        configService.get<string>('ALLOWED_ORIGINS') ||
+        frontendOrigin ||
+        ''
+      )
+        .split(',')
+        .map((origin) => origin.trim().replace(/\/$/, ''))
+        .filter(Boolean),
+    ),
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
 
   app.enableCors({
     origin: (origin, callback) => {

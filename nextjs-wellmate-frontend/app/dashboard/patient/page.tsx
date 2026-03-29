@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { adminService } from "@/services/admin";
+import { useAuthStore } from "@/store/auth-store";
+import { useRouter } from "next/navigation";
 import {
     Search, UserX, Shield, Filter, Mail, Phone,
     CalendarDays, Activity, ChevronDown, X, Eye, Trash2
@@ -35,6 +37,9 @@ const formatUser = (u: any): UserItem => ({
 });
 
 export default function UsersPage() {
+    const router = useRouter();
+    const user = useAuthStore((state) => state.user);
+    const [mounted, setMounted] = useState(false);
     const [users, setUsers] = useState<UserItem[]>([]);
     const [search, setSearch] = useState("");
     const [filterRole, setFilterRole] = useState("all");
@@ -44,6 +49,22 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+        if (!user) {
+            router.replace("/login");
+            return;
+        }
+        if (user.role !== "admin") {
+            router.replace("/dashboard");
+        }
+    }, [mounted, user, router]);
+
+    useEffect(() => {
+        if (!mounted || !user || user.role !== "admin") return;
         setLoading(true);
         setError(null);
         adminService.getUsers().then(data => {
@@ -53,7 +74,15 @@ export default function UsersPage() {
             console.error("Failed to fetch users", err);
             setError("Failed to fetch users");
         }).finally(() => setLoading(false));
-    }, []);
+    }, [mounted, user]);
+
+    if (!mounted || !user || user.role !== "admin") {
+        return (
+            <div className="flex h-screen items-center justify-center bg-[#F5F1E8]">
+                <div className="animate-spin w-8 h-8 border-4 border-[#ffd980] border-t-transparent rounded-full"></div>
+            </div>
+        );
+    }
 
     const filtered = users.filter(u => {
         const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()) || u.phone.includes(search);
