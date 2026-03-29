@@ -179,7 +179,7 @@ export default function AdminDashboard() {
                 ].map((stat, i) => (
                     <button
                         key={i}
-                        onClick={() => setShowStatModal(stat.key)}
+                        onClick={() => setShowStatModal(stat.key as any)}
                         className="bg-white rounded-3xl p-6 shadow-sm border border-gray-50 hover:shadow-md hover:scale-[1.02] transition-all text-left w-full"
                     >
                         <div className={`w-12 h-12 ${stat.color} rounded-2xl flex items-center justify-center mb-4`}>
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
                 ].map((item, i) => (
                     <button
                         key={i}
-                        onClick={() => setShowStatModal("การนัดหมายวันนี้")}
+                        onClick={() => setShowStatModal("appointments")}
                         className={`${item.bg} rounded-2xl p-4 hover:scale-[1.03] transition-transform`}
                     >
                         <p className={`text-2xl font-black ${item.color}`}>{item.value}</p>
