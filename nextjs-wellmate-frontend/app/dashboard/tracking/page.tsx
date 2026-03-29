@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import OrderTrackingPageContent from "@/components/dashboard/OrderTrackingPageContent";
 
 export default function DashboardTrackingPage() {
-    return <OrderTrackingPageContent />;
+    return (
+        <Suspense fallback={<div>Loading tracking data...</div>}>
+            <OrderTrackingPageContent />
+        </Suspense>
+    );
 }

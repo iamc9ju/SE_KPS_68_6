@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart, X } from "lucide-react";
@@ -50,7 +50,7 @@ const toSafeNumber = (value: number | string | null | undefined): number => {
     return 0;
 };
 
-export default function RestaurantMenuPage() {
+function RestaurantMenuContent() {
     const searchParams = useSearchParams();
     const partnerIdParam = searchParams.get("partnerId");
     const partnerId = partnerIdParam ? Number(partnerIdParam) : null;
@@ -351,5 +351,13 @@ export default function RestaurantMenuPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function RestaurantMenuPage() {
+    return (
+        <Suspense fallback={<div className="p-10 ml-64">Loading restaurant menu...</div>}>
+            <RestaurantMenuContent />
+        </Suspense>
     );
 }
