@@ -22,5 +22,5 @@ export default function HealthProfileGuard({ children }: { children: React.React
         }
     }, [user, pathname, router]);
 
-    return <>{children}</>;
+    return children;
 }

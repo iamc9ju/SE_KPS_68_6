@@ -26,7 +26,7 @@ export default function DashboardLayout({
     if (!mounted) return null;
 
     if (useStandaloneLayout) {
-        return <>{children}</>;
+        return children;
     }
 
     return (

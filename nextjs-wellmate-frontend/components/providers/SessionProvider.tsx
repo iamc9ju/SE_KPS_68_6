@@ -29,5 +29,5 @@ export default function SessionProvider({ children }: { children: React.ReactNod
   }, [setUser]);
 
 
-  return <>{children}</>;
+  return children;
 }
