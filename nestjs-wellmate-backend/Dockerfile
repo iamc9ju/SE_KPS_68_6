@@ -3,6 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 # Copy package files และ install ก่อน (เพื่อใช้ cache)
 COPY package*.json ./
+COPY prisma ./prisma/
 RUN npm install
 # Copy source code ที่เหลือ
 COPY . .
