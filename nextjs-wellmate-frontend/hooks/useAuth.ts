@@ -38,6 +38,7 @@ export const useAuth = () => {
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
   const routeByRole = (role: AuthUser["role"] | undefined) => {
+    if (role === "admin") return "/dashboard/admindashboard";
     if (role === "food_partner") return "/dashboard";
     if (role === "patient") return "/healthdata";
     return "/dashboard";

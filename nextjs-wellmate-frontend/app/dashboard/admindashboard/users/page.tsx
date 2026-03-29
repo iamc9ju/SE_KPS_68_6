@@ -3,43 +3,55 @@ import React, { useState, useEffect } from "react";
 import { adminService } from "@/services/admin";
 import {
     Search, UserX, Shield, Filter, Mail, Phone,
-    CalendarDays, Activity, ChevronDown, X, Eye, Edit2, Trash2
+    CalendarDays, Activity, ChevronDown, X, Eye, Trash2
 } from "lucide-react";
 
-const usersData = [
-    { id: "U001", name: "คุณสมชาย สมดี", email: "somchai@email.com", phone: "081-234-5678", role: "patient", status: "active", joined: "10 ม.ค. 2569", lastSeen: "วันนี้ 09:12", bmi: 24.5, appointments: 8, img: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=120&h=120&fit=crop" },
-    { id: "U002", name: "คุณธนัญรดา วราพิพัฒน์พล", email: "somying@email.com", phone: "082-345-6789", role: "patient", status: "active", joined: "12 ม.ค. 2569", lastSeen: "เมื่อวาน", bmi: 21.3, appointments: 5, img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop" },
-    { id: "U003", name: "ดร. สมศรี แพทย์ดี", email: "nutri.a@email.com", phone: "083-456-7890", role: "nutritionist", status: "active", joined: "5 ก.พ. 2569", lastSeen: "วันนี้ 11:00", bmi: null, appointments: 42, img: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=120&h=120&fit=crop" },
-    { id: "U004", name: "คุณมานีมีทอง (ซันไชน์)", email: "sunshine@food.com", phone: "084-567-8901", role: "food_partner", status: "suspended", joined: "20 ก.พ. 2569", lastSeen: "3 วันที่แล้ว", bmi: null, appointments: 0, img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120&h=120&fit=crop" },
-    { id: "U005", name: "คุณวิชัย มั่นคง", email: "wichai@email.com", phone: "085-678-9012", role: "patient", status: "active", joined: "1 มี.ค. 2569", lastSeen: "วันนี้ 08:30", bmi: 27.8, appointments: 3, img: "https://images.unsplash.com/photo-1528892952291-009c663ce843?w=120&h=120&fit=crop" },
-    { id: "U006", name: "ดร. วิภา สุขสันต์", email: "nutri.b@email.com", phone: "086-789-0123", role: "nutritionist", status: "active", joined: "15 ก.พ. 2569", lastSeen: "วันนี้ 10:45", bmi: null, appointments: 38, img: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=120&h=120&fit=crop" },
-    { id: "U007", name: "คุณนิภา งาม", email: "nipa@email.com", phone: "087-890-1234", role: "patient", status: "active", joined: "5 มี.ค. 2569", lastSeen: "2 วันที่แล้ว", bmi: 19.6, appointments: 6, img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop" },
-    { id: "U008", name: "คุณธนา สร้างสุข", email: "tana@email.com", phone: "088-901-2345", role: "patient", status: "inactive", joined: "20 มี.ค. 2569", lastSeen: "สัปดาห์ที่แล้ว", bmi: 30.1, appointments: 1, img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop" },
-];
+type UserItem = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    status: string;
+    joined: string;
+    lastSeen: string;
+    bmi: number | null;
+    appointments: number;
+    img: string;
+};
 
 const roleLabel: Record<string, string> = { patient: "ผู้ป่วย", nutritionist: "นักโภชนาการ", food_partner: "ร้านค้า", admin: "แอดมิน" };
 const roleColor: Record<string, string> = { patient: "bg-blue-100 text-blue-700", nutritionist: "bg-[#fff3cc] text-[#7a5c00]", food_partner: "bg-orange-100 text-orange-700", admin: "bg-purple-100 text-purple-700" };
-const statusColor: Record<string, string> = { active: "bg-green-100 text-green-700", suspended: "bg-red-100 text-red-600", inactive: "bg-gray-100 text-gray-500" };
-const statusLabel: Record<string, string> = { active: "ใช้งาน", suspended: "ระงับ", inactive: "ไม่ใช้งาน" };
+const statusColor: Record<string, string> = { active: "bg-green-100 text-green-700", inactive: "bg-gray-100 text-gray-500" };
+const statusLabel: Record<string, string> = { active: "Active", inactive: "Inactive" };
+
+
+const formatUser = (u: any): UserItem => ({
+    ...u,
+    joined: new Date(u.joined).toLocaleDateString('th-TH'),
+    lastSeen: u.lastSeen ?? "-",
+    bmi: u.bmi ?? null
+});
 
 export default function UsersPage() {
-    const [users, setUsers] = useState(usersData);
+    const [users, setUsers] = useState<UserItem[]>([]);
     const [search, setSearch] = useState("");
     const [filterRole, setFilterRole] = useState("all");
     const [filterStatus, setFilterStatus] = useState("all");
-    const [selected, setSelected] = useState<typeof usersData[0] | null>(null);
-    const [editModal, setEditModal] = useState<typeof usersData[0] | null>(null);
+    const [selected, setSelected] = useState<UserItem | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        setLoading(true);
+        setError(null);
         adminService.getUsers().then(data => {
-            const formatted = data.map((u: any) => ({
-                ...u,
-                joined: new Date(u.joined).toLocaleDateString('th-TH'),
-                lastSeen: "เพิ่งใช้งาน",
-                bmi: null
-            }));
+            const formatted = data.map((u: any) => formatUser(u));
             setUsers(formatted);
-        }).catch(err => console.error("Failed to fetch users", err));
+        }).catch(err => {
+            console.error("Failed to fetch users", err);
+            setError("Failed to fetch users");
+        }).finally(() => setLoading(false));
     }, []);
 
     const filtered = users.filter(u => {
@@ -49,15 +61,36 @@ export default function UsersPage() {
         return matchSearch && matchRole && matchStatus;
     });
 
-    const toggleStatus = (id: string) => setUsers(p => p.map(u => u.id === id ? { ...u, status: u.status === "active" ? "suspended" : "active" } : u));
-    const deleteUser = (id: string) => { setUsers(p => p.filter(u => u.id !== id)); setSelected(null); };
+    const toggleStatus = async (user: UserItem) => {
+        try {
+            const updated = user.status === "active"
+                ? await adminService.deactivateUser(user.id)
+                : await adminService.activateUser(user.id);
+            const formatted = formatUser(updated);
+            setUsers(p => p.map(u => u.id === formatted.id ? formatted : u));
+            if (selected?.id === formatted.id) setSelected(formatted);
+        } catch (err) {
+            console.error("Failed to update user status", err);
+            setError("Failed to update user status");
+        }
+    };
+    const deleteUser = async (id: string) => {
+        try {
+            await adminService.deleteUser(id);
+            setUsers(p => p.filter(u => u.id !== id));
+            if (selected?.id === id) setSelected(null);
+        } catch (err) {
+            console.error("Failed to delete user", err);
+            setError("Failed to delete user");
+        }
+    };
 
     const stats = {
         total: users.length,
         patient: users.filter(u => u.role === "patient").length,
         nutritionist: users.filter(u => u.role === "nutritionist").length,
         partner: users.filter(u => u.role === "food_partner").length,
-        suspended: users.filter(u => u.status === "suspended").length,
+        inactive: users.filter(u => u.status === "inactive").length,
     };
 
     return (
@@ -68,6 +101,9 @@ export default function UsersPage() {
                 <p className="text-gray-400 text-sm mt-1">ผู้ใช้ทั้งหมด {stats.total} คน</p>
             </div>
 
+            {loading && <p className="text-xs text-gray-400 mb-4">Loading...</p>}
+            {error && <p className="text-xs text-red-500 mb-4">{error}</p>}
+
             {/* Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
                 {[
@@ -75,7 +111,7 @@ export default function UsersPage() {
                     { label: "ผู้ป่วย", value: stats.patient, color: "bg-blue-50" },
                     { label: "นักโภชนาการ", value: stats.nutritionist, color: "bg-[#fff8e1]" },
                     { label: "ร้านค้า", value: stats.partner, color: "bg-orange-50" },
-                    { label: "ถูกระงับ", value: stats.suspended, color: "bg-red-50" },
+                    { label: "Inactive", value: stats.inactive, color: "bg-gray-50" },
                 ].map((s, i) => (
                     <div key={i} className={`${s.color} rounded-2xl p-4 text-center border border-gray-50 shadow-sm`}>
                         <p className="text-2xl font-black text-gray-900">{s.value}</p>
@@ -105,9 +141,7 @@ export default function UsersPage() {
                         <Activity className="w-4 h-4 text-gray-400" />
                         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="text-sm outline-none bg-transparent">
                             <option value="all">สถานะทั้งหมด</option>
-                            <option value="active">ใช้งาน</option>
-                            <option value="suspended">ระงับ</option>
-                            <option value="inactive">ไม่ใช้งาน</option>
+                            <option value="active">ใช้งาน</option>                            <option value="inactive">ไม่ใช้งาน</option>
                         </select>
                         <ChevronDown className="w-3 h-3 text-gray-400" />
                     </div>
@@ -151,7 +185,7 @@ export default function UsersPage() {
                             <button onClick={() => setSelected(user)} className="flex-1 flex items-center justify-center gap-1 py-2 rounded-2xl bg-[#fff3cc] hover:bg-[#ffd980] text-[#7a5c00] text-xs font-bold transition-colors">
                                 <Eye className="w-3.5 h-3.5" /> ดูข้อมูล
                             </button>
-                            <button onClick={() => toggleStatus(user.id)} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${user.status === "active" ? "bg-red-50 hover:bg-red-100 text-red-600" : "bg-green-50 hover:bg-green-100 text-green-700"}`}>
+                            <button onClick={() => toggleStatus(user)} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-2xl text-xs font-bold transition-colors ${user.status === "active" ? "bg-red-50 hover:bg-red-100 text-red-600" : "bg-green-50 hover:bg-green-100 text-green-700"}`}>
                                 {user.status === "active" ? <><UserX className="w-3.5 h-3.5" /> ระงับ</> : <><Shield className="w-3.5 h-3.5" /> เปิดใช้</>}
                             </button>
                             <button onClick={() => deleteUser(user.id)} className="p-2 rounded-2xl bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
@@ -196,7 +230,7 @@ export default function UsersPage() {
                             ))}
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={() => toggleStatus(selected.id)} className={`flex-1 font-bold py-2.5 rounded-2xl text-sm transition-colors ${selected.status === "active" ? "bg-red-50 hover:bg-red-100 text-red-600" : "bg-[#ffd980] hover:bg-[#f5c518] text-[#7a5c00]"}`}>
+                            <button onClick={() => toggleStatus(selected)} className={`flex-1 font-bold py-2.5 rounded-2xl text-sm transition-colors ${selected.status === "active" ? "bg-red-50 hover:bg-red-100 text-red-600" : "bg-[#ffd980] hover:bg-[#f5c518] text-[#7a5c00]"}`}>
                                 {selected.status === "active" ? "ระงับบัญชี" : "เปิดใช้งาน"}
                             </button>
                             <button onClick={() => deleteUser(selected.id)} className="px-4 py-2.5 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors">

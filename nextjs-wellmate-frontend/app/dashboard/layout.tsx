@@ -15,7 +15,9 @@ export default function DashboardLayout({
     const pathname = usePathname();
     const isOpen = useCartStore((state) => state.isOpen);
     const setIsOpen = useCartStore((state) => state.setIsOpen);
-    const useStandaloneLayout = pathname === "/dashboard/progress";
+    const useStandaloneLayout =
+        pathname === "/dashboard/progress" ||
+        pathname.startsWith("/dashboard/admindashboard");
 
     React.useEffect(() => {
         setMounted(true);
