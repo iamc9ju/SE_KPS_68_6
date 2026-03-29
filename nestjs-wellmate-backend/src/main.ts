@@ -11,6 +11,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
+  // --- DEBUG LOGS FOR ENVIRONMENT VARIABLES ---
+  console.log('--- Current Process Environment Keys ---');
+  console.log(Object.keys(process.env).sort().join(', '));
+  console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+  console.log('PORT in env:', process.env.PORT);
+  console.log('----------------------------------------');
+
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
     rawBody: true,
