@@ -1,0 +1,328 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Save, Search, User, Filter, AlertCircle, ShoppingBag, Plus } from "lucide-react";
+import api from "@/lib/api";
+import { useAuthStore } from "@/store/auth-store";
+import WeeklyCalendar, { MealEntry } from "@/components/meal-plan/WeeklyCalendar";
+import MealPlannerModal from "@/components/meal-plan/MealPlannerModal";
+import Swal from "sweetalert2";
+
+type Patient = {
+    patientId: string;
+    firstName: string;
+    lastName: string;
+    user: { email: string; profileImageUrl?: string };
+};
+
+export default function MealPlanPage() {
+    const { user } = useAuthStore();
+    const isNutritionist = user?.role === "nutritionist";
+    
+    // Auth-store User type doesn't have patient/nutritionist nested
+    // We'll fetch them separately or use metadata if available
+    const [patientId, setPatientId] = useState<string | null>(null);
+    const [nutritionistId, setNutritionistId] = useState<string | null>(null);
+
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [meals, setMeals] = useState<MealEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    
+    // Nutritionist specific state
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showPlanner, setShowPlanner] = useState(false);
+    const [plannerDate, setPlannerDate] = useState(new Date());
+    const [plannerType, setPlannerType] = useState("");
+
+    useEffect(() => {
+        const init = async () => {
+            if (isNutritionist && user) {
+                // Fetch nutritionist profile
+                try {
+                    const res = await api.get("/nutritionists/profile");
+                    // Handle both wrapped { data: ... } and direct object
+                    const nutData = res.data?.data || res.data;
+                    if (nutData?.nutritionistId) {
+                        setNutritionistId(nutData.nutritionistId);
+                    } else {
+                        console.error("No nutritionistId in profile data:", res.data);
+                    }
+                } catch (e) {
+                    console.error("Error fetching nutritionist profile", e);
+                }
+                fetchPatients();
+                setIsLoading(false);
+            } else if (user?.role === "patient") {
+                // Fetch patient record
+                try {
+                    const res = await api.get("/patients/profile");
+                    const pData = res.data?.data || res.data;
+                    if (pData?.patientId) {
+                        setPatientId(pData.patientId);
+                        fetchMealPlan(pData.patientId);
+                    } else {
+                        console.error("No patientId in profile data:", res.data);
+                        setIsLoading(false);
+                    }
+                } catch (e) {
+                    console.error("No patient record found");
+                    setIsLoading(false);
+                }
+            } else {
+                // Not a patient or nutritionist (e.g. food_partner or admin)
+                setIsLoading(false);
+            }
+        };
+        init();
+    }, [user, isNutritionist]);
+
+    const fetchMealPlan = async (patientId: string) => {
+        console.log("Fetching meal plan for patientId:", patientId);
+        setIsLoading(true);
+        try {
+            const res = await api.get(`/meal-plan/patient/${patientId}`);
+            console.log("Raw API Response for meal plan:", res.data);
+            
+            const allPlans = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            // Flatten all mealPlanItems from all plans
+            const allItems = allPlans.reduce((acc: any[], plan: any) => {
+                if (plan.mealPlanItems) {
+                    return [...acc, ...plan.mealPlanItems];
+                }
+                return acc;
+            }, []);
+            
+            console.log("Flattened meals count:", allItems.length);
+            setMeals(allItems);
+        } catch (error) {
+            console.error("Error fetching meal plan:", error);
+            Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'ไม่สามารถโหลดแผนการกินได้' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchPatients = async () => {
+        try {
+            // Simplified: Fetch patients associated with this nutritionist
+            const res = await api.get("/patients"); 
+            const data = res.data?.data || res.data || [];
+            setPatients(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching patients:", error);
+            setPatients([]);
+        }
+    };
+
+    const handleToggleDone = async (itemId: number, isDone: boolean) => {
+        // Optimistic update
+        setMeals(prev => prev.map(m => m.mealPlanItemId === itemId ? { ...m, isDone } : m));
+        
+        try {
+            await api.patch(`/meal-plan/item/${itemId}`, { isDone });
+            // toast success
+        } catch (error) {
+            console.error("Error updating meal item:", error);
+            // Revert on error
+            setMeals(prev => prev.map(m => m.mealPlanItemId === itemId ? { ...m, isDone: !isDone } : m));
+            Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'ไม่สามารถบันทึกได้' });
+        }
+    };
+
+    const handleOpenPlanner = (date: Date, type: string) => {
+        setPlannerDate(date);
+        setPlannerType(type);
+        setShowPlanner(true);
+    };
+
+    const handleSaveMealItem = async (menuItemId: number) => {
+        if (!selectedPatientId) {
+            Swal.fire({ icon: 'warning', title: 'ไม่สามารถดำเนินการได้', text: 'กรุณาเลือกผู้ป่วยก่อน' });
+            return;
+        }
+
+        if (!nutritionistId) {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'ข้อมูลไม่สมบูรณ์', 
+                text: 'ไม่พบรหัสนักโภชนาการของคุณ (Nutritionist Profile) กรุณาติดต่อผู้ดูแลระบบ' 
+            });
+            return;
+        }
+        
+        try {
+            setIsLoading(true);
+            await api.post("/meal-plan/item", {
+                patientId: selectedPatientId,
+                nutritionistId: nutritionistId, 
+                planDate: plannerDate.toLocaleDateString('en-CA'),
+                mealType: plannerType,
+                menuItemId,
+            });
+            setShowPlanner(false);
+            fetchMealPlan(selectedPatientId);
+            Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'บันทึกแผนการกินเรียบร้อย', timer: 1500 });
+        } catch (error) {
+            console.error("Error saving meal item:", error);
+            Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'ไม่สามารถบันทึกได้' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const changeWeek = (direction: number) => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() + direction * 7);
+        setSelectedDate(newDate);
+    };
+
+    const handleSelectPatient = (patientId: string) => {
+        setSelectedPatientId(patientId);
+        fetchMealPlan(patientId);
+    };
+
+    if (isLoading && !isNutritionist) {
+        return (
+            <div className="flex-1 bg-[#fffbf5] p-8 flex items-center justify-center ml-64">
+                <div className="text-[#8a7550] animate-pulse font-black text-xl">กำลังโหลดแผนการกินของคุณ...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex-1 bg-[#fffbf5] overflow-y-auto custom-scrollbar ml-64">
+            <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div>
+                        <div className="flex items-center gap-2 text-[#8a7550] mb-2">
+                            <ShoppingBag size={18} className="text-[#C6E065]" />
+                            <span className="text-[11px] font-black uppercase tracking-widest">Wellness Planner</span>
+                        </div>
+                        <h1 className="text-4xl font-black text-[#3d3522]">{isNutritionist ? "ออกแบบแผนการกิน" : "แผนการกินของคุณ"}</h1>
+                        <p className="text-[#8a7550] font-medium mt-1">{isNutritionist ? "จัดการและติดตามการควบคุมอาหารอย่างมีประสิทธิภาพ" : "จัดการและติดตามโภชนาการของคุณให้ตรงตามเป้าหมาย"}</p>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-white p-2 rounded-[28px] shadow-sm border border-gray-200">
+                        <button 
+                            onClick={() => changeWeek(-1)}
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-gray-50 text-gray-400 group transition-all"
+                        >
+                            <ChevronLeft size={20} className="group-hover:-translate-x-0.5" />
+                        </button>
+                        <div className="flex items-center gap-2 px-4 border-x border-gray-100 min-w-[180px] justify-center text-[13px] font-black text-[#3d3522]">
+                            <CalendarIcon size={16} className="text-gray-300" />
+                            {selectedDate.toLocaleDateString("th-TH", { month: "long", year: "numeric" })}
+                        </div>
+                        <button 
+                            onClick={() => changeWeek(1)}
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-gray-50 text-gray-400 group transition-all"
+                        >
+                            <ChevronRight size={20} className="group-hover:translate-x-0.5" />
+                        </button>
+                    </div>
+                </div>
+
+                {isNutritionist && (
+                    <div className="mb-10 bg-white rounded-[40px] p-8 border border-gray-200 shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-center gap-6 justify-between">
+                            <div className="flex-1 w-full sm:w-auto">
+                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">เลือกผู้ป่วยที่ต้องการจัดแผน</label>
+                                <div className="relative">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <select 
+                                        value={selectedPatientId}
+                                        onChange={(e) => handleSelectPatient(e.target.value)}
+                                        className="w-full pl-12 pr-10 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-[14px] font-black text-[#3d3522] focus:ring-2 focus:ring-[#C6E065] appearance-none"
+                                    >
+                                        <option value="">เลือกรายชื่อผู้ป่วย...</option>
+                                        {patients.map(p => (
+                                            <option key={p.patientId} value={p.patientId}>{p.firstName} {p.lastName}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 rotate-90" size={16} />
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                )}
+
+                {/* Main Content Card */}
+                <div className="bg-white rounded-[48px] p-6 sm:p-10 border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#C6E065]/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                    
+                    {!selectedPatientId && isNutritionist ? (
+                        <div className="py-24 flex flex-col items-center justify-center text-center">
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                                <User size={40} className="text-gray-300" />
+                            </div>
+                            <h3 className="text-xl font-black text-[#3d3522] mb-2">ยังไม่ได้เลือกผู้ป่วย</h3>
+                            <p className="text-[#8a7550] font-medium max-w-xs mx-auto">กรุณาเลือกรายชื่อผู้ป่วยด้านบนเพื่อจัดการหรือดูแผนการกินรายสัปดาห์</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center justify-between mb-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 flex items-center justify-center -ml-2">
+                                        <img src="/images/calendar-3d.png" alt="Calendar" className="w-full h-full object-contain" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-[#3d3522]">ตารางสัปดาห์นี้</h2>
+                                        <p className="text-[13px] text-[#8a7550] font-bold">สรุปโภชนาการและการทานอาหาร</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-gray-50 px-4 py-2 rounded-xl text-[12px] font-black text-[#3d3522]">
+                                        {(() => {
+                                            const start = new Date(selectedDate);
+                                            const day = start.getDay();
+                                            const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+                                            start.setDate(diff);
+                                            const weekDaysStr = Array.from({length: 7}, (_, i) => {
+                                                const d = new Date(start);
+                                                d.setDate(start.getDate() + i);
+                                                return d.toDateString();
+                                            });
+                                            const weeklyMeals = meals.filter(m => weekDaysStr.includes(new Date(m.planDate).toDateString()));
+                                            const doneCount = weeklyMeals.filter(m => m.isDone).length;
+                                            return `ทานแล้ว: ${doneCount} / ${weeklyMeals.length}`;
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {meals.length === 0 && !isNutritionist ? (
+                                <div className="py-20 flex flex-col items-center justify-center text-center">
+                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                                        <AlertCircle size={40} className="text-gray-300" />
+                                    </div>
+                                    <h3 className="text-xl font-black text-[#3d3522] mb-2">ยังไม่มีแผนสำหรับช่วงเวลานี้</h3>
+                                    <p className="text-[#8a7550] font-medium max-w-xs mx-auto">คุณยังไม่มีแผนการกินในช่วงสัปดาห์ที่เลือก กรุณาติอต่อฝ่ายบริการลูกค้าหรือนักโภชนาการ</p>
+                                </div>
+                            ) : (
+                                <WeeklyCalendar 
+                                    selectedDate={selectedDate}
+                                    meals={meals}
+                                    onToggleDone={handleToggleDone}
+                                    onAddMeal={handleOpenPlanner}
+                                    isEditable={isNutritionist}
+                                />
+                            )}
+                        </>
+                    )}
+                </div>
+
+                <MealPlannerModal 
+                    isOpen={showPlanner}
+                    onClose={() => setShowPlanner(false)}
+                    onSave={handleSaveMealItem}
+                    date={plannerDate}
+                    mealType={plannerType}
+                />
+            </div>
+        </div>
+    );
+}

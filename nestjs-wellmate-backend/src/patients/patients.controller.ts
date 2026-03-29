@@ -37,4 +37,11 @@ export class PatientsController {
   async getProfile(@CurrentUser('sub') userId: string) {
     return this.patientsService.getProfile(userId);
   }
+
+  @Get()
+  @Auth(UserRole.admin, UserRole.nutritionist)
+  @ApiOperation({ summary: 'ดึงข้อมูลคนไข้ทั้งหมด (สำหรับ Admin และ Nutritionist)' })
+  async findAll() {
+    return this.patientsService.findAll();
+  }
 }

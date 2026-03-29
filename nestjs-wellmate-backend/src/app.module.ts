@@ -33,6 +33,7 @@ import { NutritionOrdersModule } from './nutrition-orders/nutrition-orders.modul
 import { NutritionistApprovalModule } from './nutritionist-approval/nutritionist-approval.module';
 import { NutritionAppointmentsModule } from './nutrition-appointments/nutrition-appointments.module';
 import { ProgressModule } from './progress/progress.module';
+import { MealPlanModule } from './meal-plan/meal-plan.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { ProgressModule } from './progress/progress.module';
     NutritionistApprovalModule,
     NutritionAppointmentsModule,
     ProgressModule,
+    MealPlanModule,
   ],
   controllers: [AppController],
   providers: [

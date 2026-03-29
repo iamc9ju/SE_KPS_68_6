@@ -72,4 +72,18 @@ export class PatientsService {
       // ... โค้ดด้านล่าง ...
     };
   }
+
+  async findAll() {
+    const patients = await this.prisma.patient.findMany({
+      include: {
+        user: {
+          select: {
+            email: true,
+            profileImageUrl: true,
+          },
+        },
+      },
+    });
+    return { data: patients };
+  }
 }

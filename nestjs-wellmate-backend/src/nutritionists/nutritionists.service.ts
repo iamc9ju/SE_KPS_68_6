@@ -271,4 +271,32 @@ export class NutritionistsService {
       available: !bookedTimes.has(slot.startDateTime.getTime()),
     }));
   }
+
+  async getProfile(userId: string) {
+    const nutritionist = await this.prisma.nutritionist.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            email: true,
+            profileImageUrl: true,
+            role: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!nutritionist) {
+      throw new NotFoundException('ไม่พบข้อมูลนักโภชนาการ');
+    }
+
+    return {
+      ...nutritionist,
+      email: nutritionist.user.email,
+      role: nutritionist.user.role,
+      profileImageUrl: nutritionist.user.profileImageUrl,
+      phone: nutritionist.user.phone,
+    };
+  }
 }

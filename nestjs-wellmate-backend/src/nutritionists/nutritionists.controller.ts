@@ -38,6 +38,14 @@ export class NutritionistsController {
     private nutritionistSchedulesService: NutritionistSchedulesService,
   ) { }
 
+  @Get('profile')
+  @ApiBearerAuth()
+  @Auth(UserRole.nutritionist)
+  @ApiOperation({ summary: 'ดึงข้อมูลโปรไฟล์ของตัวเอง (นักโภชนาการ)' })
+  async getProfile(@CurrentUser('sub') userId: string) {
+    return this.nutritionistsService.getProfile(userId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'ค้นหานักโภชนาการ (สามารถกรอง กรองเรียงลำดับ ได้)' })
   @ApiResponse({
