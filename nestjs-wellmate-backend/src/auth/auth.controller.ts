@@ -193,11 +193,10 @@ export class AuthController {
     accessToken: string,
     refreshToken: string,
   ) {
-    const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: (isProduction ? 'strict' : 'lax') as 'strict' | 'lax',
+      secure: true,
+      sameSite: 'none' as const,
       path: '/',
     };
 
@@ -241,8 +240,9 @@ export class AuthController {
   }
 
   private clearAuthCookies(response: Response) {
-    response.clearCookie('accessToken');
-    response.clearCookie('refreshToken');
+    const opts = { path: '/', httpOnly: true, secure: true, sameSite: 'none' as const };
+    response.clearCookie('accessToken', opts);
+    response.clearCookie('refreshToken', opts);
   }
 
   private parseExpiryToMs(expiry: string): number {
