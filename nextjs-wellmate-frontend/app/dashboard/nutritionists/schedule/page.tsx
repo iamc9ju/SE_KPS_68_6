@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { nutritionistApi, CreateSchedulePayload, CreateLeavePayload } from "@/services/nutritionists";
 import Swal from "sweetalert2";
-import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, Views, ToolbarProps } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -47,6 +47,8 @@ export default function WorkSchedulePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [leaves, setLeaves] = useState<any[]>([]);
+    const [calendarDate, setCalendarDate] = useState(() => new Date());
+    const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
     
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -214,6 +216,13 @@ export default function WorkSchedulePage() {
                         onSelectEvent={(event: any) => handleDeleteLog(event.resource.data.nutritionistLeaveId)}
                         selectable
                         views={['month', 'week', 'day']}
+                        view={calendarView}
+                        date={calendarDate}
+                        onNavigate={(date) => setCalendarDate(date)}
+                        onView={(view) => setCalendarView(view)}
+                        components={{
+                            toolbar: CustomToolbar,
+                        }}
                         eventPropGetter={(event: any) => {
                             let backgroundColor = "#C6E065";
                             if (event.resource.type === 'leave') backgroundColor = "#f87171";
@@ -307,6 +316,53 @@ export default function WorkSchedulePage() {
                         </div>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+function CustomToolbar({ label, onNavigate, onView, view }: ToolbarProps) {
+    return (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={() => onNavigate("PREV")}
+                    className="px-3 py-2 rounded-xl bg-gray-50 text-[#3d3522] font-black text-xs hover:bg-gray-100 transition-colors"
+                >
+                    ‹
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onNavigate("TODAY")}
+                    className="px-4 py-2 rounded-xl bg-[#C6E065] text-[#3d3522] font-black text-xs hover:bg-[#bfe600] transition-colors"
+                >
+                    วันนี้
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onNavigate("NEXT")}
+                    className="px-3 py-2 rounded-xl bg-gray-50 text-[#3d3522] font-black text-xs hover:bg-gray-100 transition-colors"
+                >
+                    ›
+                </button>
+            </div>
+            <div className="text-sm font-black text-[#3d3522]">{label}</div>
+            <div className="flex items-center gap-2">
+                {(["month", "week", "day"] as const).map((v) => (
+                    <button
+                        key={v}
+                        type="button"
+                        onClick={() => onView(v)}
+                        className={`px-3 py-2 rounded-xl text-xs font-black transition-colors ${
+                            view === v
+                                ? "bg-[#3d3522] text-white"
+                                : "bg-gray-50 text-[#3d3522] hover:bg-gray-100"
+                        }`}
+                    >
+                        {v === "month" ? "เดือน" : v === "week" ? "สัปดาห์" : "วัน"}
+                    </button>
+                ))}
             </div>
         </div>
     );

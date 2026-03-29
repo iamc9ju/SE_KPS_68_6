@@ -526,13 +526,7 @@ export default function Calendar() {
                             )}
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={handleOpenAddActivity}
-                        className="px-5 py-2.5 rounded-lg bg-[#ccff00] text-slate-900 font-black text-sm hover:bg-[#bfe600] transition-colors"
-                    >
-                        เพิ่มกิจกรรม
-                    </button>
+                    <div />
                 </div>
 
                 <div className="flex items-center gap-6 mb-6">

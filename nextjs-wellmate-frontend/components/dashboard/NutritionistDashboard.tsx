@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { 
     Users, 
     Calendar, 
@@ -10,7 +11,6 @@ import {
     ChevronRight, 
     MoreHorizontal,
     Search,
-    Filter,
     ArrowUpRight,
     Star,
     Loader2,
@@ -52,10 +52,14 @@ interface Appointment {
 }
 
 export default function NutritionistDashboard() {
+    const router = useRouter();
     const [statsData, setStatsData] = useState<DashboardStats | null>(null);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+    const [showAllPatients, setShowAllPatients] = useState(false);
+    const [patientQuery, setPatientQuery] = useState("");
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -155,7 +159,6 @@ export default function NutritionistDashboard() {
 
     const upcomingAppointments = (Array.isArray(appointments) ? appointments : [])
         .filter(appt => appt && appt.startTime && new Date(appt.startTime) >= new Date())
-        .slice(0, 3)
         .map(appt => ({
             id: appt.appointmentId,
             name: appt.patient ? `${appt.patient.firstName} ${appt.patient.lastName}` : "ไม่ระบุชื่อ",
@@ -168,8 +171,11 @@ export default function NutritionistDashboard() {
             rawStatus: appt.status
         }));
 
+    const visibleUpcomingAppointments = showAllUpcoming
+        ? upcomingAppointments
+        : upcomingAppointments.slice(0, 3);
+
     const activePatients = Array.from(new Set((Array.isArray(appointments) ? appointments : []).map(a => a.patientId)))
-        .slice(0, 3)
         .map(patientId => {
             const lastAppt = appointments.find(a => a.patientId === patientId);
             return {
@@ -180,6 +186,14 @@ export default function NutritionistDashboard() {
                 lastActive: lastAppt ? format(new Date(lastAppt.startTime), "d MMM yyyy", { locale: th }) : "N/A"
             };
         });
+
+    const normalizedPatientQuery = patientQuery.trim().toLowerCase();
+    const filteredPatients = normalizedPatientQuery
+        ? activePatients.filter((patient) =>
+              patient.name.toLowerCase().includes(normalizedPatientQuery),
+          )
+        : activePatients;
+    const visiblePatients = showAllPatients ? filteredPatients : filteredPatients.slice(0, 3);
 
     if (loading) {
         return (
@@ -305,15 +319,7 @@ export default function NutritionistDashboard() {
                             ยินดีต้อนรับกลับมาครับ! วันนี้คุณมีนัดหมายทั้งหมด {statsData?.appointmentsToday || 0} เคส
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
-                            <Filter size={18} />
-                            ตัวกรอง
-                        </button>
-                        <button className="flex items-center gap-2 px-6 py-2.5 bg-[#C6E065] rounded-2xl text-sm font-bold text-[#3d3522] hover:shadow-lg transition-all shadow-md">
-                            จัดเวลาทำงาน
-                        </button>
-                    </div>
+                    <div className="flex items-center gap-3" />
                 </header>
 
                 {/* Stats Grid */}
@@ -464,14 +470,20 @@ export default function NutritionistDashboard() {
                     <section className="lg:col-span-2 space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-black text-[#1a1a1a]">นัดหมายที่กำลังจะมาถึง</h2>
-                            <button className="text-sm font-bold text-[#3d3522] hover:underline flex items-center gap-1">
-                                ดูทั้งหมด <ChevronRight size={16} />
-                            </button>
+                            {upcomingAppointments.length > 3 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllUpcoming((prev) => !prev)}
+                                    className="text-sm font-bold text-[#3d3522] hover:underline flex items-center gap-1"
+                                >
+                                    {showAllUpcoming ? "ย่อรายการ" : "ดูทั้งหมด"} <ChevronRight size={16} />
+                                </button>
+                            )}
                         </div>
 
                         <div className="space-y-4">
-                            {upcomingAppointments.length > 0 ? (
-                                upcomingAppointments.map((appointment) => (
+                            {visibleUpcomingAppointments.length > 0 ? (
+                                visibleUpcomingAppointments.map((appointment) => (
                                     <div 
                                         key={appointment.id}
                                         className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-[#C6E065]/50 transition-all"
@@ -513,7 +525,11 @@ export default function NutritionistDashboard() {
                             <div className="relative z-10 max-w-[60%]">
                                 <h3 className="text-2xl font-black mb-2">เริ่มให้คำปรึกษาผ่านวิดีโอ?</h3>
                                 <p className="text-gray-400 text-sm mb-6">คุณสามารถเริ่มห้องสนทนาวิดีโอสำหรับเคสถัดไปได้ทันที เพื่อเตรียมพร้อมก่อนเริ่มการนัดหมาย</p>
-                                <button className="px-6 py-3 bg-[#C6E065] text-[#1a1a1a] font-black rounded-2xl hover:scale-105 transition-all">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/dashboard/chat")}
+                                    className="px-6 py-3 bg-[#C6E065] text-[#1a1a1a] font-black rounded-2xl hover:scale-105 transition-all"
+                                >
                                     เปิดห้องสนทนา
                                 </button>
                             </div>
@@ -523,14 +539,22 @@ export default function NutritionistDashboard() {
 
                     {/* Right Column: Active Patients */}
                     <section className="space-y-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                             <h2 className="text-xl font-black text-[#1a1a1a]">คนไข้ล่าสุด</h2>
-                            <Search size={18} className="text-gray-400" />
+                            <div className="relative">
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    value={patientQuery}
+                                    onChange={(e) => setPatientQuery(e.target.value)}
+                                    placeholder="ค้นชื่อ"
+                                    className="h-9 w-40 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-xs font-semibold text-gray-600 placeholder:text-gray-400 focus:border-[#C6E065] focus:outline-none"
+                                />
+                            </div>
                         </div>
 
                         <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden">
-                            {activePatients.length > 0 ? (
-                                activePatients.map((patient) => (
+                            {visiblePatients.length > 0 ? (
+                                visiblePatients.map((patient) => (
                                     <div key={patient.id} className="p-5 hover:bg-gray-50 transition-all group cursor-pointer">
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="font-bold text-[#1a1a1a] group-hover:text-[#3d3522]">{patient.name}</h4>
@@ -556,9 +580,15 @@ export default function NutritionistDashboard() {
                             ) : (
                                 <div className="p-8 text-center text-gray-400 italic text-sm">ยังไม่มีคนไข้ในประวัติ</div>
                             )}
-                            <button className="w-full py-4 text-xs font-black text-gray-400 hover:text-[#3d3522] transition-colors bg-gray-50/50 uppercase tracking-widest">
-                                ดูคนไข้ทั้งหมด
-                            </button>
+                            {filteredPatients.length > 3 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllPatients((prev) => !prev)}
+                                    className="w-full py-4 text-xs font-black text-gray-400 hover:text-[#3d3522] transition-colors bg-gray-50/50 uppercase tracking-widest"
+                                >
+                                    {showAllPatients ? "ย่อรายการ" : "ดูคนไข้ทั้งหมด"}
+                                </button>
+                            )}
                         </div>
 
                         {statsData && statsData.pendingMealPlans > 0 && (
