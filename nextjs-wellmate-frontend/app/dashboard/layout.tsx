@@ -6,7 +6,6 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import { useCartStore } from "@/store/cart-store";
 import RightSidebar from "@/components/dashboard/RightSidebar";
-
 export default function DashboardLayout({
     children,
 }: {

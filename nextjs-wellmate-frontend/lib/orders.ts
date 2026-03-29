@@ -1,4 +1,4 @@
-export type OrderStatus = "pending" | "accepted" | "shipping" | "delivered" | "cancelled";
+export type OrderStatus = "pending" | "accepted" | "preparing" | "ready" | "delivering" | "shipping" | "delivered" | "cancelled";
 
 export type PaymentStatus = "UNPAID" | "PAID";
 
@@ -53,9 +53,6 @@ export function unwrapOrderList(payload: unknown): Order[] {
 export function canTrackOrder(order: Pick<Order, "paymentStatus" | "status">) {
     return (
         order.paymentStatus === "PAID" ||
-        order.status === "accepted" ||
-        order.status === "shipping" ||
-        order.status === "delivered" ||
-        order.status === "cancelled"
+        ["accepted", "preparing", "ready", "delivering", "shipping", "delivered", "cancelled"].includes(order.status)
     );
 }

@@ -138,11 +138,17 @@ export default function FoodPartnerHistoryPage() {
         return payload as T;
     };
 
-    const isWithinDays = (iso: string, days: number) => {
-        const date = new Date(iso);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        return diffMs <= days * 24 * 60 * 60 * 1000;
+    const isWithinDays = (iso: string | undefined, days: number) => {
+        if (!iso) return false;
+        try {
+            const date = new Date(iso);
+            if (isNaN(date.getTime())) return false;
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            return diffMs <= days * 24 * 60 * 60 * 1000;
+        } catch {
+            return false;
+        }
     };
 
     const formatTime = (iso: string) =>
@@ -156,28 +162,40 @@ export default function FoodPartnerHistoryPage() {
         }));
         const itemsCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
         const subtotal = order.items.reduce((sum, i) => sum + Number(i.totalPrice || 0), 0);
-        const status: OrderStatus = order.status === "delivered" ? "completed" : "cancelled";
-        const statusLabel = order.status === "delivered" ? "Delivered" : "Cancelled";
+        
+        // Map all statuses for consistency
+        const statusConfig: Record<string, { type: OrderStatus; label: string }> = {
+            delivered: { type: "completed", label: "จัดส่งคุณแล้ว" },
+            cancelled: { type: "cancelled", label: "ยกเลิกแล้ว" },
+            pending: { type: "completed", label: "รอการยืนยัน" },
+            accepted: { type: "completed", label: "รับออเดอร์แล้ว" },
+            preparing: { type: "completed", label: "กำลังเตรียมอาหาร" },
+            ready: { type: "completed", label: "พร้อมคนขับ" },
+            delivering: { type: "completed", label: "กำลังไปส่ง" },
+        };
+
+        const config = statusConfig[order.status] || { type: "completed", label: order.status };
         const createdTime = formatTime(order.createdAt ?? new Date().toISOString());
+        
         return {
             id: order.orderId,
             time: createdTime,
             createdAt: order.createdAt,
-            customer: order.customerName ?? "Customer",
+            customer: order.customerName ?? "ลูกค้าทั่วไป",
             itemsCount,
             subtotal,
             discount: 0,
             commission: 0,
             net: subtotal,
-            status,
-            statusLabel,
+            status: config.type,
+            statusLabel: config.label,
             items,
             timeline: [
-                { time: createdTime, label: "Order created", tone: "ok" },
+                { time: createdTime, label: "สร้างออเดอร์", tone: "ok" },
                 {
                     time: createdTime,
-                    label: status === "completed" ? "Delivered" : "Cancelled",
-                    tone: status === "completed" ? "ok" : "cancel",
+                    label: config.label,
+                    tone: config.type === "completed" ? "ok" : "cancel",
                 },
             ],
         };
@@ -191,6 +209,9 @@ export default function FoodPartnerHistoryPage() {
             year: "numeric",
         });
     };
+
+    // ... handlePrintReceipt / handleDownloadReceipt ... (kept same logic but I'll skip re-pasting for brevity if possible, but replace_file_content needs the full block)
+    // Actually, I'll keep them.
 
     const buildReceiptHtml = (order: HistoryOrder) => {
         const rows = order.items
@@ -326,6 +347,7 @@ export default function FoodPartnerHistoryPage() {
         win.print();
     };
 
+
     useEffect(() => {
         const fetchHistory = async () => {
             setIsLoading(true);
@@ -334,13 +356,12 @@ export default function FoodPartnerHistoryPage() {
                 const res = await api.get<ApiEnvelope<ApiOrder[]> | ApiOrder[]>("/orders");
                 const data = unwrap(res.data);
                 const items = Array.isArray(data) ? data : [];
-                const history = items
-                    .filter((order) => order.status === "delivered" || order.status === "cancelled")
-                    .map(mapOrder);
-                setOrders(history);
+                // Remove strict filter to allow seeing active orders in 'History' too
+                const mapped = items.map(mapOrder);
+                setOrders(mapped);
             } catch (error) {
                 console.error("Failed to load order history:", error);
-                setLoadError("Failed to load order history");
+                setLoadError("ไม่สามารถโหลดประวัติออเดอร์ได้");
                 setOrders([]);
             } finally {
                 setIsLoading(false);
@@ -354,206 +375,235 @@ export default function FoodPartnerHistoryPage() {
             const matchesQuery =
                 order.id.toLowerCase().includes(query.toLowerCase()) ||
                 order.customer.toLowerCase().includes(query.toLowerCase());
+            
             const matchesStatus =
                 statusFilter === "ทั้งหมด"
                     ? true
                     : statusFilter === "สำเร็จ"
                       ? order.status === "completed"
                       : order.status === "cancelled";
-            const matchesDate = isWithinDays(order.createdAt ?? order.time, dateRangeDays);
+
+            // Allow viewing older orders if filtered accordingly, but default to 7 days in label
+            const matchesDate = dateRange === "แสดงทั้งหมด" ? true : isWithinDays(order.createdAt, dateRangeDays);
+            
             return matchesQuery && matchesStatus && matchesDate;
         });
-    }, [query, statusFilter, orders, dateRangeDays]);
+    }, [query, statusFilter, orders, dateRangeDays, dateRange]);
+
+    const changeDateRange = () => {
+        if (dateRange === "7 วันที่ผ่านมา") setDateRange("แสดงทั้งหมด");
+        else setDateRange("7 วันที่ผ่านมา");
+    };
+
+    const changeStatusFilter = () => {
+        if (statusFilter === "ทั้งหมด") setStatusFilter("สำเร็จ");
+        else if (statusFilter === "สำเร็จ") setStatusFilter("ยกเลิก");
+        else setStatusFilter("ทั้งหมด");
+    };
 
     return (
-        <div className="relative flex min-h-screen bg-[#faf4ea] text-[#3f3425]">
-            <BackgroundPattern />
-            <Sidebar />
+        <main className="flex-1 h-screen overflow-y-auto px-8 py-10 lg:pl-64 scroll-smooth">
+            <div className="mx-auto max-w-[1440px] space-y-6">
+                <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-8 shadow-sm backdrop-blur">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-[#f7efe1] rounded-2xl text-[#7b6a55]">
+                            <Search size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-black text-[#2f2a1d]">ประวัติออเดอร์</h1>
+                            <p className="text-sm text-[#6b5d4b] font-medium mt-1">
+                                ใช้สำหรับตรวจสอบรายได้ย้อนหลัง และดูรายละเอียดบิลทั้งหมดแบบเรียลไทม์
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-            <main className="flex-1 px-8 py-8 md:ml-64">
-                <div className="mx-auto max-w-[1300px] space-y-6">
-                    <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
-                        <h1 className="text-3xl font-black text-[#2f2a1d]">
-                            ประวัติออเดอร์
-                        </h1>
-                        <p className="mt-1 text-sm text-[#6b5d4b]">
-                            ใช้สำหรับตรวจสอบรายได้ย้อนหลัง และดูรายละเอียดบิลทั้งหมด
-                        </p>
-                    </section>
-
-                    <section className="rounded-[28px] border border-[#eadfce] bg-white p-5 shadow-sm">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
-                                <div className="relative flex-1">
-                                    <Search
-                                        size={18}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c7a66]"
-                                    />
-                                    <input
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        placeholder="ค้นหาด้วยรหัสออเดอร์ หรือชื่อลูกค้า"
-                                        className="w-full rounded-full border border-[#eadfce] bg-white py-3 pl-11 pr-4 text-sm font-semibold text-[#2f2a1d] outline-none"
-                                    />
-                                </div>
-                                <button className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-bold text-[#6b5d4b]">
-                                    <Calendar size={14} /> {dateRange}
-                                    <ChevronDown size={14} />
-                                </button>
-                                <button className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-bold text-[#6b5d4b]">
-                                    สถานะ: {statusFilter}
-                                    <ChevronDown size={14} />
-                                </button>
+                <section className="rounded-[28px] border border-[#eadfce] bg-white p-6 shadow-sm">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex flex-1 flex-col gap-4 lg:flex-row lg:items-center">
+                            <div className="relative flex-1">
+                                <Search
+                                    size={18}
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c7a66]"
+                                />
+                                <input
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="ค้นหาด้วยรหัสออเดอร์ หรือชื่อลูกค้า"
+                                    className="w-full rounded-2xl border border-[#eadfce] bg-[#faf4ea]/30 py-4 pl-12 pr-4 text-sm font-bold text-[#2f2a1d] outline-none focus:border-[#C6E065] transition-colors"
+                                />
                             </div>
-                            <button className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-bold text-[#6b5d4b]">
-                                <FileDown size={14} /> ดาวน์โหลดเป็น CSV
+                            <button 
+                                onClick={changeDateRange}
+                                className="inline-flex items-center gap-2 rounded-2xl border border-[#eadfce] bg-white px-5 py-4 text-sm font-bold text-[#6b5d4b] hover:bg-gray-50 transition-colors"
+                            >
+                                <Calendar size={16} /> {dateRange}
+                                <ChevronDown size={14} className={`transition-transform ${dateRange === "แสดงทั้งหมด" ? "rotate-180" : ""}`} />
+                            </button>
+                            <button 
+                                onClick={changeStatusFilter}
+                                className="inline-flex items-center gap-2 rounded-2xl border border-[#eadfce] bg-white px-5 py-4 text-sm font-bold text-[#6b5d4b] hover:bg-gray-50 transition-colors"
+                            >
+                                สถานะ: <span className="text-[#2f2a1d]">{statusFilter}</span>
+                                <ChevronDown size={14} />
                             </button>
                         </div>
-                    </section>
+                        <button className="inline-flex items-center gap-2 rounded-2xl bg-[#3d3522] px-6 py-4 text-sm font-black text-white hover:bg-[#2d2618] transition-all shadow-lg active:scale-95">
+                            <FileDown size={18} /> ดาวน์โหลด CSV
+                        </button>
+                    </div>
+                </section>
 
-                    <section className="rounded-[28px] border border-[#eadfce] bg-white p-4 shadow-sm">
-                        <div className="grid grid-cols-1 gap-3 text-xs font-bold text-[#8c7a66] md:grid-cols-6">
-                            <div className="md:col-span-2">รหัสออเดอร์ & เวลา</div>
-                            <div>ชื่อลูกค้า</div>
-                            <div>จำนวนรายการ</div>
-                            <div>ยอดเงินสุทธิ</div>
-                            <div>สถานะ</div>
-                        </div>
+                <section className="rounded-[28px] border border-[#eadfce] bg-white p-6 shadow-sm overflow-hidden">
+                    <div className="grid grid-cols-1 gap-4 text-[11px] font-black text-[#8c7a66] md:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr] uppercase tracking-wider border-b border-[#f0e6d8] pb-4 mb-4">
+                        <div>รหัสออเดอร์ & เวลา</div>
+                        <div>ชื่อลูกค้า</div>
+                        <div>จำนวนรายการ</div>
+                        <div>ยอดเงินสุทธิ</div>
+                        <div className="text-right">สถานะ / รายละเอียด</div>
+                    </div>
 
-                        <div className="mt-3 space-y-3">
-                            {filtered.map((order) => (
+                    <div className="space-y-4">
+                        {isLoading ? (
+                            <div className="py-20 text-center text-[#8c7a66] font-bold">กำลังโหลดข้อมููล...</div>
+                        ) : filtered.length === 0 ? (
+                            <div className="py-20 text-center text-[#8c7a66] font-bold">ไม่พบข้อมูลออเดอร์</div>
+                        ) : (
+                            filtered.map((order) => (
                                 <div
                                     key={order.id}
-                                    className="grid grid-cols-1 items-center gap-3 rounded-2xl border border-[#f0e6d8] bg-[#faf4ea] px-4 py-4 text-sm md:grid-cols-6"
+                                    className="grid grid-cols-1 items-center gap-4 rounded-[24px] border border-[#f0e6d8] bg-[#faf4ea]/30 px-6 py-5 text-sm md:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr] hover:border-[#C6E065] transition-all group"
                                 >
-                                    <div className="md:col-span-2">
-                                        <p className="text-base font-black text-[#2f2a1d]">
-                                            #{order.id}
+                                    <div>
+                                        <p className="text-lg font-black text-[#2f2a1d] group-hover:text-[#4c8b4a] transition-colors">
+                                            #{order.id.slice(-8).toUpperCase()}
                                         </p>
-                                        <p className="text-xs text-[#6b5d4b]">{order.time}</p>
+                                        <p className="text-xs font-bold text-[#8c7a66] flex items-center gap-2 mt-1">
+                                            <Calendar size={12} /> {formatDate(order.createdAt)} • {order.time}
+                                        </p>
                                     </div>
-                                    <div className="font-semibold text-[#3f3425]">
+                                    <div className="font-black text-[#3f3425]">
                                         {order.customer}
                                     </div>
-                                    <div className="text-[#3f3425]">
+                                    <div className="font-bold text-[#6b5d4b]">
                                         {order.itemsCount} รายการ
                                     </div>
-                                    <div className="font-black text-[#1f6b4e]">
+                                    <div className="text-xl font-black text-[#2f7d57]">
                                         {formatBaht(order.net)}
                                     </div>
-                                    <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center justify-end gap-3">
                                         <StatusPill
                                             status={order.status}
                                             label={order.statusLabel}
                                         />
                                         <button
                                             onClick={() => setSelected(order)}
-                                            className="rounded-full border border-[#eadfce] bg-white px-3 py-1 text-xs font-bold text-[#6b5d4b]"
+                                            className="rounded-xl border-2 border-[#eadfce] bg-white px-4 py-2 text-xs font-black text-[#3d3522] hover:bg-[#3d3522] hover:text-white transition-all shadow-sm active:scale-95"
                                         >
                                             ดูรายละเอียด
                                         </button>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </section>
-                </div>
-            </main>
+                            ))
+                        )}
+                    </div>
+                </section>
+            </div>
 
             <Drawer open={!!selected} onClose={() => setSelected(null)}>
                 {selected && (
-                    <div className="space-y-6">
-                        <div className="rounded-3xl border border-[#eadfce] bg-[#faf4ea] p-4">
-                            <p className="text-xs font-bold text-[#8c7a66]">
+                    <div className="space-y-8 animate-fadeIn">
+                        <div className="rounded-[32px] border border-[#eadfce] bg-[#faf4ea] p-8">
+                            <p className="text-[11px] font-black text-[#8c7a66] uppercase tracking-[0.2em] mb-3">
                                 รายละเอียดออเดอร์
                             </p>
-                            <h2 className="mt-2 text-2xl font-black text-[#2f2a1d]">
-                                #{selected.id}
+                            <h2 className="text-4xl font-black text-[#2f2a1d] tracking-tight">
+                                #{selected.id.toUpperCase()}
                             </h2>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-4 flex items-center gap-3">
                                 <StatusPill
                                     status={selected.status}
                                     label={selected.statusLabel}
                                 />
-                                <span className="text-xs text-[#6b5d4b]">
-                                    {selected.time}
+                                <span className="text-sm font-bold text-[#6b5d4b]">
+                                    {formatDate(selected.createdAt)} • {selected.time}
                                 </span>
                             </div>
                         </div>
 
-                        <section className="rounded-3xl border border-[#eadfce] bg-white p-4">
-                            <p className="text-sm font-black text-[#2f2a1d]">
+                        <section className="rounded-[32px] border border-[#eadfce] bg-white p-8 shadow-sm">
+                            <p className="text-[11px] font-black text-[#2f2a1d] uppercase tracking-[0.2em] mb-6">
                                 Timeline การจัดส่ง
                             </p>
-                            <div className="mt-4 space-y-4">
+                            <div className="space-y-6">
                                 {selected.timeline.map((step, index) => (
-                                    <div key={`${step.time}-${index}`} className="flex gap-3">
+                                    <div key={`${step.time}-${index}`} className="flex gap-6">
                                         <div className="flex flex-col items-center">
-                                            <span
-                                                className={`h-3 w-3 rounded-full ${
+                                            <div
+                                                className={`h-4 w-4 rounded-full ring-4 ${
                                                     step.tone === "ok"
-                                                        ? "bg-[#2f7d57]"
-                                                        : "bg-[#b13a3a]"
+                                                        ? "bg-[#2f7d57] ring-[#e7f2e9]"
+                                                        : "bg-[#b13a3a] ring-[#fde7e7]"
                                                 }`}
                                             />
                                             {index !== selected.timeline.length - 1 && (
-                                                <span className="mt-1 h-10 w-[2px] bg-[#eadfce]" />
+                                                <div className="mt-2 h-12 w-[2px] bg-gradient-to-b from-[#eadfce] to-transparent" />
                                             )}
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-[#8c7a66]">
+                                            <p className="text-xs font-black text-[#8c7a66]">
                                                 {step.time}
                                             </p>
-                                            <p className="text-sm font-black text-[#2f2a1d]">
+                                            <p className="text-base font-black text-[#2f2a1d] mt-1">
                                                 {step.label}
                                             </p>
                                             {step.meta && (
-                                                <p className="text-xs text-[#b13a3a]">
+                                                <p className="text-xs font-bold text-[#b13a3a] mt-1 bg-red-50 px-2 py-1 rounded-lg">
                                                     {step.meta}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
                                 ))}
-                                {selected.cancelInfo && (
-                                    <div className="rounded-2xl border border-[#fde7e7] bg-[#fff5f5] px-3 py-2 text-xs font-bold text-[#b13a3a]">
-                                        {selected.cancelInfo}
-                                    </div>
-                                )}
                             </div>
                         </section>
 
-                        <section className="rounded-3xl border border-[#eadfce] bg-white p-4">
-                            <p className="text-sm font-black text-[#2f2a1d]">
-                                รายการอาหาร
+                        <section className="rounded-[32px] border border-[#eadfce] bg-white p-8 shadow-sm">
+                            <p className="text-[11px] font-black text-[#2f2a1d] uppercase tracking-[0.2em] mb-6">
+                                รายการอาหาร ({selected.itemsCount})
                             </p>
                             {selected.allergy && (
-                                <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-600">
-                                    แจ้งแพ้อาหาร: {selected.allergy}
+                                <div className="mb-6 rounded-2xl bg-red-50 p-4 border border-red-100">
+                                    <p className="text-xs font-black text-red-600 uppercase tracking-widest mb-1">🚨 แจ้งแพ้อาหาร</p>
+                                    <p className="text-sm font-bold text-red-700">{selected.allergy}</p>
                                 </div>
                             )}
-                            <div className="mt-3 space-y-3 text-sm text-[#3f3425]">
+                            <div className="space-y-3">
                                 {selected.items.map((item, index) => (
                                     <div
                                         key={`${selected.id}-item-${index}`}
-                                        className="rounded-2xl border border-[#f0e6d8] px-3 py-2"
+                                        className="rounded-2xl border border-[#f0e6d8] bg-[#faf4ea]/20 p-4 hover:border-[#C6E065] transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
-                                            <p className="font-black text-[#2f2a1d]">
-                                                {item.name} x {item.qty}
+                                            <p className="text-base font-black text-[#2f2a1d]">
+                                                {item.name} <span className="text-[#8c7a66] ml-2 font-bold">x {item.qty}</span>
                                             </p>
-                                            <p className="text-xs font-bold text-[#8c7a66]">
+                                            <p className="text-lg font-black text-[#2f2a1d]">
                                                 {formatBaht(item.price * item.qty)}
                                             </p>
                                         </div>
                                         {item.addons && item.addons.length > 0 && (
-                                            <p className="mt-1 text-xs text-[#6b5d4b]">
-                                                Add-on: {item.addons.join(", ")}
-                                            </p>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {item.addons.map((addon) => (
+                                                    <span key={addon} className="text-[10px] font-black text-[#6b5d4b] bg-white px-2 py-1 rounded-md border border-[#eadfce]">
+                                                        +{addon}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         )}
                                         {item.note && (
-                                            <p className="mt-1 text-xs font-black text-[#b16a2b]">
-                                                โน้ตพิเศษ: {item.note}
+                                            <p className="mt-2 text-xs font-bold text-[#b16a2b] italic">
+                                                “ {item.note} ”
                                             </p>
                                         )}
                                     </div>
@@ -561,55 +611,63 @@ export default function FoodPartnerHistoryPage() {
                             </div>
                         </section>
 
-                        <section className="rounded-3xl border border-[#eadfce] bg-white p-4">
-                            <p className="text-sm font-black text-[#2f2a1d]">
-                                สรุปยอดเงิน
+                        <section className="rounded-[32px] border border-[#eadfce] bg-white p-8 shadow-sm">
+                            <p className="text-[11px] font-black text-[#2f2a1d] uppercase tracking-[0.2em] mb-6">
+                                สรุปยอดเงินสุทธิ
                             </p>
-                            <div className="mt-4 space-y-2 text-sm text-[#3f3425]">
-                                <div className="flex justify-between">
+                            <div className="space-y-4 text-sm font-bold text-[#3f3425]">
+                                <div className="flex justify-between text-[#8c7a66]">
                                     <span>ค่าอาหารรวม</span>
                                     <span>{formatBaht(selected.subtotal)}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>ส่วนลดของร้านค้า</span>
-                                    <span>{formatBaht(selected.discount)}</span>
+                                <div className="flex justify-between text-[#8c7a66]">
+                                    <span>ส่วนลดจากร้านค้า</span>
+                                    <span>- {formatBaht(selected.discount)}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>ค่าคอมมิชชัน / GP</span>
-                                    <span>{formatBaht(selected.commission)}</span>
+                                <div className="flex justify-between text-[#b16a2b]">
+                                    <span>ค่าธรรมเนียมแพลตฟอร์ม</span>
+                                    <span>- {formatBaht(selected.commission)}</span>
                                 </div>
-                                <div className="flex justify-between border-t border-[#f0e6d8] pt-3 text-base font-black">
-                                    <span>ยอดเงินสุทธิที่ร้านได้รับ</span>
-                                    <span className="text-[#1f6b4e]">
-                                        {formatBaht(selected.net)}
-                                    </span>
+                                <div className="flex justify-between border-t border-dashed border-[#eadfce] pt-6 items-end">
+                                    <div>
+                                        <p className="text-[10px] font-black text-[#8c7a66] uppercase tracking-widest mb-1">ยอดเงินที่ร้านได้รับ</p>
+                                        <p className="text-4xl font-black text-[#2f7d57]">{formatBaht(selected.net)}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="rounded-lg bg-[#e7f2e9] px-3 py-1.5 text-[10px] font-black text-[#2f7d57] uppercase tracking-widest">
+                                            {selected.status === "completed" ? "โอนเงินแล้ว" : "รอดำเนินการ"}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </section>
 
-                        <section className="rounded-3xl border border-[#eadfce] bg-[#faf4ea] p-4">
-                            <p className="text-sm font-black text-[#2f2a1d]">
-                                จัดการใบเสร็จ
-                            </p>
-                            <div className="mt-4 flex flex-wrap gap-3">
-                                <button
-                                    onClick={() => handlePrintReceipt(selected)}
-                                    className="inline-flex items-center gap-2 rounded-full bg-[#2f2a1d] px-5 py-2 text-xs font-black text-white"
-                                >
-                                    <Printer size={14} /> พิมพ์ใบเสร็จ
-                                </button>
-                                <button
-                                    onClick={() => handleDownloadReceipt(selected)}
-                                    className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-5 py-2 text-xs font-black text-[#6b5d4b]"
-                                >
-                                    <Download size={14} /> ดาวน์โหลด PDF
-                                </button>
+                        <section className="rounded-[32px] border border-[#eadfce] bg-[#3d3522] p-8 shadow-xl shadow-[#3d3522]/20">
+                            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                <div className="text-center sm:text-left">
+                                    <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">จัดการเอกสาร</p>
+                                    <h4 className="text-lg font-black text-white">ใบเสร็จรับเงิน (E-Receipt)</h4>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => handlePrintReceipt(selected)}
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-xs font-black text-[#3d3522] hover:bg-gray-100 transition-all active:scale-95 shadow-lg"
+                                    >
+                                        <Printer size={16} /> พิมพ์
+                                    </button>
+                                    <button
+                                        onClick={() => handleDownloadReceipt(selected)}
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-6 py-3 text-xs font-black text-white hover:bg-white/20 transition-all active:scale-95 border border-white/20"
+                                    >
+                                        <Download size={16} /> บันทึก PDF
+                                    </button>
+                                </div>
                             </div>
                         </section>
                     </div>
                 )}
             </Drawer>
-        </div>
+        </main>
     );
 }
 

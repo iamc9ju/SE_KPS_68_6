@@ -486,8 +486,8 @@ export default function FoodPartnerMenuPage() {
 
     return (
         <>
-            <main className="flex-1 overflow-y-auto px-8 py-8 ml-64">
-                <div className="w-full space-y-6">
+            <main className="flex-1 h-screen overflow-y-auto px-8 py-10 lg:pl-64 scroll-smooth">
+                <div className="mx-auto max-w-[1440px] space-y-6">
                     <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                             <div>
@@ -618,8 +618,8 @@ export default function FoodPartnerMenuPage() {
                             </div>
                         ))}
                     </section>
-                </div>
-            </main>
+            </div>
+        </main>
 
             <Modal
                 open={showModal}

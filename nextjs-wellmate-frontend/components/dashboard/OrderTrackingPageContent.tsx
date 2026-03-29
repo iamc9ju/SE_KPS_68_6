@@ -46,11 +46,35 @@ const STATUS_META: Record<
     },
     accepted: {
         stage: 2,
+        label: "ร้านรับออเดอร์แล้ว",
+        description: "ออเดอร์ได้รับการยืนยันแล้วและกำลังเข้าสู่กระบวนการเตรียมอาหาร",
+        eta: "20-30 นาที",
+        accent: "bg-[#eaf3ff] text-[#295fc0]",
+        icon: Package,
+    },
+    preparing: {
+        stage: 2,
         label: "ร้านกำลังเตรียมอาหาร",
         description: "ออเดอร์ได้รับการยืนยันแล้วและกำลังจัดเตรียมเมนูของคุณ",
         eta: "15-25 นาที",
-        accent: "bg-[#eaf3ff] text-[#295fc0]",
+        accent: "bg-[#fff6df] text-[#8c6b13]",
         icon: Package,
+    },
+    ready: {
+        stage: 2,
+        label: "เตรียมอาหารเสร็จแล้ว รอการจัดส่ง",
+        description: "อาหารของคุณเตรียมเสร็จแล้ว กำลังรอไรเดอร์มารับ",
+        eta: "10-15 นาที",
+        accent: "bg-[#e6f0ff] text-[#3f6fb5]",
+        icon: CheckCircle2,
+    },
+    delivering: {
+        stage: 3,
+        label: "ออเดอร์กำลังจัดส่ง",
+        description: "ไรเดอร์รับออเดอร์แล้วและกำลังเดินทางไปหาคุณ",
+        eta: "5-15 นาที",
+        accent: "bg-[#f5e6ff] text-[#7a3fb5]",
+        icon: Bike,
     },
     shipping: {
         stage: 3,
@@ -97,7 +121,7 @@ function formatDateTime(value?: string) {
 }
 
 function isActiveOrder(status: OrderStatus) {
-    return status === "pending" || status === "accepted" || status === "shipping";
+    return ["pending", "accepted", "preparing", "ready", "delivering", "shipping"].includes(status);
 }
 
 export default function OrderTrackingPageContent() {

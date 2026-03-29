@@ -36,8 +36,11 @@ type FilterOption = {
 
 const statusConfig = {
     pending: { label: 'รอการยืนยัน', color: 'bg-amber-100 text-[#3d3522]', icon: Clock },
-    accepted: { label: 'กำลังเตรียมอาหาร', color: 'bg-blue-100 text-[#3d3522]', icon: Package },
-    shipping: { label: 'กำลังจัดส่ง', color: 'bg-indigo-100 text-[#3d3522]', icon: MapPin },
+    accepted: { label: 'รับออเดอร์แล้ว', color: 'bg-blue-100 text-[#3d3522]', icon: CheckCircle2 },
+    preparing: { label: 'กำลังเตรียมอาหาร', color: 'bg-orange-100 text-[#3d3522]', icon: Package },
+    ready: { label: 'เตรียมอาหารเสร็จแล้ว รอการจัดส่ง', color: 'bg-emerald-100 text-[#3d3522]', icon: CheckCircle2 },
+    delivering: { label: 'กำลังจัดส่ง', color: 'bg-indigo-100 text-[#3d3522]', icon: MapPin },
+    shipping: { label: 'กำลังจัดส่ง', color: 'bg-indigo-100 text-[#3d3522]', icon: MapPin }, // Compatibility
     delivered: { label: 'จัดส่งสำเร็จ', color: 'bg-emerald-100 text-[#3d3522]', icon: CheckCircle2 },
     cancelled: { label: 'ยกเลิกแล้ว', color: 'bg-slate-100 text-[#3d3522]', icon: AlertCircle },
 };
@@ -46,7 +49,7 @@ export default function OrdersPage() {
     const { user } = useAuthStore();
     const router = useRouter();
     const isFoodPartner = user?.role === "food_partner";
-
+    const isPatient = user?.role === "patient";
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -59,10 +62,24 @@ export default function OrdersPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const ordersPerPage = 6;
 
+    const fetchOrders = async () => {
+        if (!isPatient) return;
+        try {
+            setLoading(true);
+            const res = await api.get('/orders');
+            setOrders(unwrapOrderList(res.data));
+            setErrorMessage(null);
+        } catch {
+            setOrders([]);
+            setErrorMessage('ยังโหลดรายการสั่งซื้อไม่ได้ กรุณาตรวจสอบว่า backend กำลังรันอยู่ แล้วลองรีเฟรชอีกครั้ง');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        if (isFoodPartner) return;
         fetchOrders();
-    }, [isFoodPartner]);
+    }, [isPatient]);
 
     // Polling logic for QR Modal if open
     useEffect(() => {
@@ -84,19 +101,6 @@ export default function OrdersPage() {
         return () => clearInterval(interval);
     }, [qrModalOrder]);
 
-    const fetchOrders = async () => {
-        try {
-            setLoading(true);
-            const res = await api.get('/orders');
-            setOrders(unwrapOrderList(res.data));
-            setErrorMessage(null);
-        } catch {
-            setOrders([]);
-            setErrorMessage('ยังโหลดรายการสั่งซื้อไม่ได้ กรุณาตรวจสอบว่า backend กำลังรันอยู่ แล้วลองรีเฟรชอีกครั้ง');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const filteredOrders = orders.filter(order => {
         if (filter === 'all') return true;
@@ -149,9 +153,31 @@ export default function OrdersPage() {
         return <FoodPartnerOrders />;
     }
 
+    if (!isPatient) {
+        return (
+            <div className="flex-1 flex items-center justify-center min-h-screen bg-[#fffbf5] lg:pl-64">
+                <div className="bg-white rounded-[48px] p-20 text-center shadow-sm border border-gray-100 max-w-2xl mx-10">
+                    <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                        <AlertCircle size={48} className="text-red-400" />
+                    </div>
+                    <h3 className="text-2xl font-black text-[#3d3522] mb-3">เข้าถึงไม่ได้</h3>
+                    <p className="text-[#3d3522] font-bold mb-10 text-lg leading-relaxed">
+                        ขออภัย หน้านี้สำหรับผู้ใช้งานในกลุ่ม "คนไข้" หรือ "ร้านค้าอาหาร" เท่านั้น
+                    </p>
+                    <button 
+                        onClick={() => router.push('/dashboard')}
+                        className="bg-[#3d3522] text-white px-12 py-5 rounded-[24px] font-black hover:bg-[#2d2618] transition-all shadow-xl active:scale-95 text-lg"
+                    >
+                        กลับไปหน้าหลัก
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     if (loading) {
         return (
-            <div className="flex-1 flex items-center justify-center min-h-screen bg-[#fffbf5]">
+            <div className="flex-1 flex items-center justify-center min-h-screen bg-[#fffbf5] lg:pl-64">
                 <div className="flex flex-col items-center gap-6">
                     <Loader2 className="w-16 h-16 animate-spin text-[#C6E065]" />
                     <p className="text-[#3d3522] font-black uppercase tracking-widest text-xs">กำลังโหลดรายการสั่งซื้อ...</p>
@@ -209,13 +235,13 @@ export default function OrdersPage() {
                     
                     {/* Filters - Modern Chips */}
                     <div className="flex gap-3 mt-10 overflow-x-auto pb-4 no-scrollbar">
-                        {[
+                        {([
                             { id: 'all', label: 'ทั้งหมด', icon: LayoutGrid },
                             { id: 'unpaid', label: 'ค้างชำระ', icon: Wallet },
                             { id: 'accepted', label: 'กำลังเตรียม', icon: Clock },
                             { id: 'shipping', label: 'กำลังส่ง', icon: MapPin },
                             { id: 'delivered', label: 'สำเร็จแล้ว', icon: CheckCircle2 },
-                        ].map((btn: FilterOption) => (
+                        ] as FilterOption[]).map((btn) => (
                             <button
                                 key={btn.id}
                                 onClick={() => setFilter(btn.id)}

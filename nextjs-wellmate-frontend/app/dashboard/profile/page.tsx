@@ -16,8 +16,6 @@ import {
     UploadCloud,
     Wallet,
 } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import BackgroundPattern from "@/components/dashboard/BackgroundPattern";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 
@@ -606,12 +604,8 @@ export default function FoodPartnerProfilePage() {
     };
 
     return (
-        <div className="relative isolate flex min-h-screen bg-[#faf4ea] text-[#3f3425]">
-            <BackgroundPattern />
-            <Sidebar />
-
-            <main className="flex-1 px-8 py-8 md:ml-64">
-                <div className="mx-auto max-w-[1200px] space-y-6">
+        <main className="flex-1 overflow-y-auto custom-scrollbar ml-64 px-4 sm:px-8 py-8">
+            <div className="mx-auto max-w-[1440px] space-y-6 pb-20">
                     <section className="rounded-[28px] border border-[#eadfce] bg-white p-6 shadow-sm">
                         <div className="flex flex-col gap-4">
                             <div className="inline-flex items-center gap-2 rounded-full bg-[#f4ead8] px-3 py-1 text-xs font-bold text-[#7b6a55]">
@@ -1168,6 +1162,5 @@ export default function FoodPartnerProfilePage() {
                     </section>
                 </div>
             </main>
-        </div>
-    );
+        );
 }

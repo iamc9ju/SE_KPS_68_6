@@ -9,6 +9,7 @@ import RightSidebar from "@/components/dashboard/RightSidebar";
 import RecipeCard from "@/components/healthymenu/RecipeCard";
 import FoodDetailModal from "@/components/ui/FoodDetail/FoodDetailModal";
 import { useCartStore, MenuItem as StoreMenuItem } from "@/store/cart-store";
+import { useAuthStore } from "@/store/auth-store";
 
 type LocalMenuItem = StoreMenuItem & {
     restaurantName: string;
@@ -179,6 +180,11 @@ function MenuCardWrapper({
 
 function AddToCartButton({ item }: { item: LocalMenuItem }) {
     const addItem = useCartStore(state => state.addItem);
+    const userRole = useAuthStore(state => state.user?.role);
+    const isPatient = userRole === "patient";
+
+    if (!isPatient) return null;
+
     return (
         <button
             onClick={(e) => {
@@ -214,6 +220,9 @@ function RestaurantCard({ shop }: { shop: Restaurant }) {
 }
 
 export default function HealthyMenu() {
+    const userRole = useAuthStore(state => state.user?.role);
+    const isPatient = userRole === "patient";
+
     const searchParams = useSearchParams();
     const openCartFromQuery = searchParams.get("cart");
     const [search, setSearch] = useState("");
@@ -349,6 +358,12 @@ export default function HealthyMenu() {
         <div className="flex-1 flex flex-col w-full h-screen bg-[#fffaf0] font-sans text-[#3d3522] overflow-hidden relative">
             <main className={`flex-1 overflow-y-auto px-8 py-8 z-10 custom-scrollbar ml-64 bg-[#FDF9F3] mr-0`}>
                 <div className="max-w-none w-full">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-4xl font-black text-[#1a1a1a] mb-2 tracking-tight">เลือกเมนูสุขภาพ</h1>
+                            <p className="text-gray-400 font-bold text-sm">ค้นพบอาหารที่อร่อยและดีต่อร่างกายจากพาร์ทเนอร์ของเรา</p>
+                        </div>
+                    </div>
 
 
                     {/* Category Circles Row */}
@@ -539,27 +554,30 @@ export default function HealthyMenu() {
                 </div>
             </main>
 
-            <RightSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+            {isPatient && (
+                <>
+                    <RightSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+                    {/* Floating Cart Button (Shopee/Lazada style - Brown/Cream Edition) */}
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        className="fixed bottom-8 right-8 z-[60] bg-[#faf8f2] border-[6px] border-[#8a7550] shadow-[0_10px_40px_-5px_rgba(138,117,80,0.4)] p-4 rounded-full hover:scale-110 hover:border-[#3d3522] transition-all duration-300 flex items-center justify-center group"
+                    >
+                        <div className="relative text-[#8a7550] group-hover:text-[#3d3522] transition-colors">
+                            <ShoppingCart size={36} strokeWidth={2.5} />
+                            {cartItems.length > 0 && (
+                                <div className="absolute -top-3 -left-4 bg-red-500 text-white text-[12px] font-black w-[26px] h-[26px] rounded-full flex items-center justify-center shadow-lg border-2 border-[#faf8f2]">
+                                    {getTotalItems() > 99 ? '99+' : getTotalItems()}
+                                </div>
+                            )}
+                        </div>
+                    </button>
+                </>
+            )}
             <FoodDetailModal 
                 isOpen={!!selectedItem} 
                 onClose={() => setSelectedItem(null)} 
                 item={selectedItem} 
             />
-
-            {/* Floating Cart Button (Shopee/Lazada style - Brown/Cream Edition) */}
-            <button
-                onClick={() => setIsCartOpen(true)}
-                className="fixed bottom-8 right-8 z-[60] bg-[#faf8f2] border-[6px] border-[#8a7550] shadow-[0_10px_40px_-5px_rgba(138,117,80,0.4)] p-4 rounded-full hover:scale-110 hover:border-[#3d3522] transition-all duration-300 flex items-center justify-center group"
-            >
-                <div className="relative text-[#8a7550] group-hover:text-[#3d3522] transition-colors">
-                    <ShoppingCart size={36} strokeWidth={2.5} />
-                    {cartItems.length > 0 && (
-                        <div className="absolute -top-3 -left-4 bg-red-500 text-white text-[12px] font-black w-[26px] h-[26px] rounded-full flex items-center justify-center shadow-lg border-2 border-[#faf8f2]">
-                            {getTotalItems() > 99 ? '99+' : getTotalItems()}
-                        </div>
-                    )}
-                </div>
-            </button>
         </div>
     );
 }

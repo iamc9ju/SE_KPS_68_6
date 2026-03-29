@@ -10,11 +10,12 @@ import {
     Phone,
     Store,
     UtensilsCrossed,
+    Loader2,
 } from "lucide-react";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 
-type OrderStatus = "new" | "preparing" | "ready";
+type OrderStatus = "new" | "preparing" | "ready" | "delivering" | "delivered";
 
 type OrderItem = {
     name: string;
@@ -85,13 +86,17 @@ const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านยุ
 const STATUS_LABEL: Record<OrderStatus, string> = {
     new: "กำลังรอรับออเดอร์",
     preparing: "กำลังเตรียมอาหาร",
-    ready: "พร้อมส่ง / รอไรเดอร์",
+    ready: "เตรียมอาหารเสร็จแล้ว รอการจัดส่ง",
+    delivering: "กำลังจัดส่ง",
+    delivered: "จัดส่งเรียบร้อยแล้ว",
 };
 
 const STATUS_TONE: Record<OrderStatus, string> = {
     new: "bg-[#e7f2e9] text-[#2f7d57]",
     preparing: "bg-[#fff6df] text-[#8c6b13]",
     ready: "bg-[#e6f0ff] text-[#3f6fb5]",
+    delivering: "bg-[#f5e6ff] text-[#7a3fb5]",
+    delivered: "bg-gray-100 text-gray-600",
 };
 
 const PAYMENT_LABEL: Record<Order["paymentStatus"], string> = {
@@ -106,12 +111,14 @@ const formatBaht = (value: number) =>
 const toUiStatus = (status: ApiOrder["status"]): OrderStatus => {
     if (status === "pending") return "new";
     if (status === "accepted" || status === "preparing") return "preparing";
-    if (status === "ready" || status === "delivering") return "ready";
+    if (status === "ready") return "ready";
+    if (status === "delivering") return "delivering";
+    if (status === "delivered") return "delivered";
     return "new";
 };
 
 const isActiveStatus = (status: ApiOrder["status"]) =>
-    status !== "delivered" && status !== "cancelled";
+    status !== "cancelled";
 
 const toPaymentStatus = (status: ApiOrder["paymentStatus"]): Order["paymentStatus"] => {
     if (status === "PAID") return "paid";
@@ -266,12 +273,14 @@ function OrderCard({
     onReject,
     onReady,
     onView,
+    isProcessing,
 }: {
     order: Order;
     onAccept: () => void;
     onReject: () => void;
     onReady: () => void;
     onView: () => void;
+    isProcessing?: boolean;
 }) {
     const isLate = order.minutes >= 15;
     return (
@@ -318,13 +327,16 @@ function OrderCard({
                         <>
                             <button
                                 onClick={onAccept}
-                                className="rounded-full bg-[#2f7d57] px-4 py-2 text-xs font-black text-white"
+                                disabled={isProcessing}
+                                className="inline-flex items-center gap-2 rounded-full bg-[#2f7d57] px-4 py-2 text-xs font-black text-white disabled:opacity-50"
                             >
+                                {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
                                 รับออเดอร์
                             </button>
                             <button
                                 onClick={onReject}
-                                className="rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-black text-[#b13a3a]"
+                                disabled={isProcessing}
+                                className="rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-black text-[#b13a3a] disabled:opacity-50"
                             >
                                 ปฏิเสธ
                             </button>
@@ -333,15 +345,35 @@ function OrderCard({
                     {order.status === "preparing" && (
                         <button
                             onClick={onReady}
-                            className="rounded-full bg-[#f4c84a] px-4 py-2 text-xs font-black text-[#3b2c12]"
+                            disabled={isProcessing}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#f4c84a] px-4 py-2 text-xs font-black text-[#3b2c12] disabled:opacity-50"
                         >
+                            {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
                             อาหารเสร็จแล้ว
                         </button>
                     )}
                     {order.status === "ready" && (
-                        <div className="text-xs font-bold text-[#6b5d4b]">
-                            {order.riderStatus ?? "รอไรเดอร์มารับ"}
-                        </div>
+                        <button
+                            onClick={() => onAccept()}
+                            disabled={isProcessing}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#7a3fb5] px-4 py-2 text-xs font-black text-white disabled:opacity-50"
+                        >
+                            {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
+                            เริ่มจัดส่ง
+                        </button>
+                    )}
+                    {order.status === "delivering" && (
+                        <button
+                            onClick={() => onReady()}
+                            disabled={isProcessing}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#2f7d57] px-4 py-2 text-xs font-black text-white disabled:opacity-50"
+                        >
+                            {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
+                            จัดส่งสำเร็จ
+                        </button>
+                    )}
+                    {order.status === "delivered" && (
+                        <Badge text="สำเร็จแล้ว" />
                     )}
                 </div>
                 <button
@@ -366,6 +398,7 @@ export default function FoodPartnerOrders() {
     const [showReject, setShowReject] = useState(false);
     const [showEmergencyPause, setShowEmergencyPause] = useState(false);
     const [selectedReason, setSelectedReason] = useState(REJECT_REASONS[0]);
+    const [processingOrders, setProcessingOrders] = useState<Set<string>>(new Set());
 
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -439,6 +472,10 @@ export default function FoodPartnerOrders() {
                 const known = knownOrderIdsRef.current;
                 const hasNew = mappedActive.some((o) => !known.has(o.id));
                 if (hasNew) {
+                    if (soundOn) {
+                        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+                        audio.play().catch(e => console.error("Sound play failed:", e));
+                    }
                     knownOrderIdsRef.current = new Set(mappedActive.map((o) => o.id));
                     setAllOrders(mappedAll);
                     setOrders(mappedActive);
@@ -482,6 +519,8 @@ export default function FoodPartnerOrders() {
             new: orders.filter((o) => o.status === "new"),
             preparing: orders.filter((o) => o.status === "preparing"),
             ready: orders.filter((o) => o.status === "ready"),
+            delivering: orders.filter((o) => o.status === "delivering"),
+            delivered: orders.filter((o) => o.status === "delivered"),
         };
     }, [orders]);
 
@@ -507,11 +546,20 @@ export default function FoodPartnerOrders() {
     };
 
     const acceptOrder = async (order: Order) => {
+        setProcessingOrders((prev) => new Set(prev).add(order.id));
         try {
             await api.patch(`/orders/${order.id}/status`, { status: "preparing" });
             setOrders((prev) =>
                 prev.map((o) => (o.id === order.id ? { ...o, status: "preparing" } : o)),
             );
+            Swal.fire({
+                icon: "success",
+                title: "รับออเดอร์แล้ว",
+                text: `ออเดอร์ #${order.id} กำลังเตรียมอาหาร`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: "#fffbf5",
+            });
         } catch (error) {
             console.error("Failed to accept order:", error);
             Swal.fire({
@@ -521,15 +569,30 @@ export default function FoodPartnerOrders() {
                 confirmButtonColor: "#3d3522",
                 background: "#fffbf5",
             });
+        } finally {
+            setProcessingOrders((prev) => {
+                const next = new Set(prev);
+                next.delete(order.id);
+                return next;
+            });
         }
     };
 
     const markReady = async (order: Order) => {
+        setProcessingOrders((prev) => new Set(prev).add(order.id));
         try {
             await api.patch(`/orders/${order.id}/status`, { status: "ready" });
             setOrders((prev) =>
                 prev.map((o) => (o.id === order.id ? { ...o, status: "ready" } : o)),
             );
+            Swal.fire({
+                icon: "success",
+                title: "อาหารเสร็จแล้ว",
+                text: `ออเดอร์ #${order.id} พร้อมจัดส่งแล้ว`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: "#fffbf5",
+            });
         } catch (error) {
             console.error("Failed to mark ready:", error);
             Swal.fire({
@@ -539,13 +602,63 @@ export default function FoodPartnerOrders() {
                 confirmButtonColor: "#3d3522",
                 background: "#fffbf5",
             });
+        } finally {
+            setProcessingOrders((prev) => {
+                const next = new Set(prev);
+                next.delete(order.id);
+                return next;
+            });
+        }
+    };
+
+    const markDelivering = async (order: Order) => {
+        setProcessingOrders((prev) => new Set(prev).add(order.id));
+        try {
+            await api.patch(`/orders/${order.id}/status`, { status: "delivering" });
+            setOrders((prev) =>
+                prev.map((o) => (o.id === order.id ? { ...o, status: "delivering" } : o)),
+            );
+            Swal.fire({
+                icon: "success",
+                title: "เริ่มจัดส่งแล้ว",
+                text: `ออเดอร์ #${order.id} กำลังนำส่งลูกค้า`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: "#fffbf5",
+            });
+        } catch (error) {
+            console.error("Failed to mark delivering:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Update failed",
+                text: "Unable to mark as delivering",
+                confirmButtonColor: "#3d3522",
+                background: "#fffbf5",
+            });
+        } finally {
+            setProcessingOrders((prev) => {
+                const next = new Set(prev);
+                next.delete(order.id);
+                return next;
+            });
         }
     };
 
     const markDelivered = async (order: Order) => {
+        setProcessingOrders((prev) => new Set(prev).add(order.id));
         try {
             await api.patch(`/orders/${order.id}/status`, { status: "delivered" });
-            setOrders((prev) => prev.filter((o) => o.id !== order.id));
+            setOrders((prev) =>
+                prev.map((o) => (o.id === order.id ? { ...o, status: "delivered" } : o)),
+            );
+            Swal.fire({
+                icon: "success",
+                title: "จัดส่งเรียบร้อย",
+                text: `ออเดอร์ #${order.id} ถูกจัดส่งเรียบร้อยแล้ว`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: "#fffbf5",
+            });
             setShowDetails(false);
             setSelectedOrder(null);
         } catch (error) {
@@ -557,14 +670,29 @@ export default function FoodPartnerOrders() {
                 confirmButtonColor: "#3d3522",
                 background: "#fffbf5",
             });
+        } finally {
+            setProcessingOrders((prev) => {
+                const next = new Set(prev);
+                next.delete(order.id);
+                return next;
+            });
         }
     };
 
     const confirmReject = async () => {
         if (!selectedOrder) return;
+        setProcessingOrders((prev) => new Set(prev).add(selectedOrder.id));
         try {
             await api.patch(`/orders/${selectedOrder.id}/status`, { status: "cancelled" });
             setOrders((prev) => prev.filter((o) => o.id !== selectedOrder.id));
+            Swal.fire({
+                icon: "success",
+                title: "ปฏิเสธสำเร็จ",
+                text: `ออเดอร์ #${selectedOrder.id} ถูกยกเลิกแล้ว`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: "#fffbf5",
+            });
             setShowReject(false);
         } catch (error) {
             console.error("Failed to reject order:", error);
@@ -574,6 +702,12 @@ export default function FoodPartnerOrders() {
                 text: "Unable to reject order",
                 confirmButtonColor: "#3d3522",
                 background: "#fffbf5",
+            });
+        } finally {
+            setProcessingOrders((prev) => {
+                const next = new Set(prev);
+                next.delete(selectedOrder.id);
+                return next;
             });
         }
     };
@@ -593,7 +727,7 @@ export default function FoodPartnerOrders() {
 
     return (
         <main className="flex-1 h-screen overflow-y-auto px-8 py-10 lg:pl-64 bg-[#fffbf5] scroll-smooth">
-            <div className="mx-auto max-w-[1300px] space-y-6">
+            <div className="mx-auto max-w-[1440px] space-y-6">
                 <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
                     {loadError && (
                         <div className="mb-4 rounded-2xl border border-[#f0e6d8] bg-[#fff5f5] px-4 py-3 text-xs font-bold text-[#b13a3a]">
@@ -683,12 +817,14 @@ export default function FoodPartnerOrders() {
                         {([
                             { key: "new", label: "ออเดอร์ใหม่" },
                             { key: "preparing", label: "กำลังเตรียม" },
-                            { key: "ready", label: "รอจัดส่ง" },
+                            { key: "ready", label: "รอส่ง" },
+                            { key: "delivering", label: "กำลังส่ง" },
+                            { key: "delivered", label: "สำเร็จ" },
                         ] as const).map((tab) => (
                             <button
                                 key={tab.key}
                                 onClick={() => setMobileTab(tab.key)}
-                                className={`flex-1 rounded-full border px-3 py-2 text-xs font-black ${mobileTab === tab.key
+                                className={`flex-1 rounded-full border px-2 py-2 text-[10px] font-black ${mobileTab === tab.key
                                     ? "border-[#2f7d57] bg-[#2f7d57] text-white"
                                     : "border-[#eadfce] bg-white text-[#6b5d4b]"
                                     }`}
@@ -698,7 +834,7 @@ export default function FoodPartnerOrders() {
                         ))}
                     </div>
 
-                    <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                         {([
                             {
                                 key: "new",
@@ -717,9 +853,23 @@ export default function FoodPartnerOrders() {
                             {
                                 key: "ready",
                                 title: "รอจัดส่ง",
-                                description: "เสร็จแล้ว รอไรเดอร์",
+                                description: "รอไรเดอร์มารับ",
                                 accent: "bg-[#e6f0ff] text-[#3f6fb5]",
                                 orders: grouped.ready,
+                            },
+                            {
+                                key: "delivering",
+                                title: "กำลังจัดส่ง",
+                                description: "ไรเดอร์กำลังมุ่งหน้าไป",
+                                accent: "bg-[#f5e6ff] text-[#7a3fb5]",
+                                orders: grouped.delivering,
+                            },
+                            {
+                                key: "delivered",
+                                title: "จัดส่งสำเร็จ",
+                                description: "ลูกค้าได้รับอาหารแล้ว",
+                                accent: "bg-gray-100 text-gray-600",
+                                orders: grouped.delivered,
                             },
                         ] as const).map((column) => (
                             <div
@@ -755,9 +905,16 @@ export default function FoodPartnerOrders() {
                                     <OrderCard
                                         key={order.id}
                                         order={order}
-                                        onAccept={() => acceptOrder(order)}
+                                        isProcessing={processingOrders.has(order.id)}
+                                        onAccept={() => {
+                                            if (order.status === "new") acceptOrder(order);
+                                            if (order.status === "ready") markDelivering(order);
+                                        }}
                                         onReject={() => openReject(order)}
-                                        onReady={() => markReady(order)}
+                                        onReady={() => {
+                                            if (order.status === "preparing") markReady(order);
+                                            if (order.status === "delivering") markDelivered(order);
+                                        }}
                                         onView={() => openDetails(order)}
                                     />
                                 ))}
@@ -971,15 +1128,27 @@ export default function FoodPartnerOrders() {
                                                 markReady(selectedOrder);
                                                 return;
                                             }
+                                            if (selectedOrder.status === "ready") {
+                                                markDelivering(selectedOrder);
+                                                return;
+                                            }
                                             markDelivered(selectedOrder);
                                         }}
-                                        className="rounded-full bg-[#f4c84a] px-5 py-2 text-xs font-black text-[#3b2c12]"
+                                        disabled={processingOrders.has(selectedOrder.id)}
+                                        className="inline-flex items-center gap-2 rounded-full bg-[#f4c84a] px-5 py-2 text-xs font-black text-[#3b2c12] disabled:opacity-50"
                                     >
+                                        {processingOrders.has(selectedOrder.id) ? (
+                                            <Loader2 size={12} className="animate-spin" />
+                                        ) : null}
                                         {selectedOrder.status === "new"
                                             ? "Start cooking"
                                             : selectedOrder.status === "preparing"
                                                 ? "Food ready"
-                                                : "Delivered"}
+                                                : selectedOrder.status === "ready"
+                                                    ? "Start delivery"
+                                                    : selectedOrder.status === "delivering"
+                                                        ? "Delivered"
+                                                        : "Done"}
                                     </button>
                                     <button className="rounded-full border border-[#eadfce] bg-white px-5 py-2 text-xs font-black text-[#b13a3a]">
                                         ติดต่อแอดมิน / รายงานปัญหา
@@ -996,42 +1165,48 @@ export default function FoodPartnerOrders() {
                 title="ปฏิเสธออเดอร์"
                 onClose={() => setShowReject(false)}
             >
-                <div className="space-y-3 text-sm text-[#3f3425]">
-                    <p className="text-xs text-[#6b5d4b]">
-                        โปรดเลือกเหตุผลในการปฏิเสธเพื่อเก็บสถิติให้แอดมิน
-                    </p>
-                    <div className="space-y-2">
-                        {REJECT_REASONS.map((reason) => (
-                            <label
-                                key={reason}
-                                className="flex cursor-pointer items-center justify-between rounded-xl border border-[#eadfce] bg-white px-3 py-2"
+                {selectedOrder && (
+                    <div className="space-y-3 text-sm text-[#3f3425]">
+                        <p className="text-xs text-[#6b5d4b]">
+                            โปรดเลือกเหตุผลในการปฏิเสธเพื่อเก็บสถิติให้แอดมิน
+                        </p>
+                        <div className="space-y-2">
+                            {REJECT_REASONS.map((reason) => (
+                                <label
+                                    key={reason}
+                                    className="flex cursor-pointer items-center justify-between rounded-xl border border-[#eadfce] bg-white px-3 py-2"
+                                >
+                                    <span>{reason}</span>
+                                    <input
+                                        type="radio"
+                                        name="reject-reason"
+                                        value={reason}
+                                        checked={selectedReason === reason}
+                                        onChange={() => setSelectedReason(reason)}
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={confirmReject}
+                                disabled={processingOrders.has(selectedOrder.id)}
+                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#b13a3a] px-4 py-2 text-xs font-black text-white disabled:opacity-50"
                             >
-                                <span>{reason}</span>
-                                <input
-                                    type="radio"
-                                    name="reject-reason"
-                                    value={reason}
-                                    checked={selectedReason === reason}
-                                    onChange={() => setSelectedReason(reason)}
-                                />
-                            </label>
-                        ))}
+                                {processingOrders.has(selectedOrder.id) ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                ) : null}
+                                ยืนยันปฏิเสธ
+                            </button>
+                            <button
+                                onClick={() => setShowReject(false)}
+                                className="flex-1 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-black text-[#6b5d4b]"
+                            >
+                                ยกเลิก
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={confirmReject}
-                            className="flex-1 rounded-full bg-[#b13a3a] px-4 py-2 text-xs font-black text-white"
-                        >
-                            ยืนยันปฏิเสธ
-                        </button>
-                        <button
-                            onClick={() => setShowReject(false)}
-                            className="flex-1 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-black text-[#6b5d4b]"
-                        >
-                            ยกเลิก
-                        </button>
-                    </div>
-                </div>
+                )}
             </Modal>
 
             <Modal

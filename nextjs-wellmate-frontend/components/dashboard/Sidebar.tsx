@@ -32,9 +32,9 @@ export default function Sidebar() {
         { icon: Calendar, label: "ปฏิทิน", href: "/dashboard/calendar", roles: ["patient", "nutritionist", "admin"] },
         { icon: Clock, label: "จัดการเวลาทำงาน", href: "/dashboard/nutritionists/schedule", roles: ["nutritionist", "admin"] },
         { icon: MessageSquare, label: "ข้อความ", href: "/dashboard/chat", roles: ["patient", "nutritionist", "admin"] },
-        { icon: Utensils, label: "ร้านอาหารสุขภาพ", href: "/dashboard/healthymenu", roles: ["patient", "admin"] },
+        { icon: Utensils, label: "ร้านอาหารสุขภาพ", href: "/dashboard/healthymenu", roles: ["patient"] },
         { icon: Utensils, label: "จัดการเมนู", href: "/dashboard/menu", roles: ["food_partner", "admin"] },
-        { icon: Package, label: "รายการสั่งซื้อ", href: "/dashboard/orders", roles: ["patient", "food_partner", "admin"] },
+        { icon: Package, label: "รายการสั่งซื้อ", href: "/dashboard/orders", roles: ["patient"] },
         { icon: BookOpen, label: "แผนการกิน", href: "/dashboard/meal-plan", roles: ["patient", "nutritionist", "admin"] },
         { icon: ScrollText, label: "บันทึกอาหาร", href: "/dashboard/food-diary", roles: ["patient"] },
         { icon: BarChart2, label: "ความคืบหน้า", href: "/dashboard/progress", roles: ["patient", "admin"] },
@@ -48,8 +48,8 @@ export default function Sidebar() {
     const filteredMenuItems = isFoodPartner
         ? [
             { icon: LayoutGrid, label: "แดชบอร์ด", href: "/dashboard" },
+            { icon: Package, label: "จัดการออเดอร์", href: "/dashboard/orders" },
             { icon: Utensils, label: "จัดการเมนู", href: "/dashboard/menu" },
-            { icon: Package, label: "รายการสั่งซื้อ", href: "/dashboard/orders" },
             { icon: BookOpen, label: "ประวัติ", href: "/dashboard/history" },
             { icon: UserCog, label: "ตั้งค่า", href: "/dashboard/profile" },
         ]
