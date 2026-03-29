@@ -2,14 +2,20 @@
 
 import { useAuthStore } from "@/store/auth-store";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function HealthProfileGuard({ children }: { children: React.ReactNode }) {
+    const [mounted, setMounted] = useState(false);
     const { user } = useAuthStore();
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         // Only enforce for patients
         if (user && user.role === "patient" && user.isProfileComplete === false) {
             // List of allowed paths even if profile is incomplete
@@ -20,7 +26,7 @@ export default function HealthProfileGuard({ children }: { children: React.React
                 router.push("/healthdata");
             }
         }
-    }, [user, pathname, router]);
+    }, [mounted, user, pathname, router]);
 
     return children;
 }
