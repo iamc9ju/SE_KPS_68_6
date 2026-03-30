@@ -386,11 +386,37 @@ model Appointment {
 
   chatRoom ChatRoom?
   mealPlan MealPlan[]
+  recommendedItems RecommendedMenuItem[]
 
   @@index([startTime])
   @@index([patientId])
   @@index([nutritionistId])
   @@map("appointment")
+}
+
+model MenuCategory {
+  id          Int      @id @default(autoincrement()) @map("category_id")
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  menuItems   MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model RecommendedMenuItem {
+  id            String   @id @default(uuid()) @map("id") @db.Uuid
+  appointmentId String   @map("appointment_id") @db.Uuid
+  menuItemId    Int      @map("menu_item_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId], onDelete: Cascade)
+  menuItem      MenuItem    @relation(fields: [menuItemId], references: [menuItemId], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@map("recommended_menu_items")
 }
 
 model FoodPartner {
@@ -474,7 +500,7 @@ model MenuItem {
   description   String?  @db.Text
   price         Decimal  @db.Decimal(10, 2)
   imageUrl      String?  @map("image_url") @db.VarChar(255)
-  category      String?  @db.VarChar(50)
+  categoryId    Int?     @map("category_id")
   caloriesKcal  Int?     @map("calories_kcal")
   proteinG      Decimal? @map("protein_g") @db.Decimal(5, 2)
   carbsG        Decimal? @map("carbs_g") @db.Decimal(5, 2)
@@ -484,15 +510,34 @@ model MenuItem {
   stockQuantity Int      @default(100) @map("stock_quantity")
   isOutOfStock  Boolean  @default(false) @map("is_out_of_stock")
   isAvailable   Boolean  @default(true) @map("is_available")
+  isSet         Boolean  @default(false) @map("is_set")
 
-  foodPartner     FoodPartner      @relation(fields: [foodPartnerId], references: [foodPartnerId], onDelete: Cascade)
-  orderItems      OrderItem[]
-  courseItems     CourseItem[]
-  mealPlanItems   MealPlanItem[]
-  menuIngredients MenuIngredient[]
-  cartItems       CartItem[]
+  foodPartner      FoodPartner           @relation(fields: [foodPartnerId], references: [foodPartnerId], onDelete: Cascade)
+  category         MenuCategory?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems       OrderItem[]
+  courseItems      CourseItem[]
+  mealPlanItems    MealPlanItem[]
+  menuIngredients  MenuIngredient[]
+  cartItems        CartItem[]
+  recommendedBy    RecommendedMenuItem[]
+  setComponents    SetItem[]             @relation("SetToComponents")
+  isPartOfSets     SetItem[]             @relation("ComponentToSet")
 
   @@map("menu_items")
+}
+
+model SetItem {
+  id              String   @id @default(uuid()) @db.Uuid @map("id")
+  setId           Int      @map("set_id")
+  componentItemId Int      @map("component_item_id")
+  quantity        Int      @default(1)
+
+  set             MenuItem @relation("SetToComponents", fields: [setId], references: [menuItemId], onDelete: Cascade)
+  component       MenuItem @relation("ComponentToSet", fields: [componentItemId], references: [menuItemId], onDelete: Cascade)
+
+  @@index([setId])
+  @@index([componentItemId])
+  @@map("set_items")
 }
 
 model Order {

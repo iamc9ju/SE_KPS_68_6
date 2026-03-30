@@ -20,25 +20,49 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasToken = request.cookies.has("accessToken");
+  const accessToken = request.cookies.get("accessToken")?.value;
   const isPublicPath = PUBLIC_PATHS.includes(pathname);
+  const isHealthDataPath = pathname === "/healthdata";
 
-  // 2. Redirect unauthenticated users trying to access protected paths
-  if (!hasToken && !isPublicPath) {
-    // If not logged in, redirect to login page
-    // Using session_expired=true can trigger a SweetAlert in the login page for better UX
-    const loginUrl = new URL("/login", request.url);
-    // Only add session_expired if they were trying to reach a significant protected area
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admindashboard") || pathname.startsWith("/nutritionist")) {
-       // We can optionally add this, but just a standard redirect is cleaner for "not logged in"
-       // loginUrl.searchParams.set("session_expired", "true");
-    }
-    return NextResponse.redirect(loginUrl);
+  // 2. Redirect unauthenticated users
+  if (!accessToken && !isPublicPath) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 3. Redirect authenticated users away from public auth pages to dashboard
-  if (hasToken && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // 3. Handle authenticated users
+  if (accessToken) {
+    if (pathname === "/login" || pathname === "/register") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    try {
+      // Decode JWT payload (middle part of the token)
+      const payloadBase64 = accessToken.split(".")[1];
+      if (payloadBase64) {
+        // Safe base64 decoding in Edge Runtime
+        const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        
+        const { role, isProfileComplete } = JSON.parse(jsonPayload);
+
+        // Redirect patients with incomplete profiles to /healthdata
+        if (role === "patient" && isProfileComplete === false && !isHealthDataPath && !pathname.startsWith("/auth")) {
+            const allowedAuthPaths = ["/auth/sign-out", "/auth/logout"];
+            if (!allowedAuthPaths.includes(pathname)) {
+                return NextResponse.redirect(new URL("/healthdata", request.url));
+            }
+        }
+
+        // Redirect patients with COMPLETE profiles AWAY from /healthdata
+        if (role === "patient" && isProfileComplete === true && isHealthDataPath) {
+            return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      }
+    } catch (e) {
+      console.error("Middleware JWT decode error:", e);
+    }
   }
 
   return NextResponse.next();

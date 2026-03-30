@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentRecommendationsDto } from './dto/update-recommendations.dto';
 import { Prisma, AppointmentStatus } from '@prisma/client';
 import { TIME_CONSTANTS } from '../common/constants/time.constants';
 import { ErrorMessages } from '../common/constants/response.constants';
@@ -191,11 +192,21 @@ export class AppointmentsService {
         nutritionist: {
           select: {
             nutritionistId: true,
-            firstName: true, // แก้ตรงนี้
-            lastName: true,  // แก้ตรงนี้
+            firstName: true,
+            lastName: true,
             user: {
               select: {
                 email: true,
+              },
+            },
+          },
+        },
+        recommendedItems: {
+          include: {
+            menuItem: {
+              include: {
+                foodPartner: true,
+                category: true,
               },
             },
           },
@@ -228,9 +239,8 @@ export class AppointmentsService {
         nutritionist: {
           select: {
             nutritionistId: true,
-            // แก้ไข: เปลี่ยนจาก name เป็น firstName และ lastName
-            firstName: true, // แก้ตรงนี้
-            lastName: true,  // แก้ตรงนี้
+            firstName: true,
+            lastName: true,
           },
         },
         patient: {
@@ -241,6 +251,20 @@ export class AppointmentsService {
         chatRoom: {
           select: {
             chatRoomId: true,
+          },
+        },
+        recommendedItems: {
+          include: {
+            menuItem: {
+              include: {
+                foodPartner: {
+                  select: {
+                    partnerName: true,
+                  },
+                },
+                category: true,
+              },
+            },
           },
         },
       },
@@ -285,9 +309,8 @@ export class AppointmentsService {
       include: {
         patient: {
           select: {
-            // แก้ไข: เปลี่ยนจาก name เป็น firstName และ lastName
-            firstName: true, // แก้ตรงนี้
-            lastName: true,  // แก้ตรงนี้
+            firstName: true,
+            lastName: true,
             user: {
               select: {
                 email: true,
@@ -298,6 +321,41 @@ export class AppointmentsService {
         },
       },
       orderBy: { startTime: 'desc' },
+    });
+  }
+
+  async saveRecommendations(appointmentId: string, userId: string, dto: UpdateAppointmentRecommendationsDto) {
+    const appointment = await this.prisma.appointment.findFirst({
+      where: { 
+        appointmentId,
+        nutritionist: {
+          userId: userId
+        }
+      },
+      include: { nutritionist: true },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException(ErrorMessages.APPOINTMENTS.NOT_FOUND + ' or unauthorized');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      // First, delete existing recommendations for this appointment
+      await tx.recommendedMenuItem.deleteMany({
+        where: { appointmentId },
+      });
+
+      // Then, create new ones
+      if (dto.menuItemIds.length > 0) {
+        await tx.recommendedMenuItem.createMany({
+          data: dto.menuItemIds.map((menuItemId) => ({
+            appointmentId,
+            menuItemId,
+          })),
+        });
+      }
+
+      return { message: 'Recommendations saved successfully' };
     });
   }
 }

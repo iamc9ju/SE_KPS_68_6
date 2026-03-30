@@ -37,10 +37,12 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
-  const routeByRole = (role: AuthUser["role"] | undefined) => {
+  const routeByRole = (role: AuthUser["role"] | undefined, isProfileComplete?: boolean) => {
     if (role === "admin") return "/dashboard/admindashboard";
     if (role === "food_partner") return "/dashboard";
-    if (role === "patient") return "/healthdata";
+    if (role === "patient") {
+      return isProfileComplete ? "/dashboard" : "/healthdata";
+    }
     return "/dashboard";
   };
 
@@ -90,7 +92,8 @@ export const useAuth = () => {
         });
       }
 
-      login(res.data.data);
+      const userData = res.data.data;
+      login(userData);
 
       if (rememberMe) {
         localStorage.setItem("savedEmail", data.email);
@@ -98,15 +101,18 @@ export const useAuth = () => {
         localStorage.removeItem("savedEmail");
       }
 
-      router.push(routeByRole(res.data.data?.role));
+      router.push(routeByRole(userData?.role, userData?.isProfileComplete));
     } catch (err) {
       const message = handleAxiosError(
         err,
         "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
       );
+
+      const isSuspended = message === "บัญชีของคุณถูกระงับ";
+
       await Swal.fire({
-        icon: "error",
-        title: "เข้าสู่ระบบไม่สำเร็จ",
+        icon: isSuspended ? "warning" : "error",
+        title: isSuspended ? "บัญชีถูกระงับ" : "เข้าสู่ระบบไม่สำเร็จ",
         text: message,
         confirmButtonText: "ลองใหม่อีกครั้ง",
         color: "#3d3522",
@@ -143,8 +149,9 @@ export const useAuth = () => {
 
       // Auto-login
       if (res.data?.data) {
-        login(res.data.data);
-        router.push(routeByRole(res.data.data?.role));
+        const userData = res.data.data;
+        login(userData);
+        router.push(routeByRole(userData.role, userData.isProfileComplete));
       } else {
         router.push("/login?registered=true");
       }

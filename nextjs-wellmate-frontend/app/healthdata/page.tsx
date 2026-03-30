@@ -253,6 +253,12 @@ export default function HealthProfilePage() {
         router.replace("/dashboard");
     }, [user, router]);
 
+    // Prevent rendering the form if the user has already completed their profile
+    // This avoids the UI "flicker" before the useEffect redirect kicks in
+    if (user?.role === "patient" && user?.isProfileComplete) {
+        return null;
+    }
+
     const handleChange = (field: string, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };

@@ -15,12 +15,6 @@ import {
 } from './dto/menu-item-request.dto';
 import { Prisma, UserRole } from '@prisma/client';
 
-type MenuItemWithPartner = Prisma.MenuItemGetPayload<{
-  include: {
-    foodPartner: { select: { partnerName: true; foodPartnerId: true } };
-  };
-}>;
-
 @Injectable()
 export class FoodMenuService {
   private readonly logger = new Logger(FoodMenuService.name);
@@ -40,7 +34,7 @@ export class FoodMenuService {
       foodPartnerId,
       maxCalories,
       isAvailable,
-      category,
+      categoryId,
     } = query;
 
     const skip = (page - 1) * limit;
@@ -49,7 +43,7 @@ export class FoodMenuService {
     if (foodPartnerId) where.foodPartnerId = foodPartnerId;
     if (isAvailable !== undefined) where.isAvailable = isAvailable;
     if (maxCalories) where.caloriesKcal = { lte: maxCalories };
-    if (category) where.category = category;
+    if (categoryId) where.categoryId = categoryId;
 
     if (q) {
       where.OR = [
@@ -68,6 +62,12 @@ export class FoodMenuService {
           include: {
             foodPartner: {
               select: { partnerName: true, foodPartnerId: true },
+            },
+            category: true,
+            setComponents: {
+              include: {
+                component: true,
+              },
             },
           },
         }),
@@ -101,6 +101,12 @@ export class FoodMenuService {
             address: true,
           },
         },
+        category: true,
+        setComponents: {
+          include: {
+            component: true,
+          },
+        },
       },
     });
 
@@ -117,17 +123,35 @@ export class FoodMenuService {
       throw new ForbiddenException('User is not registered as a Food Partner');
     }
 
+    const { components, ...rest } = dto;
+
     const newItem = await this.prisma.menuItem.create({
       data: {
-        ...dto,
+        ...rest,
         foodPartnerId: partner.foodPartnerId,
         price: new Prisma.Decimal(dto.price),
         proteinG: dto.proteinG ? new Prisma.Decimal(dto.proteinG) : null,
         carbsG: dto.carbsG ? new Prisma.Decimal(dto.carbsG) : null,
         fatG: dto.fatG ? new Prisma.Decimal(dto.fatG) : null,
+        isSet: dto.isSet ?? false,
+        setComponents:
+          dto.isSet && components
+            ? {
+                create: components.map((c) => ({
+                  componentItemId: c.componentItemId,
+                  quantity: c.quantity ?? 1,
+                })),
+              }
+            : undefined,
       },
       include: {
         foodPartner: { select: { partnerName: true, foodPartnerId: true } },
+        category: true,
+        setComponents: {
+          include: {
+            component: true,
+          },
+        },
       },
     });
 
@@ -142,17 +166,38 @@ export class FoodMenuService {
   ) {
     await this.verifyOwnership(id, userId, role);
 
+    const { components, ...rest } = dto;
+
     const updatedItem = await this.prisma.menuItem.update({
       where: { menuItemId: id },
       data: {
-        ...dto,
+        ...rest,
         price: dto.price ? new Prisma.Decimal(dto.price) : undefined,
         proteinG: dto.proteinG ? new Prisma.Decimal(dto.proteinG) : undefined,
         carbsG: dto.carbsG ? new Prisma.Decimal(dto.carbsG) : undefined,
         fatG: dto.fatG ? new Prisma.Decimal(dto.fatG) : undefined,
+        isSet: dto.isSet,
+        setComponents:
+          dto.isSet && components
+            ? {
+                deleteMany: {},
+                create: components.map((c) => ({
+                  componentItemId: c.componentItemId,
+                  quantity: c.quantity ?? 1,
+                })),
+              }
+            : dto.isSet === false
+              ? { deleteMany: {} }
+              : undefined,
       },
       include: {
         foodPartner: { select: { partnerName: true, foodPartnerId: true } },
+        category: true,
+        setComponents: {
+          include: {
+            component: true,
+          },
+        },
       },
     });
 
@@ -177,6 +222,12 @@ export class FoodMenuService {
     return { url };
   }
 
+  async findAllCategories() {
+    return this.prisma.menuCategory.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
   private async verifyOwnership(itemId: number, userId: string, role: string) {
     const item = await this.prisma.menuItem.findUnique({
       where: { menuItemId: itemId },
@@ -194,17 +245,24 @@ export class FoodMenuService {
     return item;
   }
 
-  private mapItems(items: MenuItemWithPartner[]) {
+  private mapItems(items: any[]) {
     return items.map((item) => this.mapItem(item));
   }
 
-  private mapItem(item: MenuItemWithPartner) {
+  private mapItem(item: any) {
     return {
       ...item,
       price: Number(item.price),
       proteinG: item.proteinG ? Number(item.proteinG) : null,
       carbsG: item.carbsG ? Number(item.carbsG) : null,
       fatG: item.fatG ? Number(item.fatG) : null,
+      components: item.setComponents
+        ? item.setComponents.map((sc: any) => ({
+            ...sc.component,
+            price: Number(sc.component.price),
+            quantity: sc.quantity,
+          }))
+        : [],
     };
   }
 }

@@ -9,8 +9,23 @@ import {
   Max,
   IsBoolean,
   IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class MenuItemComponentDto {
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  @IsNotEmpty()
+  componentItemId: number;
+
+  @ApiPropertyOptional({ example: 1, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+}
 
 export class CreateMenuItemDto {
   @ApiProperty({ example: 'Grilled Chicken Salad' })
@@ -33,10 +48,10 @@ export class CreateMenuItemDto {
   @IsUrl()
   imageUrl?: string;
 
-  @ApiPropertyOptional({ example: 'Salad' })
+  @ApiPropertyOptional({ example: 1 })
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsInt()
+  categoryId?: number;
 
   @ApiPropertyOptional({ example: 450 })
   @IsOptional()
@@ -78,6 +93,18 @@ export class CreateMenuItemDto {
   @IsInt()
   @Min(0)
   stockQuantity?: number;
+
+  @ApiPropertyOptional({ example: false, default: false })
+  @IsOptional()
+  @IsBoolean()
+  isSet?: boolean;
+
+  @ApiPropertyOptional({ type: [MenuItemComponentDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MenuItemComponentDto)
+  components?: MenuItemComponentDto[];
 }
 
 export class UpdateMenuItemDto extends CreateMenuItemDto {

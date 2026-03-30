@@ -2,24 +2,27 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
-    Search, Phone, Video, Paperclip, CheckCheck,
-    Check, Send, Bell, MoreVertical, Smile, X, Star,
-    ExternalLink, ChevronLeft, ChevronRight, ImageIcon, ZoomIn,
-    Download, Printer, BellOff, Trash2, Ban, UserCircle,
-    Clock, LogOut, Info,
+    Search, Paperclip, CheckCheck,
+    Check, Send, Star,
+    X, 
+    Clock, LogOut, Info, Smile,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useChatWebSocket } from "@/hooks/useChatWebSocket";
 import api from "@/lib/api";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
+import { appointmentsApi } from "@/services/appointments";
+import { menuApi, MenuItem as ServiceMenuItem } from "@/services/menu-items";
+import { useCartStore } from "@/store/cart-store";
+import Swal from "sweetalert2";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
     id: string;
     text: string;
     time: string;
-    isDoc: boolean; // isDoc here means "is from the other person" in the original mock's logic (confusing name, but keeping for UI compatibility)
+    isDoc: boolean; 
     read: boolean;
     type: "text" | "image" | "file";
     status?: "sending" | "sent" | "error";
@@ -34,8 +37,9 @@ interface ChatRoom {
         endTime: string;
         summary?: string;
         nutritionistNotes?: string;
-        patient: { firstName: string; lastName: string; user: { profileImageUrl: string } };
-        nutritionist: { firstName: string; lastName: string; user: { profileImageUrl: string } };
+        recommendedItems?: any[];
+        patient: { firstName: string; lastName: string; user: { profileImageUrl: string } | null };
+        nutritionist: { firstName: string; lastName: string; user: { profileImageUrl: string } | null };
     };
     chatMessages: any[];
 }
@@ -43,15 +47,67 @@ interface ChatRoom {
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DEFAULT_AVATAR = "/images/default-avatar.png";
 
-const GALLERY_IMAGES = [
-    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1543353071-873f17a7a088?w=800&auto=format&fit=crop",
-];
+// ─── Subcomponents ────────────────────────────────────────────────────────────
+const RecommendationCard = ({ items, onAddToCart }: { items: any[]; onAddToCart: (item: any) => void }) => {
+    const [selectedIds, setSelectedIds] = useState<number[]>(items.map(i => i.menuItem.menuItemId));
+    
+    const toggleSelect = (id: number) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
 
-const EMOJIS = ["😀", "😅", "😂", "🥰", "😎", "🥺", "😡", "👍", "🙏", "💪", "🥗", "🍗", "🍎", "🔥", "💯", "✨", "🎉", "💤", "💊", "🏥"];
+    const handleAddSelected = () => {
+        const selectedItems = items.filter(i => selectedIds.includes(i.menuItem.menuItemId));
+        selectedItems.forEach(i => onAddToCart(i.menuItem));
+    };
 
-// ─── Image Lightbox ───────────────────────────────────────────────────────────
+    return (
+        <div className="bg-white rounded-[24px] border border-[#87D039]/20 shadow-md overflow-hidden mt-4 w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-[#87D039]/10 px-5 py-3 border-b border-[#87D039]/10 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <Smile className="text-[#87D039]" size={18} />
+                    <span className="text-[13px] font-black text-[#5AAA1D] uppercase tracking-wider">โภชนาการแนะนำ</span>
+                </div>
+                <button 
+                    onClick={() => setSelectedIds(selectedIds.length === items.length ? [] : items.map(i => i.menuItem.menuItemId))}
+                    className="text-[10px] font-black uppercase tracking-widest text-[#5AAA1D] hover:underline"
+                >
+                    {selectedIds.length === items.length ? "ล้างทั้งหมด" : "เลือกทั้งหมด"}
+                </button>
+            </div>
+            <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+                {items.map((rec) => {
+                    const isSelected = selectedIds.includes(rec.menuItem.menuItemId);
+                    return (
+                        <div 
+                            key={rec.menuItemId} 
+                            onClick={() => toggleSelect(rec.menuItem.menuItemId)}
+                            className={`flex items-center gap-3 p-2 rounded-xl transition-all group cursor-pointer border ${isSelected ? "bg-[#87D039]/5 border-[#87D039]/20" : "hover:bg-gray-50 border-transparent"}`}
+                        >
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? "bg-[#87D039] border-[#87D039]" : "border-gray-200"}`}>
+                                {isSelected && <Check size={12} className="text-white" />}
+                            </div>
+                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm ml-1">
+                                <img src={rec.menuItem.imageUrl || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-bold text-gray-800 truncate">{rec.menuItem.name}</p>
+                                <p className="text-[11px] text-[#87D039] font-black">฿{rec.menuItem.price} <span className="text-gray-300 font-medium ml-1">| {rec.menuItem.caloriesKcal || 0} kcal</span></p>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <button 
+                onClick={handleAddSelected}
+                disabled={selectedIds.length === 0}
+                className="w-full py-3.5 bg-[#87D039] hover:bg-[#76b831] text-white text-[12px] font-black uppercase tracking-[2px] transition-all border-t border-[#87D039]/10 active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+            >
+                สั่งอาหารที่เลือก ({selectedIds.length})
+            </button>
+        </div>
+    );
+};
+
 const Lightbox = ({ images, startIndex, onClose }: { images: string[]; startIndex: number; onClose: () => void }) => {
     const [current, setCurrent] = useState(startIndex);
     const prev = useCallback(() => setCurrent((i) => (i - 1 + images.length) % images.length), [images.length]);
@@ -76,15 +132,6 @@ const Lightbox = ({ images, startIndex, onClose }: { images: string[]; startInde
         </div>
     );
 };
-
-// ─── Subcomponents ────────────────────────────────────────────────────────────
-const DateDivider = ({ label }: { label: string }) => (
-    <div className="flex items-center gap-3 my-1">
-        <div className="flex-1 h-px bg-gray-200/70" />
-        <span className="text-[11px] font-semibold text-gray-400 px-3 py-0.5 bg-white rounded-full border border-gray-200/80 whitespace-nowrap">{label}</span>
-        <div className="flex-1 h-px bg-gray-200/70" />
-    </div>
-);
 
 const ChatBubble = ({ msg, onImageClick }: { msg: Message; onImageClick?: (url: string) => void }) => {
     const isImage = msg.type === "image";
@@ -133,17 +180,21 @@ export default function ChatPage() {
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
-    const [showProfile, setShowProfile] = useState(false);
     const [lightboxImages, setLightboxImages] = useState<string[] | null>(null);
     const [lightboxStart, setLightboxStart] = useState(0);
-    const [showMenu, setShowMenu] = useState(false);
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [showSearch, setShowSearch] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [debugMode, setDebugMode] = useState(false);
+
+    // Recommendation State
+    const [showRecModal, setShowRecModal] = useState(false);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [availableItems, setAvailableItems] = useState<ServiceMenuItem[]>([]);
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [isSavingRec, setIsSavingRec] = useState(false);
+    
+    const addToCart = useCartStore((state) => state.addItem);
 
     // ─── Helper: Map DB Message to UI Message ───
     const mapMessage = useCallback((m: any): Message => ({
@@ -157,10 +208,38 @@ export default function ChatPage() {
     }), [user?.userId]);
 
     const bottomRef = useRef<HTMLDivElement>(null);
-    const emojiRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { sendMessage, markAsRead, onNewMessage, onMessagesRead, isConnected } = useChatWebSocket(selectedRoomId);
+
+    // Fetch categories
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const cats = await menuApi.getCategories();
+                setCategories(cats);
+            } catch (err) {
+                console.error("Error fetching categories:", err);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    // Fetch items when category changes
+    useEffect(() => {
+        const fetchItems = async () => {
+            try {
+                const res = await menuApi.getMenuItems({ 
+                    categoryId: selectedCategoryId || undefined,
+                    limit: 50 
+                });
+                setAvailableItems(res.data);
+            } catch (err) {
+                console.error("Error fetching items:", err);
+            }
+        };
+        if (showRecModal) fetchItems();
+    }, [selectedCategoryId, showRecModal]);
 
     // Fetch rooms
     useEffect(() => {
@@ -174,7 +253,6 @@ export default function ChatPage() {
                     const firstRoom = roomsData[0];
                     setSelectedRoomId(firstRoom.chatRoomId);
                     
-                    // Immediately populate messages from the room list to avoid "Waiting for load"
                     if (firstRoom.chatMessages && firstRoom.chatMessages.length > 0) {
                         const initialMsgs = firstRoom.chatMessages.map(mapMessage).reverse();
                         setMessages(initialMsgs);
@@ -187,7 +265,7 @@ export default function ChatPage() {
             }
         };
         if (user) fetchRooms();
-    }, [user, selectedRoomId]);
+    }, [user, selectedRoomId, mapMessage]);
 
     // Fetch messages when room selected
     useEffect(() => {
@@ -196,12 +274,9 @@ export default function ChatPage() {
             return;
         }
 
-        // 🌟 Fix: Clear immediately to prevent flicker from old room
         setMessages([]);
-
         let isCurrent = true;
 
-        // 1. Pre-populate from rooms list for instant switching
         const localRoom = rooms.find(r => String(r.chatRoomId) === String(selectedRoomId));
         if (localRoom?.chatMessages) {
             const initialMsgs = localRoom.chatMessages.map(mapMessage).reverse();
@@ -211,7 +286,7 @@ export default function ChatPage() {
         const fetchMessages = async () => {
             try {
                 const res = await api.get(`/chat/${selectedRoomId}/messages`);
-                if (!isCurrent) return; // 🌟 Fix: Abandon if user switched rooms already
+                if (!isCurrent) return;
                 
                 const rawMessages = Array.isArray(res.data) ? res.data : (res.data?.data || []);
                 const mapped: Message[] = rawMessages.map(mapMessage).reverse();
@@ -223,25 +298,20 @@ export default function ChatPage() {
         fetchMessages();
 
         return () => {
-            isCurrent = false; // 🌟 Fix: Cleanup flag
+            isCurrent = false;
         };
-    }, [selectedRoomId, user?.userId]);
+    }, [selectedRoomId, user?.userId, mapMessage, rooms]);
 
     // Handle new messages from socket
     useEffect(() => {
         const cleanup = onNewMessage((newMsg: any) => {
-            console.log("📨 Received new_message:", newMsg);
             if (String(newMsg.chatRoomId) === String(selectedRoomId)) {
-                console.log("✅ Message belongs to active room. Updating UI...");
                 const mapped: Message = mapMessage(newMsg);
                 setMessages((prev) => {
-                    // 1. Avoid duplicates immediately (real ID check)
                     if (prev.some(m => String(m.id) === String(mapped.id))) {
-                        console.log("🚫 Skipping duplicate message ID:", mapped.id);
                         return prev;
                     }
                     
-                    // 2. Matching optimistic messages from self (by text/type)
                     if (!mapped.isDoc) {
                         const optIndex = prev.findIndex(m => 
                             (m.status === "sending" || m.id.startsWith("opt-")) && 
@@ -250,7 +320,6 @@ export default function ChatPage() {
                         );
                         
                         if (optIndex !== -1) {
-                            console.log("🔄 Synchronizing optimistic message with server version");
                             const next = [...prev];
                             next[optIndex] = { ...mapped, status: "sent" };
                             return next;
@@ -259,19 +328,15 @@ export default function ChatPage() {
                     
                     return [...prev, mapped];
                 });
-            } else {
-                console.log(`ℹ️ Message for room ${newMsg.chatRoomId} ignored (Current: ${selectedRoomId})`);
             }
         });
         return cleanup;
-    }, [selectedRoomId, onNewMessage, user?.userId]);
+    }, [selectedRoomId, onNewMessage, user?.userId, mapMessage]);
 
     // Handle read receipts
     useEffect(() => {
         const cleanup = onMessagesRead((data: any) => {
-            console.log("📖 Messages read in room:", data);
             if (String(data.chatRoomId) === String(selectedRoomId) && String(data.userId) !== String(user?.userId)) {
-                console.log("✅ Other person read my messages. Updating UI...");
                 setMessages((prev) => prev.map(m => (!m.isDoc ? { ...m, read: true } : m)));
             }
         });
@@ -283,7 +348,7 @@ export default function ChatPage() {
         if (selectedRoomId && isConnected) {
             markAsRead();
         }
-    }, [selectedRoomId, isConnected, messages.length]); 
+    }, [selectedRoomId, isConnected, messages.length, markAsRead]); 
 
     // Auto scroll to bottom
     useEffect(() => {
@@ -307,7 +372,7 @@ export default function ChatPage() {
         if (currentTime < start) return "upcoming";
         if (currentTime > end) return "ended";
         return "active";
-    }, [activeRoom, currentTime]);
+    }, [activeRoom, currentTime, debugMode]);
 
     const otherParticipant = useMemo(() => {
         if (!activeRoom) return null;
@@ -332,7 +397,6 @@ export default function ChatPage() {
         const content = input.trim();
         const tempId = `opt-${Date.now()}`;
         
-        // 1. Add optimistic message
         const optimisticMsg: Message = {
             id: tempId,
             text: content,
@@ -347,26 +411,18 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, optimisticMsg]);
         setInput("");
 
-        // 2. Send via socket
         sendMessage(content, "text", (ack: any) => {
-            console.log("📨 Message acknowledgement:", ack);
             if (ack && ack.chatMessageId) {
-                // Update specific optimistic message to sent status and real ID
-                setMessages((prev) => {
-                    return prev.map(m => m.id === tempId ? {
-                        ...m,
-                        id: String(ack.chatMessageId),
-                        status: "sent"
-                    } : m);
-                });
+                setMessages((prev) => prev.map(m => m.id === tempId ? {
+                    ...m,
+                    id: String(ack.chatMessageId),
+                    status: "sent"
+                } : m));
             } else {
-                // Handle error
-                setMessages((prev) => {
-                    return prev.map(m => m.id === tempId ? {
-                        ...m,
-                        status: "error"
-                    } : m);
-                });
+                setMessages((prev) => prev.map(m => m.id === tempId ? {
+                    ...m,
+                    status: "error"
+                } : m));
             }
         });
     };
@@ -384,7 +440,6 @@ export default function ChatPage() {
             const res = await api.post("/chat/upload", formData);
             const imageUrl = res.data.data.imageUrl;
             
-            // Add optimistic image
             const optimisticMsg: Message = {
                 id: tempId,
                 text: imageUrl,
@@ -397,7 +452,6 @@ export default function ChatPage() {
             };
             setMessages(prev => [...prev, optimisticMsg]);
 
-            // Send via socket
             sendMessage(imageUrl, "image", (ack: any) => {
                 if (ack && ack.chatMessageId) {
                     setMessages(prev => prev.map(m => m.id === tempId ? {
@@ -409,7 +463,11 @@ export default function ChatPage() {
             });
         } catch (err) {
             console.error("Image upload failed:", err);
-            alert("อัปโหลดรูปภาพไม่สำเร็จ");
+            Swal.fire({
+                icon: 'error',
+                title: 'อัปโหลดไม่สำเร็จ',
+                text: 'ไม่สามารถอัปโหลดรูปภาพได้ในขณะนี้'
+            });
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -420,14 +478,14 @@ export default function ChatPage() {
         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
     };
 
-    if (loading) return <div className="flex h-screen w-full items-center justify-center bg-gray-50 flex-1 ml-64">กำลังโหลด...</div>;
+    if (loading) return <div className="flex h-screen w-full items-center justify-center bg-gray-50 flex-1 ml-64 font-bold text-[#87D039]">กำลังเตรียมห้องแชท...</div>;
 
     return (
         <div className="flex h-screen w-full bg-white overflow-hidden text-[#434343] font-sans ml-64">
             {lightboxImages && <Lightbox images={lightboxImages} startIndex={lightboxStart} onClose={() => setLightboxImages(null)} />}
 
             {/* Conversation List */}
-            <div className="w-[300px] flex-shrink-0 flex flex-col border-r border-gray-100 bg-white hidden md:flex">
+            <div className="w-[300px] flex-shrink-0 flex flex-col border-r border-gray-100 bg-white hidden lg:flex">
                 <div className="px-5 py-6 border-b border-gray-100/80">
                     <h2 className="text-2xl font-black text-gray-800 tracking-tight mb-4">ข้อความ</h2>
                     <div className="relative flex items-center">
@@ -480,18 +538,138 @@ export default function ChatPage() {
                             </p>
                         </div>
                     </div>
-                    
-                    {/* Test Mode Toggle (Only visible in Dev or for testing) */}
-                    <button 
-                        onClick={() => setDebugMode(!debugMode)}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all border ${debugMode ? "bg-[#87D039] text-white border-[#87D039]" : "bg-white text-gray-400 border-gray-100 hover:border-gray-200"}`}
-                    >
-                        {debugMode ? "DISABLE TEST" : "ENABLE TEST"}
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                        {user?.role === "nutritionist" && sessionStatus === "active" && (
+                            <button 
+                                onClick={() => {
+                                    setSelectedItems(activeRoom?.appointment?.recommendedItems?.map((i: any) => i.menuItemId) || []);
+                                    setShowRecModal(true);
+                                }}
+                                className="px-4 py-2 bg-[#87D039] text-white text-[12px] font-black rounded-xl hover:bg-[#76b831] transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                            >
+                                <Smile size={16} />
+                                <span>แนะนำเมนู</span>
+                            </button>
+                        )}
+                        
+                        <button 
+                            onClick={() => setDebugMode(!debugMode)}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all border ${debugMode ? "bg-[#87D039] text-white border-[#87D039]" : "bg-white text-gray-400 border-gray-100 hover:border-gray-200"}`}
+                        >
+                            {debugMode ? "TEST MODE: ON" : "TEST MODE: OFF"}
+                        </button>
+                    </div>
                 </div>
 
+                {/* Recommendation Modal */}
+                {showRecModal && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={(e) => e.target === e.currentTarget && setShowRecModal(false)}>
+                        <div className="bg-white rounded-[32px] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-xl font-black text-gray-800 tracking-tight">แนะนำเมนูอาหาร</h3>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Select items to recommend from partners</p>
+                                </div>
+                                <button onClick={() => setShowRecModal(false)} className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+                                <div className="flex flex-wrap gap-2 mb-8">
+                                    <button 
+                                        onClick={() => setSelectedCategoryId(null)}
+                                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all border ${selectedCategoryId === null ? "bg-[#87D039] text-white border-[#87D039]" : "bg-white text-gray-400 border-gray-100 hover:border-gray-200"}`}
+                                    >
+                                        ทั้งหมด
+                                    </button>
+                                    {categories.map(cat => (
+                                        <button 
+                                            key={cat.id}
+                                            onClick={() => setSelectedCategoryId(cat.id)}
+                                            className={`px-4 py-2 rounded-xl text-xs font-black transition-all border ${selectedCategoryId === cat.id ? "bg-[#87D039] text-white border-[#87D039]" : "bg-white text-gray-400 border-gray-100 hover:border-gray-200"}`}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {availableItems.map(item => (
+                                        <div 
+                                            key={item.menuItemId}
+                                            onClick={() => {
+                                                if (selectedItems.includes(item.menuItemId)) {
+                                                    setSelectedItems(selectedItems.filter(id => id !== item.menuItemId));
+                                                } else {
+                                                    setSelectedItems([...selectedItems, item.menuItemId]);
+                                                }
+                                            }}
+                                            className={`p-4 rounded-2xl border-2 transition-all cursor-pointer group flex gap-3 ${selectedItems.includes(item.menuItemId) ? "border-[#87D039] bg-[#87D039]/5" : "border-gray-100 hover:border-gray-200 bg-white"}`}
+                                        >
+                                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm">
+                                                <img src={item.imageUrl || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-[14px] text-gray-800 truncate">{item.name}</p>
+                                                <p className="text-[12px] text-[#87D039] font-black mt-0.5">฿{item.price}</p>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">{item.caloriesKcal || 0} kcal</p>
+                                            </div>
+                                            {selectedItems.includes(item.menuItemId) && (
+                                                <div className="w-6 h-6 rounded-full bg-[#87D039] flex items-center justify-center text-white shrink-0">
+                                                    <Check size={14} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                                <p className="text-sm font-bold text-gray-400 tracking-tight">
+                                    เลือกแล้ว <span className="text-gray-800 font-black">{selectedItems.length}</span> รายการ
+                                </p>
+                                <button 
+                                    disabled={isSavingRec}
+                                    onClick={async () => {
+                                        if (!selectedRoomId || !activeRoom) return;
+                                        setIsSavingRec(true);
+                                        try {
+                                            await appointmentsApi.saveRecommendations(activeRoom.appointment.appointmentId, selectedItems);
+                                            setShowRecModal(false);
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'บันทึกสำเร็จ',
+                                                text: 'บันทึกรายการแนะนำเมนูเรียบร้อยแล้ว',
+                                                timer: 1500,
+                                                showConfirmButton: false
+                                            });
+                                            
+                                            // Refresh rooms list to reflect changes
+                                            const res = await api.get("/chat/rooms");
+                                            setRooms(Array.isArray(res.data) ? res.data : (res.data?.data || []));
+                                        } catch (err) {
+                                            console.error("Save recommendations failed:", err);
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'เกิดข้อผิดพลาด',
+                                                text: 'ขัดข้องทางเทคนิค กรุณาลองใหม่อีกครั้ง'
+                                            });
+                                        } finally {
+                                            setIsSavingRec(false);
+                                        }
+                                    }}
+                                    className="px-8 py-3 bg-[#87D039] text-white text-sm font-black rounded-xl hover:bg-[#76b831] transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                >
+                                    {isSavingRec ? "กำลังบันทึก..." : "บันทึกคำแนะนำ"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar">
-                    {/* Session Status Warnings */}
                     {sessionStatus === "upcoming" && (
                         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-4 shadow-sm mb-6 max-w-2xl mx-auto">
                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -524,47 +702,69 @@ export default function ChatPage() {
                         <ChatBubble key={msg.id} msg={msg} onImageClick={(url) => { setLightboxImages([url]); setLightboxStart(0); }} />
                     ))}
 
-                    {/* Ended Session Summary */}
-                    {sessionStatus === "ended" && (
-                        <div className="mt-12 p-8 bg-white rounded-[32px] border border-gray-100 shadow-sm max-w-2xl mx-auto">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-2xl bg-[#C5F285]/20 flex items-center justify-center">
-                                    <Info className="text-[#87D039]" size={22} />
-                                </div>
-                                <h3 className="font-black text-xl text-gray-800 tracking-tight">สรุปการนัดหมาย</h3>
-                            </div>
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between py-3 border-b border-gray-50">
-                                    <span className="text-gray-400 text-sm font-bold uppercase tracking-widest">สถานะ</span>
-                                    <span className="px-3 py-1 bg-[#C5F285]/20 text-[#5AAA1D] text-[11px] rounded-full font-black uppercase tracking-wider">COMPLETED</span>
-                                </div>
-                                
-                                {activeRoom?.appointment.summary ? (
-                                    <div className="bg-gray-50 rounded-2xl p-5">
-                                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">ภาพรวมการปรึกษา</p>
-                                        <p className="text-gray-700 text-[15px] leading-relaxed font-medium italic">"{activeRoom.appointment.summary}"</p>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-4 border-2 border-dashed border-gray-100 rounded-2xl">
-                                        <p className="text-gray-400 text-sm font-medium">ไม่มีข้อมูลสรุปสำหรับการนัดหมายนี้</p>
-                                    </div>
-                                )}
-
-                                {activeRoom?.appointment.nutritionistNotes && (
-                                    <div>
-                                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">คำแนะนำเพิ่มเติม</p>
-                                        <div className="prose prose-sm max-w-none text-gray-600 font-medium">
-                                            {activeRoom.appointment.nutritionistNotes}
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                <button className="w-full py-4 bg-gray-50 hover:bg-gray-100 text-gray-500 font-bold text-sm rounded-2xl transition-all mt-4 border border-gray-100">
-                                    ดาวน์โหลดสรุปการนัดหมาย (PDF)
-                                </button>
-                            </div>
+                    {/* Recommendations for Patient */}
+                    {user?.role === "patient" && activeRoom?.appointment?.recommendedItems && activeRoom.appointment.recommendedItems.length > 0 && (
+                        <div className="flex justify-start">
+                            <RecommendationCard 
+                                items={activeRoom.appointment.recommendedItems} 
+                                onAddToCart={(item) => {
+                                    addToCart({
+                                        menuItemId: String(item.menuItemId),
+                                        name: item.name,
+                                        price: Number(item.price),
+                                        imageUrl: item.imageUrl,
+                                        foodPartnerId: item.foodPartnerId,
+                                    }, 1);
+                                    Swal.fire({
+                                        title: 'เพิ่มลงตะกร้า!',
+                                        text: `คุณได้เพิ่ม ${item.name} ลงในตะกร้าสินค้าแล้ว`,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false,
+                                        toast: true,
+                                        position: 'top-end'
+                                    });
+                                }}
+                            />
                         </div>
                     )}
+
+                    <div className="mt-12 p-8 bg-white rounded-[32px] border border-gray-100 shadow-sm max-w-2xl mx-auto">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-2xl bg-[#C5F285]/20 flex items-center justify-center">
+                                <Info className="text-[#87D039]" size={22} />
+                            </div>
+                            <h3 className="font-black text-xl text-gray-800 tracking-tight">สรุปการนัดหมาย</h3>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between py-3 border-b border-gray-50">
+                                <span className="text-gray-400 text-sm font-bold uppercase tracking-widest">สถานะ</span>
+                                <span className={`px-3 py-1 text-[11px] rounded-full font-black uppercase tracking-wider ${sessionStatus === 'ended' ? 'bg-[#C5F285]/20 text-[#5AAA1D]' : 'bg-gray-100 text-gray-400'}`}>
+                                    {sessionStatus === 'ended' ? 'COMPLETED' : 'IN PROGRESS'}
+                                </span>
+                            </div>
+                            
+                            {activeRoom?.appointment.summary ? (
+                                <div className="bg-gray-50 rounded-2xl p-5">
+                                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">ภาพรวมการปรึกษา</p>
+                                    <p className="text-gray-700 text-[15px] leading-relaxed font-medium italic">&quot;{activeRoom.appointment.summary}&quot;</p>
+                                </div>
+                            ) : (
+                                <div className="text-center py-4 border-2 border-dashed border-gray-100 rounded-2xl">
+                                    <p className="text-gray-400 text-sm font-medium">ไม่มีข้อมูลสรุปสำหรับการนัดหมายนี้</p>
+                                </div>
+                            )}
+
+                            {activeRoom?.appointment.nutritionistNotes && (
+                                <div>
+                                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">คำแนะนำเพิ่มเติม</p>
+                                    <div className="prose prose-sm max-w-none text-gray-600 font-medium">
+                                        {activeRoom.appointment.nutritionistNotes}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <div ref={bottomRef} />
                 </div>
 

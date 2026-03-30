@@ -8,6 +8,14 @@ class FoodPartnerSummaryDto {
   partnerName: string;
 }
 
+class MenuCategorySummaryDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+}
+
 export class MenuItemResponseDto {
   @ApiProperty()
   menuItemId: number;
@@ -24,8 +32,11 @@ export class MenuItemResponseDto {
   @ApiProperty({ required: false })
   imageUrl?: string;
 
+  @ApiProperty({ required: false, type: MenuCategorySummaryDto })
+  category?: MenuCategorySummaryDto;
+
   @ApiProperty({ required: false })
-  category?: string;
+  categoryId?: number;
 
   @ApiProperty({ required: false })
   caloriesKcal?: number;

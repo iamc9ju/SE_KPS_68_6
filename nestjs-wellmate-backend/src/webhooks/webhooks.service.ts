@@ -86,7 +86,7 @@ export class WebhooksService {
           where: { orderId: order.orderId },
           data: {
             paymentStatus: 'PAID',
-            status: 'pending',
+            status: 'preparing',
           },
         });
 

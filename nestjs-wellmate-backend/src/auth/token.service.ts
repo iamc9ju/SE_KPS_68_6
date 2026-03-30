@@ -34,6 +34,7 @@ export class TokenService {
     sub: string;
     email: string;
     role: string;
+    isProfileComplete?: boolean;
   }): string {
     return this.jwtService.sign(payload, {
       expiresIn: this.accessTokenExpiry,
@@ -138,6 +139,7 @@ export class TokenService {
       sub: token.user.userId,
       email: token.user.email,
       role: token.user.role,
+      isProfileComplete: token.user.role === 'patient' ? (token.user as any).patient?.isProfileComplete : true,
     });
 
     return { accessToken, refreshToken: newRefreshToken };

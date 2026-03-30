@@ -32,7 +32,13 @@ type MenuItem = {
     nutrition: Nutrition;
     allergens: string[];
     active: boolean;
-    category?: string;
+    category?: {
+        id: number;
+        name: string;
+    };
+    categoryId?: number;
+    isSet?: boolean;
+    components?: any[];
 };
 
 const ALLERGENS = [
@@ -58,7 +64,11 @@ type MenuItemApi = {
     description?: string | null;
     price: number;
     imageUrl?: string | null;
-    category?: string | null;
+    categoryId?: number | null;
+    category?: {
+        id: number;
+        name: string;
+    } | null;
     caloriesKcal?: number | null;
     proteinG?: number | null;
     carbsG?: number | null;
@@ -67,6 +77,8 @@ type MenuItemApi = {
     allergenAlert?: string | null;
     isAvailable?: boolean | null;
     isOutOfStock?: boolean | null;
+    isSet?: boolean | null;
+    components?: any[] | null;
 };
 
 type PaginatedMenuItemsDto = {
@@ -153,11 +165,70 @@ function Modal({
     );
 }
 
+function Dropdown({
+    label,
+    value,
+    options,
+    onChange,
+}: {
+    label: string;
+    value: string;
+    options: Array<{ id: string | number; name: string }>;
+    onChange: (val: string | number) => void;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const displayValue = options.find(opt => String(opt.id) === String(value))?.name || value;
+
+    return (
+        <div className="relative" ref={ref}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-bold text-[#6b5d4b]"
+            >
+                {label}: {displayValue}
+                <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isOpen && (
+                <div className="absolute left-0 top-full z-50 mt-2 min-w-[160px] overflow-hidden rounded-2xl border border-[#eadfce] bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="py-1">
+                        {options.map((opt) => (
+                            <button
+                                key={opt.id}
+                                onClick={() => {
+                                    onChange(opt.id);
+                                    setIsOpen(false);
+                                }}
+                                className={`flex w-full items-center px-4 py-2.5 text-left text-xs font-bold transition-colors ${String(value) === String(opt.id) ? "bg-[#f4ead8] text-[#1f6b4e]" : "text-[#6b5d4b] hover:bg-[#faf4ea]"
+                                    }`}
+                            >
+                                {opt.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function FoodPartnerMenuPage() {
     const [menus, setMenus] = useState<MenuItem[]>([]);
     const [query, setQuery] = useState("");
-    const [category, setCategory] = useState(CATEGORY_ALL);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | string>(CATEGORY_ALL);
     const [status, setStatus] = useState(STATUS_ALL);
+    const [availableCategories, setAvailableCategories] = useState<Array<{ id: number; name: string }>>([]);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<MenuItem | null>(null);
     const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
@@ -173,13 +244,56 @@ export default function FoodPartnerMenuPage() {
         description: "",
         price: "",
         imageUrl: "",
-        category: "",
+        categoryId: "" as string | number,
         calories: "",
         protein: "",
         carbs: "",
         fat: "",
         allergenAlert: "",
+        isSet: false,
+        components: [] as { componentItemId: number; quantity: number }[],
     });
+
+    useEffect(() => {
+        if (form.isSet && form.components.length > 0) {
+            let totalCalories = 0;
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFat = 0;
+            let totalPrice = 0;
+
+            form.components.forEach(comp => {
+                const item = menus.find(m => m.id === comp.componentItemId);
+                if (item) {
+                    totalCalories += (item.nutrition.calories || 0) * comp.quantity;
+                    totalProtein += (item.nutrition.protein || 0) * comp.quantity;
+                    totalCarbs += (item.nutrition.carbs || 0) * comp.quantity;
+                    totalFat += (item.nutrition.fat || 0) * comp.quantity;
+                    totalPrice += (item.price || 0) * comp.quantity;
+                }
+            });
+
+            setForm(prev => {
+                if (
+                    prev.calories === String(totalCalories) &&
+                    prev.protein === String(totalProtein) &&
+                    prev.carbs === String(totalCarbs) &&
+                    prev.fat === String(totalFat) &&
+                    prev.price === String(totalPrice)
+                ) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    calories: String(totalCalories),
+                    protein: String(totalProtein),
+                    carbs: String(totalCarbs),
+                    fat: String(totalFat),
+                    price: String(totalPrice),
+                };
+            });
+        }
+    }, [form.components, form.isSet, menus]);
 
     const unwrap = <T,>(payload: ApiEnvelope<T> | T): T => {
         if (payload && typeof payload === "object" && "data" in payload) {
@@ -247,9 +361,25 @@ export default function FoodPartnerMenuPage() {
             allergens: item.allergens ?? [],
             allergenAlert: item.allergenAlert ?? undefined,
             active,
+            categoryId: item.categoryId ?? undefined,
             category: item.category ?? undefined,
+            isSet: item.isSet ?? false,
+            components: item.components ?? [],
         };
     };
+
+    const categoryDropdownOptions = useMemo(() => {
+        return [
+            { id: CATEGORY_ALL, name: "ทั้งหมด" },
+            ...availableCategories.map(c => ({ id: c.id, name: c.name }))
+        ];
+    }, [availableCategories]);
+
+    const statusOptions = [
+        { id: STATUS_ALL, name: "ทั้งหมด" },
+        { id: STATUS_AVAILABLE, name: "เปิดขาย" },
+        { id: STATUS_HIDDEN, name: "ซ่อนเมนู" }
+    ];
 
     const filteredMenus = useMemo(() => {
         return menus.filter((menu) => {
@@ -263,10 +393,10 @@ export default function FoodPartnerMenuPage() {
                         ? menu.active
                         : !menu.active;
             const matchesCategory =
-                category === CATEGORY_ALL ? true : menu.category === category;
+                selectedCategoryId === CATEGORY_ALL ? true : menu.categoryId === selectedCategoryId;
             return matchesQuery && matchesStatus && matchesCategory;
         });
-    }, [menus, query, status, category]);
+    }, [menus, query, status, selectedCategoryId]);
 
     const openNew = () => {
         setEditing(null);
@@ -276,12 +406,14 @@ export default function FoodPartnerMenuPage() {
             description: "",
             price: "",
             imageUrl: "",
-            category: "",
             calories: "",
             protein: "",
             carbs: "",
             fat: "",
+            categoryId: "",
             allergenAlert: "",
+            isSet: false,
+            components: [],
         });
         setShowModal(true);
     };
@@ -294,12 +426,14 @@ export default function FoodPartnerMenuPage() {
             description: menu.description,
             price: String(menu.price),
             imageUrl: menu.imageUrl === FALLBACK_FOOD_IMAGE ? "" : menu.imageUrl,
-            category: menu.category ?? "",
             calories: String(menu.nutrition.calories),
             protein: String(menu.nutrition.protein),
             carbs: String(menu.nutrition.carbs),
             fat: String(menu.nutrition.fat),
+            categoryId: menu.categoryId ?? "",
             allergenAlert: menu.allergenAlert ?? "",
+            isSet: menu.isSet ?? false,
+            components: menu.components?.map(c => ({ componentItemId: c.menuItemId, quantity: c.quantity })) ?? [],
         });
         setShowModal(true);
     };
@@ -323,6 +457,17 @@ export default function FoodPartnerMenuPage() {
         };
 
         fetchProfile();
+
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get<ApiEnvelope<Array<{ id: number; name: string }>> | Array<{ id: number; name: string }>>("/food-menu/categories");
+                const data = unwrap(res.data);
+                setAvailableCategories(data || []);
+            } catch (error) {
+                console.error("Failed to load categories:", error);
+            }
+        };
+        fetchCategories();
     }, []);
     const fetchMenus = async () => {
         if (!foodPartnerId) return;
@@ -336,7 +481,7 @@ export default function FoodPartnerMenuPage() {
             };
 
             if (query.trim()) params.q = query.trim();
-            if (category !== CATEGORY_ALL) params.category = category;
+            if (selectedCategoryId !== CATEGORY_ALL) params.categoryId = selectedCategoryId;
             if (status === STATUS_AVAILABLE) params.isAvailable = true;
             if (status === STATUS_HIDDEN) params.isAvailable = false;
 
@@ -362,7 +507,7 @@ export default function FoodPartnerMenuPage() {
 
     useEffect(() => {
         fetchMenus();
-    }, [foodPartnerId, query, category, status]);
+    }, [foodPartnerId, query, selectedCategoryId, status]);
 
     const toggleAvailability = async (menu: MenuItem) => {
         const next = !menu.active;
@@ -407,13 +552,15 @@ export default function FoodPartnerMenuPage() {
                 description: form.description.trim() || undefined,
                 price: Number(form.price),
                 imageUrl: form.imageUrl.trim() || undefined,
-                category: form.category.trim() || undefined,
+                categoryId: Number(form.categoryId) || undefined,
                 caloriesKcal: Number(form.calories) || 0,
                 proteinG: Number(form.protein) || 0,
                 carbsG: Number(form.carbs) || 0,
                 fatG: Number(form.fat) || 0,
                 allergens: selectedAllergens,
                 allergenAlert: form.allergenAlert.trim() || undefined,
+                isSet: form.isSet,
+                components: form.isSet ? form.components : undefined,
             };
 
             if (editing) {
@@ -522,17 +669,21 @@ export default function FoodPartnerMenuPage() {
                                 />
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                <button className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-bold text-[#6b5d4b]">
-                                    หมวดหมู่: {category}
-                                    <ChevronDown size={14} />
-                                </button>
-                                <div className="hidden">
-                                    {/* placeholder for dropdown logic */}
-                                </div>
-                                <button className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-bold text-[#6b5d4b]">
-                                    สถานะ: {status}
-                                    <ChevronDown size={14} />
-                                </button>
+                                <Dropdown
+                                    label="หมวดหมู่"
+                                    value={String(selectedCategoryId)}
+                                    options={categoryDropdownOptions}
+                                    onChange={(val) => {
+                                        if (val === CATEGORY_ALL) setSelectedCategoryId(CATEGORY_ALL);
+                                        else setSelectedCategoryId(Number(val));
+                                    }}
+                                />
+                                <Dropdown
+                                    label="สถานะ"
+                                    value={status}
+                                    options={statusOptions}
+                                    onChange={(val) => setStatus(String(val))}
+                                />
                             </div>
                         </div>
                     </section>
@@ -692,15 +843,104 @@ export default function FoodPartnerMenuPage() {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-[#6b5d4b]">
-                                Category
+                                หมวดหมู่ <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                value={form.category}
-                                onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                                placeholder="e.g. Rice / Salad / Cater"
-                                className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm"
-                            />
+                            <div className="grid grid-cols-2 gap-2 mt-1 sm:grid-cols-3">
+                                {availableCategories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() => setForm(prev => ({ ...prev, categoryId: cat.id }))}
+                                        className={`flex items-center justify-center rounded-xl border p-3 text-xs font-bold transition-all ${Number(form.categoryId) === cat.id
+                                                ? "border-[#1f6b4e] bg-[#e7f2e9] text-[#1f6b4e] shadow-sm"
+                                                : "border-[#eadfce] bg-white text-[#6b5d4b] hover:border-[#cbb89f] hover:bg-[#faf4ea]"
+                                            }`}
+                                    >
+                                        {cat.name}
+                                    </button>
+                                ))}
+                            </div>
+                            {availableCategories.length === 0 && (
+                                <p className="text-[10px] text-gray-400 italic">กำลังโหลดหมวดหมู่...</p>
+                            )}
                         </div>
+
+                        <div className="pt-2">
+                             <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#eadfce] bg-[#faf4ea] p-4">
+                                <div>
+                                    <p className="text-sm font-black text-[#2f2a1d]">เมนูเซต (Set Menu)</p>
+                                    <p className="text-[11px] text-[#6b5d4b]">เมนูนี้ประกอบด้วยอาหารหลายอย่างรวมกัน</p>
+                                </div>
+                                <Toggle 
+                                    on={form.isSet} 
+                                    onClick={() => setForm(prev => ({ ...prev, isSet: !prev.isSet }))} 
+                                />
+                             </div>
+                        </div>
+
+                        {form.isSet && (
+                            <div className="space-y-3 rounded-2xl border border-[#eadfce] bg-white p-4 shadow-sm">
+                                <p className="text-xs font-bold text-[#6b5d4b]">รายการย่อยภายในเซต</p>
+                                <div className="space-y-2">
+                                    {form.components.map((comp, idx) => {
+                                        const originalItem = menus.find(m => m.id === comp.componentItemId);
+                                        return (
+                                            <div key={idx} className="flex items-center justify-between gap-3 rounded-xl border border-[#eadfce] bg-[#fdfaf5] p-2">
+                                                <div className="flex flex-1 items-center gap-3">
+                                                    <div className="h-10 w-10 overflow-hidden rounded-lg bg-gray-100">
+                                                        <img src={originalItem?.imageUrl || FALLBACK_FOOD_IMAGE} alt="" className="h-full w-full object-cover" />
+                                                    </div>
+                                                    <div className="text-xs font-bold text-[#2f2a1d]">
+                                                        {originalItem?.name || "Unknown Item"}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="number"
+                                                        value={comp.quantity}
+                                                        onChange={(e) => {
+                                                            const val = Math.max(1, parseInt(e.target.value) || 1);
+                                                            const newComps = [...form.components];
+                                                            newComps[idx].quantity = val;
+                                                            setForm(prev => ({ ...prev, components: newComps }));
+                                                        }}
+                                                        className="w-12 rounded-lg border border-[#eadfce] py-1 text-center text-xs font-bold"
+                                                    />
+                                                    <button 
+                                                        onClick={() => {
+                                                            setForm(prev => ({ ...prev, components: prev.components.filter((_, i) => i !== idx) }));
+                                                        }}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                <div className="relative pt-2">
+                                    <p className="mb-2 text-[10px] font-bold text-[#8c7a66]">เพิ่มเมนูย่อย:</p>
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-[200px] overflow-y-auto">
+                                        {menus
+                                            .filter(m => !m.isSet && m.id !== editing?.id && !form.components.some(c => c.componentItemId === m.id))
+                                            .map((m) => (
+                                                <button
+                                                    key={m.id}
+                                                    onClick={() => setForm(prev => ({ ...prev, components: [...prev.components, { componentItemId: m.id, quantity: 1 }] }))}
+                                                    className="flex items-center gap-2 rounded-xl border border-[#eadfce] bg-white p-2 text-left hover:border-[#1f6b4e] transition-all"
+                                                >
+                                                    <div className="h-8 w-8 overflow-hidden rounded-lg bg-gray-100">
+                                                        <img src={m.imageUrl} alt="" className="h-full w-full object-cover" />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-[#6b5d4b] line-clamp-1">{m.name}</span>
+                                                </button>
+                                            ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-[#6b5d4b]">
                                 ราคา (บาท)
@@ -708,6 +948,7 @@ export default function FoodPartnerMenuPage() {
                             <input
                                 type="number"
                                 value={form.price}
+                                disabled={form.isSet}
                                 onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
                                 placeholder="0"
                                 className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm"
@@ -733,7 +974,8 @@ export default function FoodPartnerMenuPage() {
                                         </label>
                                         <input
                                             type="number"
-                                            value={form[field.key as keyof typeof form]}
+                                            value={(form as any)[field.key]}
+                                            disabled={form.isSet}
                                             onChange={(e) =>
                                                 setForm((prev) => ({
                                                     ...prev,

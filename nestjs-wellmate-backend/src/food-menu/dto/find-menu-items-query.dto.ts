@@ -29,10 +29,11 @@ export class FindMenuItemsQueryDto {
   @Type(() => Number)
   foodPartnerId?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by Category' })
+  @ApiPropertyOptional({ description: 'Filter by Category ID' })
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsInt()
+  @Type(() => Number)
+  categoryId?: number;
 
   @ApiPropertyOptional({ description: 'Filter by maximum calories' })
   @IsOptional()

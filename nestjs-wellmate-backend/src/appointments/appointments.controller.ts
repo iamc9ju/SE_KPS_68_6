@@ -7,6 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentRecommendationsDto } from './dto/update-recommendations.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth-guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Auth } from '../auth/decorators/auth.decorator';
@@ -82,5 +83,17 @@ export class AppointmentsController {
   @ApiResponse({ status: 404, description: 'ไม่พบการนัดหมาย' })
   async findOne(@Param('id') id: string, @CurrentUser('sub') userId: string) {
     return this.appointmentsService.findOne(id, userId);
+  }
+
+  @Post(':id/recommendations')
+  @Auth('nutritionist')
+  @ApiOperation({ summary: 'บันทึกรายการเมนูอาหารที่แนะนำสำหรับชั่วโมงที่ปรึกษา' })
+  @ApiResponse({ status: 200, description: 'บันทึกสำเร็จ' })
+  async saveRecommendations(
+    @Param('id') id: string,
+    @CurrentUser('sub') userId: string,
+    @Body() dto: UpdateAppointmentRecommendationsDto,
+  ) {
+    return this.appointmentsService.saveRecommendations(id, userId, dto);
   }
 }

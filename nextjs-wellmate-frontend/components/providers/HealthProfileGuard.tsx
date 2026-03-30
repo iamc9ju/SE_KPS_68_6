@@ -10,14 +10,19 @@ export default function HealthProfileGuard({ children }: { children: React.React
     const pathname = usePathname();
 
     useEffect(() => {
-        // Only enforce for patients
-        if (user && user.role === "patient" && user.isProfileComplete === false) {
-            // List of allowed paths even if profile is incomplete
-            const allowedPaths = ["/healthdata", "/auth/sign-out", "/auth/logout"];
+        if (!user) return;
 
-            if (!allowedPaths.includes(pathname)) {
+        // Only enforce for patients
+        if (user.role === "patient") {
+            const isHealthDataPath = pathname === "/healthdata";
+            const isAllowedPath = ["/auth/sign-out", "/auth/logout"].includes(pathname);
+
+            if (user.isProfileComplete === false && !isHealthDataPath && !isAllowedPath) {
                 console.log("Redirecting to healthdata: profile incomplete");
-                router.push("/healthdata");
+                router.replace("/healthdata");
+            } else if (user.isProfileComplete === true && isHealthDataPath) {
+                console.log("Redirecting to dashboard: profile complete");
+                router.replace("/dashboard");
             }
         }
     }, [user, pathname, router]);

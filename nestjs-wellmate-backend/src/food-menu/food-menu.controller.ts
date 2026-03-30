@@ -44,6 +44,13 @@ import type { JwtPayload } from '../auth/interface/jwt-payload.interface';
 export class FoodMenuController {
   constructor(private readonly foodMenuService: FoodMenuService) {}
 
+  @Get('categories')
+  @ApiOperation({ summary: 'List all menu categories' })
+  @ApiResponse({ status: 200, description: 'Return all categories' })
+  async getCategories() {
+    return this.foodMenuService.findAllCategories();
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all menu items with advanced filtering' })
   @ApiResponse({ status: 200, type: PaginatedMenuItemsDto })

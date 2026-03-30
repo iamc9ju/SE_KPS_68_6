@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -147,6 +148,11 @@ export class AuthService {
       throw new UnauthorizedException('ไม่พบข้อมูลผู้ใช้');
     }
 
+    if (user.deletedAt) {
+      this.logger.warn(`Suspended user access attempt: ${userId}`);
+      throw new ForbiddenException('บัญชีของคุณถูกระงับ');
+    }
+
     return this.flattenUser(user as unknown as UserWithRelation);
   }
 
@@ -167,6 +173,11 @@ export class AuthService {
     ) {
       this.logger.warn(`Failed login attempt: ${email}`);
       throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    }
+
+    if (user.deletedAt) {
+      this.logger.warn(`Suspended user login attempt: ${email}`);
+      throw new ForbiddenException('บัญชีของคุณถูกระงับ');
     }
 
     return user;

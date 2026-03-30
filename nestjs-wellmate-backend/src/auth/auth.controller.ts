@@ -72,6 +72,7 @@ export class AuthController {
       sub: user.userId,
       email: user.email,
       role: user.role,
+      isProfileComplete: user.isProfileComplete,
     });
     const refreshToken = await this.tokenService.createRefreshToken(
       user.userId,
@@ -102,6 +103,7 @@ export class AuthController {
       sub: user.userId,
       email: user.email,
       role: user.role,
+      isProfileComplete: user.isProfileComplete,
     });
     const refreshToken = await this.tokenService.createRefreshToken(
       user.userId,

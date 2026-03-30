@@ -14,6 +14,22 @@ export interface Appointment {
   createdAt: string;
   deletedAt?: string | null;
 
+  recommendedItems?: Array<{
+    menuItem: {
+      menuItemId: number;
+      name: string;
+      price: number;
+      imageUrl?: string;
+      caloriesKcal?: number;
+      category?: {
+        name: string;
+      };
+      foodPartner?: {
+        partnerName: string;
+      };
+    };
+  }>;
+
   // Relations mapped from GET /appointments/me or GET /appointments/:id
   nutritionist?: {
     nutritionistId: string;
@@ -59,5 +75,10 @@ export const appointmentsApi = {
   getById: async (id: string): Promise<Appointment> => {
     const response = await api.get(`/appointments/${id}`);
     return response.data.data;
+  },
+
+  saveRecommendations: async (appointmentId: string, menuItemIds: number[]) => {
+    const response = await api.post(`/appointments/${appointmentId}/recommendations`, { menuItemIds });
+    return response.data;
   },
 };

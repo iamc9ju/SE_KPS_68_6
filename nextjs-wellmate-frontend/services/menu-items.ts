@@ -6,12 +6,16 @@ export interface MenuItem {
   name: string;
   description?: string;
   price: number;
-  category?: string;
   imageUrl?: string;
   caloriesKcal?: number;
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
+  categoryId?: number;
+  category?: {
+    id: number;
+    name: string;
+  };
   stockQuantity: number;
   isOutOfStock: boolean;
   isAvailable: boolean;
@@ -28,7 +32,7 @@ export interface CreateMenuItemDto {
   description?: string;
   price: number;
   imageUrl?: string;
-  category?: string;
+  categoryId?: number;
   caloriesKcal?: number;
   proteinG?: number;
   carbsG?: number;
@@ -43,7 +47,7 @@ export interface UpdateMenuItemDto extends Partial<CreateMenuItemDto> {
 
 export interface MenuItemParams {
   foodPartnerId?: number;
-  category?: string;
+  categoryId?: number;
   maxCalories?: number;
   q?: string;
   isAvailable?: boolean;
@@ -91,6 +95,11 @@ export const menuApi = {
 
   deleteMenuItem: async (id: number): Promise<{ message: string }> => {
     const res = await api.delete(`/food-menu/${id}`);
+    return res.data;
+  },
+
+  getCategories: async (): Promise<Array<{ id: number; name: string }>> => {
+    const res = await api.get("/food-menu/categories");
     return res.data;
   },
 };
