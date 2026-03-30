@@ -152,6 +152,11 @@ export class ChatService {
                 user: { select: { profileImageUrl: true } },
               },
             },
+            recommendedItems: {
+              include: {
+                menuItem: true,
+              },
+            },
           },
         },
         chatMessages: {

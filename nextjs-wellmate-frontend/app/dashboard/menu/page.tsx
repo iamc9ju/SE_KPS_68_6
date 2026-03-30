@@ -633,8 +633,7 @@ export default function FoodPartnerMenuPage() {
 
     return (
         <>
-            <main className="flex-1 h-screen overflow-y-auto px-8 py-10 lg:pl-64 scroll-smooth">
-                <div className="mx-auto max-w-[1440px] space-y-6">
+                <div className="w-full px-6 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-10 space-y-6">
                     <section className="rounded-[28px] border border-[#eadfce] bg-white/90 p-6 shadow-sm backdrop-blur">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                             <div>

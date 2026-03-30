@@ -100,6 +100,7 @@ export const menuApi = {
 
   getCategories: async (): Promise<Array<{ id: number; name: string }>> => {
     const res = await api.get("/food-menu/categories");
-    return res.data;
+    // Handle both enveloped and non-enveloped responses
+    return (res.data as any)?.data || (Array.isArray(res.data) ? res.data : []);
   },
 };

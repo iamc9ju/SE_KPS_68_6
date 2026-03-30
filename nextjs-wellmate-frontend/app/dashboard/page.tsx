@@ -255,7 +255,9 @@ export default function DashboardPage() {
     const [recommendedMenus, setRecommendedMenus] = React.useState<MenuItem[]>([]);
 
     React.useEffect(() => {
-        if (user?.role !== "patient") {
+        if (!user || user.role === "patient") {
+            // Patient logic below
+        } else {
             setLoading(false);
             return;
         }
@@ -287,9 +289,7 @@ export default function DashboardPage() {
                     }),
                 ]);
 
-                if (!isMounted) {
-                    return;
-                }
+                if (!isMounted) return;
 
                 const overviewFallback: ProgressOverview = {
                     patient: {},
@@ -339,10 +339,6 @@ export default function DashboardPage() {
                         : [],
                 );
 
-                const failedCritical =
-                    overviewResult.status === "rejected" &&
-                    historyResult.status === "rejected" &&
-                    profileResult.status === "rejected";
                 const hadPartialFailure = [
                     overviewResult,
                     historyResult,
@@ -352,9 +348,7 @@ export default function DashboardPage() {
                     menuResult,
                 ].some((result) => result.status === "rejected");
 
-                if (failedCritical) {
-                    setErrorMessage("ไม่สามารถโหลดข้อมูลหลักของ dashboard จากฐานข้อมูลได้");
-                } else if (hadPartialFailure) {
+                if (hadPartialFailure) {
                     setErrorMessage("บางส่วนของ dashboard โหลดไม่สำเร็จ จึงแสดงเฉพาะข้อมูลที่ดึงได้");
                 }
             } catch (error) {
@@ -363,9 +357,7 @@ export default function DashboardPage() {
                     setErrorMessage("ไม่สามารถโหลดข้อมูล dashboard จากฐานข้อมูลได้ในขณะนี้");
                 }
             } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
+                if (isMounted) setLoading(false);
             }
         };
 
@@ -376,17 +368,9 @@ export default function DashboardPage() {
         };
     }, [user?.role]);
 
-    if (user?.role === "food_partner") {
-        return <FoodPartnerDashboard />;
-    }
-
-    if (user?.role === "nutritionist") {
-        return <NutritionistDashboard />;
-    }
-
-    if (user?.role === "admin") {
-        return <AdminDashboard />;
-    }
+    if (user?.role === "admin") return <AdminDashboard />;
+    if (user?.role === "nutritionist") return <NutritionistDashboard />;
+    if (user?.role === "food_partner") return <FoodPartnerDashboard />;
 
     const latestMeasurement = overview?.latestMeasurement ?? null;
     const latestHealthMetric = overview?.latestHealthMetric ?? null;
@@ -395,21 +379,15 @@ export default function DashboardPage() {
     const safeRecommendedMenus = ensureArray<MenuItem>(recommendedMenus);
     const safeNotificationItems = ensureArray<NotificationItem>(notifications?.notifications);
 
-    const latestWeight =
-        toNumber(latestMeasurement?.weightKg) ??
-        toNumber(latestHealthMetric?.weightKg);
+    const latestWeight = toNumber(latestMeasurement?.weightKg) ?? toNumber(latestHealthMetric?.weightKg);
     const latestSteps = latestMeasurement?.stepsCount ?? null;
     const latestSleepHours = toNumber(latestMeasurement?.sleepHours);
-    const latestWaterLiters = latestMeasurement?.waterMl ? latestMeasurement.waterMl / 1000 : null;
+    const latestWater = latestMeasurement?.waterMl ?? null;
     const latestCalories = latestMeasurement?.caloriesKcal ?? null;
 
     const averageSteps = average(getRecentValues(recentMeasurements, (log) => log.stepsCount ?? null));
     const averageSleep = average(getRecentValues(recentMeasurements, (log) => toNumber(log.sleepHours)));
-    const averageWaterLiters = average(
-        getRecentValues(recentMeasurements, (log) =>
-            log.waterMl !== null && log.waterMl !== undefined ? log.waterMl / 1000 : null,
-        ),
-    );
+    const averageWater = average(getRecentValues(recentMeasurements, (log) => log.waterMl ?? null));
     const averageCalories = average(getRecentValues(recentMeasurements, (log) => log.caloriesKcal ?? null));
 
     const targetWeight = toNumber(overview?.patient.targetWeightKg);
@@ -424,10 +402,9 @@ export default function DashboardPage() {
         gender,
         activityLevel,
     });
-    const remainingCalories =
-        calorieGoal !== null && latestCalories !== null
-            ? Math.max(calorieGoal - latestCalories, 0)
-            : null;
+    const remainingCalories = calorieGoal !== null && latestCalories !== null
+        ? Math.max(calorieGoal - latestCalories, 0)
+        : null;
 
     const calorieChartData = calorieGoal !== null && latestCalories !== null
         ? [
@@ -439,14 +416,10 @@ export default function DashboardPage() {
             { name: "empty", value: 0 },
         ];
 
-    const nextAppointment = safeAppointments
-        .filter((appointment) => appointment.status === "pending" || appointment.status === "confirmed")
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0] ?? null;
-
     return (
         <div className="flex-1 flex flex-col min-h-screen">
-            <main className="flex-1 overflow-y-auto px-8 py-10 z-10 custom-scrollbar ml-64 mr-80">
-                <div className="max-w-[1240px] mx-auto">
+            <main className="flex-1 overflow-y-auto px-6 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-10 z-10 custom-scrollbar ml-64 mr-80">
+                <div className="w-full">
                     <header className="mb-8 animate-fadeIn">
                         <h1 className="text-4xl font-black text-[#1a1a1a] tracking-tight mb-2">
                             สวัสดี, {user?.firstName || "ผู้ใช้งาน"}!
@@ -503,13 +476,13 @@ export default function DashboardPage() {
                                     />
                                 </StatCard>
 
-                                <StatCard title="ดื่มน้ำ" value={formatNumber(latestWaterLiters, 1)} unit="ลิตร">
+                                <StatCard title="น้ำดื่ม" value={formatNumber(latestWater)} unit="มล.">
                                     <MetricMeta
                                         icon={<GlassWater className="w-4 h-4" />}
                                         primary={
-                                            averageWaterLiters !== null
-                                                ? `เฉลี่ย 7 วัน ${formatNumber(averageWaterLiters, 1)} ลิตร`
-                                                : "ยังไม่มีประวัติการดื่มน้ำ"
+                                            averageWater !== null
+                                                ? `เฉลี่ย 7 วัน ${formatNumber(averageWater)} มล.`
+                                                : "ยังไม่มีประวัติน้ำดื่ม"
                                         }
                                         secondary={`อัปเดตล่าสุด ${formatDateLabel(latestMeasurement?.recordedAt)}`}
                                     />
@@ -518,148 +491,147 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    <div className="bg-white p-10 rounded-[40px] shadow-[0_4px_40px_rgba(0,0,0,0.02)] border border-gray-50 mb-8 animate-slideUp delay-100">
-                        <div className="flex flex-col gap-5 lg:flex-row lg:justify-between lg:items-start mb-8">
-                            <div>
-                                <h3 className="text-2xl font-black text-gray-900">สรุปแคลอรี่จากข้อมูลล่าสุด</h3>
-                                <p className="text-sm font-medium text-gray-400 mt-2">
-                                    ใช้ค่าที่บันทึกล่าสุดร่วมกับข้อมูลสุขภาพที่มีอยู่ในระบบ
-                                </p>
-                            </div>
-                            <div className="flex flex-wrap gap-4">
-                                <SummaryBadge
-                                    icon={<Utensils className="w-5 h-5" />}
-                                    label="แคลอรี่ล่าสุด"
-                                    value={`${formatNumber(latestCalories)} kcal`}
-                                />
-                                <SummaryBadge
-                                    icon={<Target className="w-5 h-5" />}
-                                    label={calorieGoal !== null ? "เป้าหมายคำนวณได้" : "ยังคำนวณไม่ได้"}
-                                    value={calorieGoal !== null ? `${formatNumber(calorieGoal)} kcal` : "ข้อมูลไม่พอ"}
-                                />
+                    <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8 mb-8">
+                        <div className="space-y-8">
+                            <div className="bg-white p-10 rounded-[40px] border border-gray-50 shadow-[0_20px_60px_rgba(0,0,0,0.03)] animate-slideUp relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50/30 rounded-full blur-3xl -mr-20 -mt-20" />
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 relative">
+                                    <div>
+                                        <p className="text-[11px] font-black text-orange-400 uppercase tracking-[0.2em] mb-2">Calorie Insight</p>
+                                        <h3 className="text-3xl font-black text-gray-900 leading-tight">การใช้พลังงานของคุณ</h3>
+                                    </div>
+                                    <div className="flex flex-wrap gap-4">
+                                        <SummaryBadge
+                                            icon={<Target className="w-5 h-5" />}
+                                            label="เป้าหมาย"
+                                            value={`${formatNumber(calorieGoal)} kcal`}
+                                        />
+                                        <SummaryBadge
+                                            icon={<Flame className="w-5 h-5" />}
+                                            label="วันนี้"
+                                            value={`${formatNumber(latestCalories)} kcal`}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col lg:flex-row items-center gap-12">
+                                    <div className="relative w-64 h-64 flex-shrink-0">
+                                        {loading ? (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="w-40 h-40 rounded-full border-8 border-gray-100 animate-pulse" />
+                                            </div>
+                                        ) : (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={calorieChartData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={100}
+                                                        outerRadius={115}
+                                                        stroke="none"
+                                                        dataKey="value"
+                                                        startAngle={180}
+                                                        endAngle={-180}
+                                                        cornerRadius={15}
+                                                        paddingAngle={0}
+                                                    >
+                                                        <Cell fill="url(#calorieGradient)" />
+                                                        <Cell fill="#f4f4f4" />
+                                                    </Pie>
+                                                    <defs>
+                                                        <linearGradient id="calorieGradient" x1="0" y1="0" x2="1" y2="0">
+                                                            <stop offset="0%" stopColor="#ffd980" />
+                                                            <stop offset="100%" stopColor="#ff9933" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        )}
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                            <Flame className="text-gray-900 mb-2 w-8 h-8 fill-gray-900/10" />
+                                            <span className="text-5xl font-black text-gray-900">
+                                                {calorieGoal !== null ? formatNumber(remainingCalories) : formatNumber(latestCalories)}
+                                            </span>
+                                            <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">kcal</span>
+                                            <span className="text-[11px] text-gray-400 font-bold mt-1">
+                                                {calorieGoal !== null ? "แคลอรี่คงเหลือโดยประมาณ" : "แคลอรี่ล่าสุดที่บันทึก"}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 w-full space-y-4">
+                                        {loading ? (
+                                            Array.from({ length: 3 }).map((_, index) => (
+                                                <Skeleton key={index} className="h-16 rounded-xl" />
+                                            ))
+                                        ) : (
+                                            <>
+                                                <InsightBlock
+                                                    label="ค่าเฉลี่ย 7 วัน"
+                                                    value={averageCalories !== null ? `${formatNumber(averageCalories)} kcal` : "ยังไม่มีข้อมูล"}
+                                                    percentage={latestCalories !== null && averageCalories !== null && averageCalories > 0
+                                                        ? Math.min(Math.round((latestCalories / averageCalories) * 100), 100)
+                                                        : 0}
+                                                    detail="ใช้จากประวัติการบันทึก caloriesKcal ใน progress"
+                                                />
+                                                <div className="p-6 bg-orange-50/50 rounded-[28px] border border-orange-100/50">
+                                                    <div className="flex gap-4">
+                                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-400 shadow-sm flex-shrink-0">
+                                                            <Utensils className="w-5 h-5" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-gray-900 mb-1">คำแนะนำโภชนาการวันนี้</p>
+                                                            <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                                                                {calorieGoal !== null && latestCalories !== null && calorieGoal > 0 && latestCalories > calorieGoal
+                                                                    ? "คุณได้รับพลังงานเกินเป้าหมายแล้ว ควรเลือกทานอาหารที่มีกากใยสูงและแคลอรี่ต่ำ"
+                                                                    : "คุณทำได้เยี่ยมมาก! รักษาการรับประทานอาหารที่มีประโยชน์เพื่อให้ร่างกายได้รับสารอาหารครบถ้วน"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col lg:flex-row items-center gap-16">
-                            <div className="relative w-72 h-72 flex-shrink-0">
-                                {loading ? (
-                                    <Skeleton className="w-full h-full rounded-full" />
-                                ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={calorieChartData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={100}
-                                                outerRadius={115}
-                                                stroke="none"
-                                                dataKey="value"
-                                                startAngle={180}
-                                                endAngle={-180}
-                                                cornerRadius={15}
-                                                paddingAngle={0}
-                                            >
-                                                <Cell fill="url(#calorieGradient)" />
-                                                <Cell fill="#f4f4f4" />
-                                            </Pie>
-                                            <defs>
-                                                <linearGradient id="calorieGradient" x1="0" y1="0" x2="1" y2="0">
-                                                    <stop offset="0%" stopColor="#ffd980" />
-                                                    <stop offset="100%" stopColor="#ff9933" />
-                                                </linearGradient>
-                                            </defs>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                )}
-                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <Flame className="text-gray-900 mb-2 w-8 h-8 fill-gray-900/10" />
-                                    <span className="text-5xl font-black text-gray-900">
-                                        {calorieGoal !== null ? formatNumber(remainingCalories) : formatNumber(latestCalories)}
-                                    </span>
-                                    <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">kcal</span>
-                                    <span className="text-[11px] text-gray-400 font-bold mt-1">
-                                        {calorieGoal !== null ? "แคลอรี่คงเหลือโดยประมาณ" : "แคลอรี่ล่าสุดที่บันทึก"}
-                                    </span>
-                                </div>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between px-2">
+                                <h3 className="text-2xl font-black text-gray-900 tracking-tight">เมนูแนะนำเพื่อคุณ</h3>
+                                <button className="text-sm font-black text-[#85B22E] hover:text-[#C6E065] transition-colors uppercase tracking-wider">ดูทั้งหมด</button>
                             </div>
-
-                            <div className="flex-1 w-full space-y-4">
+                            <div className="grid grid-cols-1 gap-8">
                                 {loading ? (
-                                    Array.from({ length: 3 }).map((_, index) => (
-                                        <Skeleton key={index} className="h-16 rounded-xl" />
+                                    Array.from({ length: 2 }).map((_, index) => (
+                                        <div key={index} className="space-y-4">
+                                            <MenuCardSkeleton />
+                                        </div>
                                     ))
+                                ) : safeRecommendedMenus.length === 0 ? (
+                                    <div className="text-sm text-gray-400 font-medium px-2 italic">
+                                        ยังไม่มีเมนูแนะนำในขณะนี้
+                                    </div>
                                 ) : (
-                                    <>
-                                        <InsightBlock
-                                            label="ค่าเฉลี่ย 7 วัน"
-                                            value={averageCalories !== null ? `${formatNumber(averageCalories)} kcal` : "ยังไม่มีข้อมูล"}
-                                            percentage={latestCalories !== null && averageCalories !== null && averageCalories > 0
-                                                ? Math.min(Math.round((latestCalories / averageCalories) * 100), 100)
-                                                : 0}
-                                            detail="ใช้จากประวัติการบันทึก caloriesKcal ใน progress"
+                                    safeRecommendedMenus.slice(0, 2).map((menu) => (
+                                        <MenuCard
+                                            key={menu.menuItemId}
+                                            category={menu.category || "เมนูเพื่อสุขภาพ"}
+                                            calories={menu.caloriesKcal ?? null}
+                                            title={menu.name}
+                                            description={menu.description || "ไม่มีรายละเอียดเพิ่มเติม"}
+                                            macros={{
+                                                c: menu.carbsG ?? null,
+                                                p: menu.proteinG ?? null,
+                                                f: menu.fatG ?? null,
+                                            }}
+                                            partnerName={menu.foodPartner?.partnerName || "ร้านค้าในระบบ"}
+                                            image={menu.imageUrl || FALLBACK_FOOD_IMAGE}
                                         />
-                                        <InsightBlock
-                                            label="นัดหมายครั้งถัดไป"
-                                            value={
-                                                nextAppointment
-                                                    ? `${new Date(nextAppointment.startTime).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}`
-                                                    : "ยังไม่มีนัดหมาย"
-                                            }
-                                            percentage={nextAppointment ? 100 : 0}
-                                            detail={
-                                                nextAppointment
-                                                    ? `กับ ${(nextAppointment.nutritionist?.firstName || "").trim()} ${(nextAppointment.nutritionist?.lastName || "").trim()}`.trim() || "มีนัดหมายในระบบ"
-                                                    : "ดึงจาก appointments ของผู้ป่วย"
-                                            }
-                                        />
-                                        <InsightBlock
-                                            label="บันทึกล่าสุด"
-                                            value={formatDateLabel(latestMeasurement?.recordedAt ?? latestHealthMetric?.recordedAt)}
-                                            percentage={100}
-                                            detail="อ้างอิงจาก progress และ health metrics ล่าสุด"
-                                        />
-                                    </>
+                                    ))
                                 )}
                             </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-10 rounded-[40px] shadow-[0_4px_40px_rgba(0,0,0,0.02)] border border-gray-50 mb-8 animate-slideUp delay-200">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h3 className="text-2xl font-black text-gray-900">เมนูจากฐานข้อมูล</h3>
-                                <p className="text-sm font-medium text-gray-400 mt-2">
-                                    แสดงเมนูจริงล่าสุดที่เปิดขายอยู่ในระบบ
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {loading ? (
-                                Array.from({ length: 2 }).map((_, index) => <MenuCardSkeleton key={index} />)
-                            ) : safeRecommendedMenus.length === 0 ? (
-                                <div className="col-span-full rounded-[28px] border border-dashed border-gray-200 bg-gray-50/70 px-6 py-10 text-center text-sm font-medium text-gray-500">
-                                    ยังไม่มีเมนูในฐานข้อมูลที่พร้อมแสดงบน dashboard
-                                </div>
-                            ) : (
-                                safeRecommendedMenus.map((menu) => (
-                                    <MenuCard
-                                        key={menu.menuItemId}
-                                        category={menu.category || "เมนูอาหาร"}
-                                        calories={menu.caloriesKcal ?? null}
-                                        title={menu.name}
-                                        description={menu.description || "ไม่มีรายละเอียดเพิ่มเติม"}
-                                        macros={{
-                                            c: menu.carbsG ?? null,
-                                            p: menu.proteinG ?? null,
-                                            f: menu.fatG ?? null,
-                                        }}
-                                        partnerName={menu.foodPartner?.partnerName || "ร้านค้าในระบบ"}
-                                        image={menu.imageUrl || FALLBACK_FOOD_IMAGE}
-                                    />
-                                ))
-                            )}
                         </div>
                     </div>
 

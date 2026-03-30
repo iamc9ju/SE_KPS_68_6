@@ -33,6 +33,14 @@ async function bootstrap() {
     configService.get<string>('FRONTEND_URL') ||
     'https://nextjs-wellmate-frontend-git-main-ittipol-botmoons-projects.vercel.app/';
 
+  const allowedOrigins = [
+    frontendUrl,
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://well-mate.vercel.app',
+    'https://wellmate-frontend.vercel.app',
+  ];
+
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {

@@ -15,7 +15,7 @@ import {
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 
-type OrderStatus = "new" | "preparing" | "ready" | "delivering" | "delivered";
+type OrderStatus = "preparing" | "ready" | "delivering" | "delivered";
 
 type OrderItem = {
     name: string;
@@ -84,7 +84,6 @@ const RIDER_POOL = [
 const REJECT_REASONS = ["วัตถุดิบหมด", "ร้านยุ่งเกินไป", "กำลังจะปิดร้าน"];
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
-    new: "กำลังรอรับออเดอร์",
     preparing: "กำลังเตรียมอาหาร",
     ready: "เตรียมอาหารเสร็จแล้ว รอการจัดส่ง",
     delivering: "กำลังจัดส่ง",
@@ -92,7 +91,6 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 const STATUS_TONE: Record<OrderStatus, string> = {
-    new: "bg-[#e7f2e9] text-[#2f7d57]",
     preparing: "bg-[#fff6df] text-[#8c6b13]",
     ready: "bg-[#e6f0ff] text-[#3f6fb5]",
     delivering: "bg-[#f5e6ff] text-[#7a3fb5]",
@@ -109,16 +107,14 @@ const formatBaht = (value: number) =>
     `${value.toLocaleString("th-TH", { maximumFractionDigits: 0 })} บาท`;
 
 const toUiStatus = (status: ApiOrder["status"]): OrderStatus => {
-    if (status === "pending") return "new";
-    if (status === "accepted" || status === "preparing") return "preparing";
     if (status === "ready") return "ready";
     if (status === "delivering") return "delivering";
     if (status === "delivered") return "delivered";
-    return "new";
+    return "preparing";
 };
 
 const isActiveStatus = (status: ApiOrder["status"]) =>
-    status !== "cancelled";
+    status !== "cancelled" && status !== "pending";
 
 const toPaymentStatus = (status: ApiOrder["paymentStatus"]): Order["paymentStatus"] => {
     if (status === "PAID") return "paid";
@@ -323,25 +319,7 @@ function OrderCard({
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[#f0e6d8] pt-3">
                 <div className="flex flex-wrap items-center gap-2">
-                    {order.status === "new" && (
-                        <>
-                            <button
-                                onClick={onAccept}
-                                disabled={isProcessing}
-                                className="inline-flex items-center gap-2 rounded-full bg-[#2f7d57] px-4 py-2 text-xs font-black text-white disabled:opacity-50"
-                            >
-                                {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
-                                รับออเดอร์
-                            </button>
-                            <button
-                                onClick={onReject}
-                                disabled={isProcessing}
-                                className="rounded-full border border-[#eadfce] bg-white px-4 py-2 text-xs font-black text-[#b13a3a] disabled:opacity-50"
-                            >
-                                ปฏิเสธ
-                            </button>
-                        </>
-                    )}
+                    {/* No "Accept" button needed for paid orders */}
                     {order.status === "preparing" && (
                         <button
                             onClick={onReady}
@@ -390,7 +368,7 @@ function OrderCard({
 export default function FoodPartnerOrders() {
     const [storeOpen, setStoreOpen] = useState(true);
     const [soundOn, setSoundOn] = useState(true);
-    const [mobileTab, setMobileTab] = useState<OrderStatus>("new");
+    const [mobileTab, setMobileTab] = useState<OrderStatus>("preparing");
     const [orders, setOrders] = useState<Order[]>([]);
     const [allOrders, setAllOrders] = useState<Order[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -516,7 +494,6 @@ export default function FoodPartnerOrders() {
 
     const grouped = useMemo(() => {
         return {
-            new: orders.filter((o) => o.status === "new"),
             preparing: orders.filter((o) => o.status === "preparing"),
             ready: orders.filter((o) => o.status === "ready"),
             delivering: orders.filter((o) => o.status === "delivering"),
@@ -529,7 +506,6 @@ export default function FoodPartnerOrders() {
             .filter((o) => isSameDay(o.createdAt))
             .reduce((sum, o) => sum + o.subtotal + o.deliveryFee, 0);
         return {
-            newOrders: grouped.new.length,
             preparing: grouped.preparing.length,
             sales,
         };
@@ -770,15 +746,7 @@ export default function FoodPartnerOrders() {
                         </div>
                     </div>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <StatCard
-                            title="ออเดอร์ใหม่"
-                            value={`${stats.newOrders} ใบ`}
-                            hint="รอการกดรับ"
-                            accent="bg-[#2f7d57]"
-                            icon={<Clock3 size={18} />}
-                            pulse
-                        />
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
                         <StatCard
                             title="กำลังเตรียมอาหาร"
                             value={`${stats.preparing} ใบ`}
@@ -815,7 +783,6 @@ export default function FoodPartnerOrders() {
 
                     <div className="flex gap-2 md:hidden">
                         {([
-                            { key: "new", label: "ออเดอร์ใหม่" },
                             { key: "preparing", label: "กำลังเตรียม" },
                             { key: "ready", label: "รอส่ง" },
                             { key: "delivering", label: "กำลังส่ง" },
@@ -834,15 +801,8 @@ export default function FoodPartnerOrders() {
                         ))}
                     </div>
 
-                    <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {([
-                            {
-                                key: "new",
-                                title: "ออเดอร์ใหม่",
-                                description: "รอการกดรับ",
-                                accent: "bg-[#e7f2e9] text-[#2f7d57]",
-                                orders: grouped.new,
-                            },
                             {
                                 key: "preparing",
                                 title: "กำลังเตรียมอาหาร",
@@ -907,7 +867,6 @@ export default function FoodPartnerOrders() {
                                         order={order}
                                         isProcessing={processingOrders.has(order.id)}
                                         onAccept={() => {
-                                            if (order.status === "new") acceptOrder(order);
                                             if (order.status === "ready") markDelivering(order);
                                         }}
                                         onReject={() => openReject(order)}
@@ -1120,10 +1079,6 @@ export default function FoodPartnerOrders() {
                                     <button
                                         onClick={() => {
                                             if (!selectedOrder) return;
-                                            if (selectedOrder.status === "new") {
-                                                acceptOrder(selectedOrder);
-                                                return;
-                                            }
                                             if (selectedOrder.status === "preparing") {
                                                 markReady(selectedOrder);
                                                 return;
@@ -1140,15 +1095,13 @@ export default function FoodPartnerOrders() {
                                         {processingOrders.has(selectedOrder.id) ? (
                                             <Loader2 size={12} className="animate-spin" />
                                         ) : null}
-                                        {selectedOrder.status === "new"
-                                            ? "Start cooking"
-                                            : selectedOrder.status === "preparing"
-                                                ? "Food ready"
-                                                : selectedOrder.status === "ready"
-                                                    ? "Start delivery"
-                                                    : selectedOrder.status === "delivering"
-                                                        ? "Delivered"
-                                                        : "Done"}
+                                        {selectedOrder.status === "preparing"
+                                            ? "Food ready"
+                                            : selectedOrder.status === "ready"
+                                                ? "Start delivery"
+                                                : selectedOrder.status === "delivering"
+                                                    ? "Delivered"
+                                                    : "Done"}
                                     </button>
                                     <button className="rounded-full border border-[#eadfce] bg-white px-5 py-2 text-xs font-black text-[#b13a3a]">
                                         ติดต่อแอดมิน / รายงานปัญหา

@@ -195,7 +195,7 @@ export default function OrdersPage() {
             ref={scrollContainerRef}
             className="flex-1 h-screen overflow-y-auto bg-[#fffbf5] lg:pl-64 scroll-smooth"
         >
-            <main className="max-w-6xl mx-auto p-6 md:p-12 pb-32">
+            <main className="w-full px-6 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12 pb-32">
                 {/* Header Inline */}
                 <header className="mb-12">
                     <div className="flex items-center gap-4 mb-4">

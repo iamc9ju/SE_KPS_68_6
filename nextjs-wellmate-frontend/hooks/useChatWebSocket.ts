@@ -111,6 +111,17 @@ export const useChatWebSocket = (chatRoomId: string | null) => {
     return () => {};
   }, []);
 
+  const onRecommendationsUpdated = useCallback((callback: (data: any) => void) => {
+    const socket = socketRef.current;
+    if (socket) {
+      socket.on("recommendations_updated", callback);
+      return () => {
+        socket.off("recommendations_updated", callback);
+      };
+    }
+    return () => {};
+  }, []);
+
   return {
     isConnected,
     error,
@@ -118,6 +129,7 @@ export const useChatWebSocket = (chatRoomId: string | null) => {
     markAsRead,
     onNewMessage,
     onMessagesRead,
+    onRecommendationsUpdated,
     socket: socketRef.current,
   };
 };

@@ -14,12 +14,14 @@ import { TIME_CONSTANTS } from '../common/constants/time.constants';
 import { ErrorMessages } from '../common/constants/response.constants';
 import { format, getDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymentsService: PaymentsService,
+    private readonly chatGateway: ChatGateway,
   ) { }
 
   async create(userId: string, dto: CreateAppointmentDto) {
@@ -332,7 +334,7 @@ export class AppointmentsService {
           userId: userId
         }
       },
-      include: { nutritionist: true },
+      include: { nutritionist: true, chatRoom: { select: { chatRoomId: true } } },
     });
 
     if (!appointment) {
@@ -353,6 +355,16 @@ export class AppointmentsService {
             menuItemId,
           })),
         });
+      }
+
+      // Emit real-time notification to chat room if it exists
+      if (appointment.chatRoom?.chatRoomId) {
+        this.chatGateway.server
+          .to(appointment.chatRoom.chatRoomId)
+          .emit('recommendations_updated', {
+            appointmentId,
+            nutritionistId: userId,
+          });
       }
 
       return { message: 'Recommendations saved successfully' };
