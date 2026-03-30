@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, Bike, Store, UtensilsCrossed, Flame, Heart, ShoppingBag, ShoppingCart, Leaf, Apple, Cake, CupSoda, Fish, Info, ChevronRight } from "lucide-react";
@@ -219,7 +219,7 @@ function RestaurantCard({ shop }: { shop: Restaurant }) {
     return card;
 }
 
-export default function HealthyMenu() {
+function HealthyMenuContent() {
     const userRole = useAuthStore(state => state.user?.role);
     const isPatient = userRole === "patient";
 
@@ -351,8 +351,6 @@ export default function HealthyMenu() {
         return restaurants.filter((r) => r.name.toLowerCase().includes(q));
     }, [restaurants, search]);
     const recommendedRestaurants = filteredRestaurants.slice(0, 6);
-
-    // total has been removed
 
     return (
         <div className="flex-1 flex flex-col w-full h-screen bg-[#fffaf0] font-sans text-[#3d3522] overflow-hidden relative">
@@ -579,6 +577,14 @@ export default function HealthyMenu() {
                 item={selectedItem} 
             />
         </div>
+    );
+}
+
+export default function HealthyMenu() {
+    return (
+        <Suspense fallback={<div className="p-10 ml-64">Loading healthy menu...</div>}>
+            <HealthyMenuContent />
+        </Suspense>
     );
 }
 

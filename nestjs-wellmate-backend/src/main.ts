@@ -30,10 +30,17 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const frontendUrl =
-    configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    configService.get<string>('FRONTEND_URL') ||
+    'https://nextjs-wellmate-frontend-git-main-ittipol-botmoons-projects.vercel.app/';
 
   app.enableCors({
-    origin: frontendUrl,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   });
   app.setGlobalPrefix('api');

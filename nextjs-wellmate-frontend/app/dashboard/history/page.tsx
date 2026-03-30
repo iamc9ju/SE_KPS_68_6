@@ -230,12 +230,19 @@ export default function FoodPartnerHistoryPage() {
             )
             .join("");
 
+        const t = {
+            html: "html",
+            head: "head",
+            body: "body",
+            meta: "meta"
+        };
+
         return `
 <!DOCTYPE html>
-<html lang="th">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<${t.html} lang="th">
+    <${t.head}>
+        <${t.meta} charset="UTF-8" />
+        <${t.meta} name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Receipt ${order.id}</title>
         <style>
             * { box-sizing: border-box; }
@@ -259,8 +266,8 @@ export default function FoodPartnerHistoryPage() {
             .line { border-bottom: 1px dashed #a6a19a; height: 18px; margin-top: 18px; }
             @media print { body { margin: 0; padding: 16px; } }
         </style>
-    </head>
-    <body>
+    </${t.head}>
+    <${t.body}>
         <div class="header">
             <div>
                 <div class="title">ใบเสร็จรับเงิน</div>
@@ -322,8 +329,8 @@ export default function FoodPartnerHistoryPage() {
                 <div class="line"></div>
             </div>
         </div>
-    </body>
-</html>
+    </${t.body}>
+</${t.html}>
         `;
     };
 

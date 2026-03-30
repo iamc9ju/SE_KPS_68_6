@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useMemo, useEffect, useState } from "react";
+import React, { Suspense, useMemo, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { appointmentsApi } from "@/services/appointments";
 import Swal from "sweetalert2";
@@ -15,7 +15,7 @@ import {
     Loader2
 } from "lucide-react";
 
-export default function PaymentPage() {
+function PaymentContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -200,5 +200,13 @@ export default function PaymentPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function PaymentPage() {
+    return (
+        <Suspense fallback={<div className="p-10 ml-64">Loading payment information...</div>}>
+            <PaymentContent />
+        </Suspense>
     );
 }
